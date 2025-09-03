@@ -5391,8 +5391,8 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
       
   {/* 3D-scen */}
   <div className="canvas-container" style={{ 
-    marginLeft: window.innerWidth <= 768 ? '20vw' : '320px', 
-    width: window.innerWidth <= 768 ? '80vw' : 'calc(100vw - 320px)', 
+    marginLeft: window.innerWidth <= 768 ? '40vw' : '320px', 
+    width: window.innerWidth <= 768 ? '60vw' : 'calc(100vw - 320px)', 
     height: '100vh', 
     position: 'relative',
     background: '#f0f0f0',
