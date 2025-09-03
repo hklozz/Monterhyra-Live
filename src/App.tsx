@@ -1826,7 +1826,14 @@ export default function App() {
   // }, [counterType]);
 
   return (
-    <div data-unused={__unused_refs.length} style={{ width: '100vw', height: '100vh', background: '#f0f0f0', position: 'relative' }}>
+    <div className="app-container" data-unused={__unused_refs.length} style={{ 
+      width: '100vw', 
+      height: '100vh', 
+      background: '#f0f0f0', 
+      position: 'relative',
+      display: 'flex',
+      flexDirection: window.innerWidth <= 768 ? 'column' : 'row' // Mobile: stack vertically
+    }}>
       {/* Floating live packlista (always visible) - DOLD */}
       <div id="packlista-floating" style={{ position: 'fixed', left: 340, top: 12, width: 200, padding: 8, background: '#fff', border: '1px solid #ddd', borderRadius: 6, boxShadow: '0 6px 20px rgba(0,0,0,0.12)', zIndex: 1201, display: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
