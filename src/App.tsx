@@ -1832,8 +1832,15 @@ export default function App() {
       background: '#f0f0f0', 
       position: 'relative',
       display: 'flex',
-      flexDirection: window.innerWidth <= 768 ? 'column' : 'row' // Mobile: stack vertically
+      flexDirection: 'row' // Always side by side
     }}>
+      
+      {/* 3D Canvas Container */}
+      <div className="canvas-container" style={{
+        flex: window.innerWidth <= 768 ? '0.6' : '1',
+        position: 'relative',
+        background: '#f0f0f0'
+      }}>
       {/* Floating live packlista (always visible) - DOLD */}
       <div id="packlista-floating" style={{ position: 'fixed', left: 340, top: 12, width: 200, padding: 8, background: '#fff', border: '1px solid #ddd', borderRadius: 6, boxShadow: '0 6px 20px rgba(0,0,0,0.12)', zIndex: 1201, display: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -2237,11 +2244,11 @@ export default function App() {
       </div>
 
       {/* Sidopanel */}
-      <div style={{
+      <div className="controls-container" style={{
         position: 'fixed',
         left: 0,
         top: 0,
-        width: 320,
+        width: window.innerWidth <= 768 ? '40vw' : '320px',
         height: '100vh',
         maxHeight: '100vh',
         boxSizing: 'border-box',
@@ -2249,7 +2256,7 @@ export default function App() {
         backdropFilter: 'blur(12px)',
         borderRight: '2px solid #e1e8ed',
         boxShadow: '8px 0 32px rgba(0, 0, 0, 0.08)',
-        padding: 24,
+        padding: window.innerWidth <= 768 ? '12px' : '24px',
         paddingBottom: 56, // extra space so bottom controls (t.ex. Lampor) aren't hidden under edge
         display: 'flex',
         flexDirection: 'column',
@@ -2257,20 +2264,21 @@ export default function App() {
         zIndex: 1000,
         overflowY: 'auto', // Lägg till scrollning
         overflowX: 'hidden',
-        WebkitOverflowScrolling: 'touch'
+        WebkitOverflowScrolling: 'touch',
+        fontSize: window.innerWidth <= 768 ? '12px' : '14px'
       }}>
         <div style={{
           position: 'sticky',
           top: 0,
           background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
-          margin: '-24px -24px 24px -24px',
-          padding: '20px 24px',
+          margin: window.innerWidth <= 768 ? '-12px -12px 12px -12px' : '-24px -24px 24px -24px',
+          padding: window.innerWidth <= 768 ? '12px' : '20px 24px',
           borderRadius: '0 0 12px 12px',
           zIndex: 10
         }}>
           <h2 style={{
             fontWeight: 700, 
-            fontSize: '20px', 
+            fontSize: window.innerWidth <= 768 ? '16px' : '20px', 
             margin: 0,
             color: 'white',
             textShadow: '0 1px 2px rgba(0,0,0,0.2)'
@@ -5382,7 +5390,12 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
       </button>
       
   {/* 3D-scen */}
-  <div style={{ marginLeft: 320, width: 'calc(100vw - 320px)', height: '100vh', position: 'relative' }}>
+  <div className="canvas-container" style={{ 
+    marginLeft: window.innerWidth <= 768 ? '40vw' : '320px', 
+    width: window.innerWidth <= 768 ? '60vw' : 'calc(100vw - 320px)', 
+    height: '100vh', 
+    position: 'relative' 
+  }}>
         {floorIndex !== null && (() => {
           // (vepa overlay removed)
           
