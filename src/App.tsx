@@ -1835,6 +1835,26 @@ export default function App() {
       flexDirection: 'row' // Always side by side
     }}>
       
+      {/* Mobile Development Notice */}
+      {window.innerWidth <= 768 && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          background: 'linear-gradient(90deg, #ff9500 0%, #ffa726 100%)',
+          color: 'white',
+          padding: '8px',
+          textAlign: 'center',
+          fontSize: '12px',
+          fontWeight: '600',
+          zIndex: 10000,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+        }}>
+          📱 Mobilversion under uppbyggnad - Använd desktop för bästa upplevelse
+        </div>
+      )}
+      
       {/* 3D Canvas Container */}
       <div className="canvas-container" style={{
         flex: window.innerWidth <= 768 ? '0.6' : '1',
@@ -5411,13 +5431,39 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
             padding: '20px'
           }}>
             <div>
-              <h2 style={{ 
-                fontSize: window.innerWidth <= 768 ? '18px' : '24px',
-                marginBottom: '10px',
-                fontWeight: '600'
-              }}>
-                Välkommen till Monterhyra! 🏗️
-              </h2>
+              {window.innerWidth <= 768 ? (
+                // Mobilversion - visa meddelande om utveckling
+                <>
+                  <div style={{
+                    background: 'rgba(255, 193, 7, 0.9)',
+                    color: '#000',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    marginBottom: '20px',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}>
+                    📱 Mobilversion under uppbyggnad<br />
+                    För bästa upplevelse, använd desktop/dator
+                  </div>
+                  <h2 style={{ 
+                    fontSize: '18px',
+                    marginBottom: '10px',
+                    fontWeight: '600'
+                  }}>
+                    Välkommen till Monterhyra! 🏗️
+                  </h2>
+                </>
+              ) : (
+                // Desktop version - vanlig välkomsttext
+                <h2 style={{ 
+                  fontSize: '24px',
+                  marginBottom: '10px',
+                  fontWeight: '600'
+                }}>
+                  Välkommen till Monterhyra! 🏗️
+                </h2>
+              )}
               <p style={{ 
                 fontSize: window.innerWidth <= 768 ? '12px' : '16px',
                 opacity: 0.9,

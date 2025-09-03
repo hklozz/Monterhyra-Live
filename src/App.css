@@ -5,7 +5,8 @@
   text-align: center;
 }
 
-/* Mobile-first responsive design - FORCE OVERRIDE */
+/* VERSION 2024-09-03 20:50 - MOBILE PROPORTIONAL UPDATE */
+/* Mobile-first responsive design - FORCE OVERRIDE - v2.0 CACHE BUSTER */
 @media (max-width: 768px) {
   #root {
     padding: 0 !important;
@@ -29,7 +30,7 @@
     display: block !important;
   }
   
-  /* FORCE Controls to take 50% of width - jämn fördelning */
+  /* FORCE Controls to take 50% of width - jämn fördelning v2.0 */
   .controls-container {
     flex: 0.5 !important;
     width: 50% !important;
@@ -37,12 +38,14 @@
     overflow-y: auto !important;
     overflow-x: hidden !important;
     padding: 12px !important;
+    padding-top: 40px !important; /* Plats för mobilmeddelande */
     background: #f8f9fa !important;
     border-left: 1px solid #ddd !important;
     font-size: 14px !important;
     position: fixed !important;
     right: 0 !important;
     top: 0 !important;
+    z-index: 1000 !important; /* Säkerställ att menyn visas */
   }
   
   /* Force 3D canvas to be visible on mobile */
