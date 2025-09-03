@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2025 Klozz Holding AB. All rights reserved.
+ * MONTERHYRA™ - Proprietary and Confidential
+ * Unauthorized copying or distribution is strictly prohibited.
+ */
+
 import React, { useState, useMemo, useRef, useImperativeHandle, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';

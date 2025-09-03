@@ -1,7 +1,11 @@
 {
   "name": "monterhyra",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "MONTERHYRA™ - Professional exhibition booth design application",
+  "author": "Klozz Holding AB",
+  "copyright": "Copyright © 2025 Klozz Holding AB. All rights reserved.",
+  "license": "PROPRIETARY",
   "type": "module",
   "scripts": {
     "dev": "vite",
