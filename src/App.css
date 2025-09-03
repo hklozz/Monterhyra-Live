@@ -5,37 +5,44 @@
   text-align: center;
 }
 
-/* Mobile-first responsive design */
+/* Mobile-first responsive design - FORCE OVERRIDE */
 @media (max-width: 768px) {
   #root {
-    padding: 0;
-    font-size: 8px; /* 70% mindre än 12px */
+    padding: 0 !important;
+    font-size: 8px !important;
   }
   
-  /* App container mobile adjustments - keep side by side but more compact */
+  /* FORCE side-by-side layout */
   .app-container {
     flex-direction: row !important;
-    height: 100vh;
-    overflow: hidden;
+    height: 100vh !important;
+    overflow: hidden !important;
+    display: flex !important;
   }
   
-  /* 3D Canvas takes 85% of width on mobile - much more space */
+  /* FORCE 3D Canvas to take 80% of width */
   .canvas-container {
-    flex: 0.85;
-    height: 100vh;
-    background: #e0e0e0; /* Synlig bakgrund för debugging */
+    flex: 0.8 !important;
+    width: 80% !important;
+    height: 100vh !important;
+    background: #e0e0e0 !important;
+    display: block !important;
   }
   
-  /* Controls take only 15% of width - 70% mindre än 35% */
+  /* FORCE Controls to take only 20% of width */
   .controls-container {
-    flex: 0.15;
-    height: 100vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 3px; /* 70% mindre från 8px */
-    background: #f8f9fa;
-    border-left: 1px solid #ddd;
-    font-size: 7px; /* 70% mindre från 11px */
+    flex: 0.2 !important;
+    width: 20% !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 2px !important;
+    background: #f8f9fa !important;
+    border-left: 1px solid #ddd !important;
+    font-size: 6px !important;
+    position: fixed !important;
+    right: 0 !important;
+    top: 0 !important;
   }
   
   /* Force 3D canvas to be visible on mobile */

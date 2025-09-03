@@ -2248,7 +2248,7 @@ export default function App() {
         position: 'fixed',
         left: 0,
         top: 0,
-        width: window.innerWidth <= 768 ? '15vw' : '320px',
+        width: window.innerWidth <= 768 ? '20vw' : '320px',
         height: '100vh',
         maxHeight: '100vh',
         boxSizing: 'border-box',
@@ -5391,11 +5391,12 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
       
   {/* 3D-scen */}
   <div className="canvas-container" style={{ 
-    marginLeft: window.innerWidth <= 768 ? '15vw' : '320px', 
-    width: window.innerWidth <= 768 ? '85vw' : 'calc(100vw - 320px)', 
+    marginLeft: window.innerWidth <= 768 ? '20vw' : '320px', 
+    width: window.innerWidth <= 768 ? '80vw' : 'calc(100vw - 320px)', 
     height: '100vh', 
     position: 'relative',
-    background: '#f0f0f0'
+    background: '#f0f0f0',
+    display: 'block'
   }}>
         {floorIndex === null ? (
           // Visa instruktioner när ingen monterstorlek är vald
