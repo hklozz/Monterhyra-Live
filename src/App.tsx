@@ -2248,7 +2248,7 @@ export default function App() {
         position: 'fixed',
         left: 0,
         top: 0,
-        width: window.innerWidth <= 768 ? '35vw' : '320px',
+        width: window.innerWidth <= 768 ? '15vw' : '320px',
         height: '100vh',
         maxHeight: '100vh',
         boxSizing: 'border-box',
@@ -5391,12 +5391,42 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
       
   {/* 3D-scen */}
   <div className="canvas-container" style={{ 
-    marginLeft: window.innerWidth <= 768 ? '35vw' : '320px', 
-    width: window.innerWidth <= 768 ? '65vw' : 'calc(100vw - 320px)', 
+    marginLeft: window.innerWidth <= 768 ? '15vw' : '320px', 
+    width: window.innerWidth <= 768 ? '85vw' : 'calc(100vw - 320px)', 
     height: '100vh', 
-    position: 'relative' 
+    position: 'relative',
+    background: '#f0f0f0'
   }}>
-        {floorIndex !== null && (() => {
+        {floorIndex === null ? (
+          // Visa instruktioner när ingen monterstorlek är vald
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            textAlign: 'center',
+            padding: '20px'
+          }}>
+            <div>
+              <h2 style={{ 
+                fontSize: window.innerWidth <= 768 ? '18px' : '24px',
+                marginBottom: '10px',
+                fontWeight: '600'
+              }}>
+                Välkommen till Monterhyra! 🏗️
+              </h2>
+              <p style={{ 
+                fontSize: window.innerWidth <= 768 ? '12px' : '16px',
+                opacity: 0.9,
+                maxWidth: '300px'
+              }}>
+                Välj en monterstorlek i menyn {window.innerWidth <= 768 ? 'till vänster' : ''} för att börja designa din 3D-monter
+              </p>
+            </div>
+          </div>
+        ) : (() => {
           // (vepa overlay removed)
           
           // Hjälpfunktion för att få rätt golvdimensioner
@@ -5413,11 +5443,12 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
           return (
             <Canvas 
               camera={{ 
-                position: window.innerWidth <= 768 ? [0, 3, 8] : [0, 2, 6], // Zooma ut mer på mobil
-                fov: window.innerWidth <= 768 ? 60 : 50 // Bredare synfält på mobil
+                position: window.innerWidth <= 768 ? [0, 4, 10] : [0, 2, 6], // Zooma ut mer på mobil
+                fov: window.innerWidth <= 768 ? 75 : 50 // Mycket bredare synfält på mobil
               }} 
               shadows
               gl={{ preserveDrawingBuffer: true }}
+              style={{ background: '#f0f0f0' }} // Säkerställ synlig bakgrund
             >
             <CaptureHelper ref={captureRef} onHideGrid={setHideGridForCapture} />
             {/* Visa golvplatta - dölj under PDF-generering */}
@@ -8646,8 +8677,9 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
           </Canvas>
           );
         })()}
-        
-        {/* Monterhyra vattenstämpel - flera lager */}
+      </div>
+
+      {/* Monterhyra vattenstämpel - flera lager */}
         <div style={{
           position: 'absolute',
           top: '20px',

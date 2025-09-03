@@ -9,7 +9,7 @@
 @media (max-width: 768px) {
   #root {
     padding: 0;
-    font-size: 12px; /* Zooma ut all text */
+    font-size: 8px; /* 70% mindre än 12px */
   }
   
   /* App container mobile adjustments - keep side by side but more compact */
@@ -19,101 +19,104 @@
     overflow: hidden;
   }
   
-  /* 3D Canvas takes 65% of width on mobile - more space */
+  /* 3D Canvas takes 85% of width on mobile - much more space */
   .canvas-container {
-    flex: 0.65;
+    flex: 0.85;
     height: 100vh;
+    background: #e0e0e0; /* Synlig bakgrund för debugging */
   }
   
-  /* Controls take 35% of width and are very compact */
+  /* Controls take only 15% of width - 70% mindre än 35% */
   .controls-container {
-    flex: 0.35;
+    flex: 0.15;
     height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 8px;
+    padding: 3px; /* 70% mindre från 8px */
     background: #f8f9fa;
     border-left: 1px solid #ddd;
-    font-size: 11px; /* Mycket mindre text */
+    font-size: 7px; /* 70% mindre från 11px */
   }
   
-  /* Zoom out 3D canvas camera for mobile */
+  /* Force 3D canvas to be visible on mobile */
   canvas {
     width: 100% !important;
     height: 100vh !important;
+    display: block !important;
+    background: #f0f0f0 !important; /* Synlig bakgrund */
   }
   
-  /* Much smaller, compact buttons */
+  /* Much smaller, compact buttons - 70% mindre */
   button {
-    min-height: 32px !important;
-    padding: 4px 8px !important;
+    min-height: 20px !important; /* 70% mindre från 32px */
+    padding: 2px 4px !important; /* 70% mindre */
     margin: 1px !important;
-    font-size: 11px !important;
-    border-radius: 4px;
+    font-size: 7px !important; /* 70% mindre från 11px */
+    border-radius: 2px;
   }
   
-  /* Compact input fields */
+  /* Compact input fields - 70% mindre */
   input, select, textarea {
-    min-height: 32px !important;
-    font-size: 11px !important;
-    padding: 4px 6px !important;
-    border-radius: 3px;
+    min-height: 20px !important; /* 70% mindre från 32px */
+    font-size: 7px !important; /* 70% mindre från 11px */
+    padding: 2px 3px !important; /* 70% mindre */
+    border-radius: 2px;
   }
   
-  /* Very compact floating panels */
+  /* Very compact floating panels - 70% mindre */
   #packlista-floating {
     position: fixed !important;
-    left: 2px !important;
-    top: 2px !important;
-    width: 140px !important;
-    font-size: 9px !important;
-    padding: 3px !important;
+    left: 1px !important;
+    top: 1px !important;
+    width: 80px !important; /* 70% mindre från 140px */
+    font-size: 6px !important; /* 70% mindre från 9px */
+    padding: 2px !important; /* 70% mindre */
     z-index: 9999;
   }
   
-  /* Compact floating price positioning */
+  /* Compact floating price positioning - 70% mindre */
   .floating-price-panel {
     position: fixed !important;
-    right: 2px !important;
-    bottom: 2px !important;
-    width: 120px !important;
-    font-size: 9px !important;
-    padding: 3px !important;
+    right: 1px !important;
+    bottom: 1px !important;
+    width: 70px !important; /* 70% mindre från 120px */
+    font-size: 6px !important; /* 70% mindre från 9px */
+    padding: 2px !important; /* 70% mindre */
     z-index: 9999;
   }
   
-  /* Compact dropdown menus */
+  /* Compact dropdown menus - 70% mindre */
   .dropdown-menu {
-    max-height: 120px;
+    max-height: 60px; /* 70% mindre från 120px */
     overflow-y: auto;
-    font-size: 10px;
+    font-size: 6px; /* 70% mindre från 10px */
   }
   
-  /* Smaller canvas watermark */
+  /* Smaller canvas watermark - 70% mindre */
   .canvas-watermark {
-    width: 60px !important;
-    opacity: 0.06 !important;
+    width: 30px !important; /* 70% mindre från 60px */
+    opacity: 0.04 !important;
   }
   
-  /* Very compact controls */
+  /* Very compact controls - 70% mindre allt */
   .controls-panel {
-    font-size: 10px;
-    line-height: 1.2;
+    font-size: 6px; /* 70% mindre från 10px */
+    line-height: 1.1;
   }
   
   .controls-panel label {
-    font-size: 10px;
-    margin-bottom: 2px;
+    font-size: 6px; /* 70% mindre från 10px */
+    margin-bottom: 1px; /* 70% mindre */
     font-weight: 600;
   }
   
   .controls-panel h2 {
-    font-size: 14px !important;
+    font-size: 8px !important; /* 70% mindre från 14px */
     margin: 0 !important;
-    padding: 8px !important;
+    padding: 3px !important; /* 70% mindre från 8px */
   }
   
-  /* Compact spacing */
+  /* Compact spacing - 70% mindre */
   .controls-panel > div {
     margin-top: 8px !important;
   }
