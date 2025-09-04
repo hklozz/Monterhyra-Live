@@ -7459,7 +7459,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     imageUrl={uploadedImage} 
                     wallLength={FLOOR_SIZES[floorIndex].width}
                     wallHeight={wallHeight}
-                    position={[0, wallHeight/2 + 0.06, -(FLOOR_SIZES[floorIndex].depth/2) + 0.15]}
+                    position={[0, wallHeight/2 + 0.06, -(FLOOR_SIZES[floorIndex].depth/2) + 0.05]}
                     rotation={[0, 0, 0]}
                   />
                 )}
@@ -7469,7 +7469,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     imageUrl={uploadedImageLeft} 
                     wallLength={FLOOR_SIZES[floorIndex].depth}
                     wallHeight={wallHeight}
-                    position={[-(FLOOR_SIZES[floorIndex].width/2) + 0.15, wallHeight/2 + 0.06, 0]}
+                    position={[-(FLOOR_SIZES[floorIndex].width/2) + 0.05, wallHeight/2 + 0.06, 0]}
                     rotation={[0, Math.PI/2, 0]}
                   />
                 )}
@@ -7479,7 +7479,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     imageUrl={uploadedImageRight} 
                     wallLength={FLOOR_SIZES[floorIndex].depth}
                     wallHeight={wallHeight}
-                    position={[(FLOOR_SIZES[floorIndex].width/2) - 0.15, wallHeight/2 + 0.06, 0]}
+                    position={[(FLOOR_SIZES[floorIndex].width/2) - 0.05, wallHeight/2 + 0.06, 0]}
                     rotation={[0, -Math.PI/2, 0]}
                   />
                 )}
@@ -7491,7 +7491,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     imageUrl={forexImageBack} 
                     wallLength={FLOOR_SIZES[floorIndex].width}
                     wallHeight={wallHeight}
-                    position={[0, wallHeight/2 + 0.06, -(FLOOR_SIZES[floorIndex].depth/2) + 0.15]}
+                    position={[0, wallHeight/2 + 0.06, -(FLOOR_SIZES[floorIndex].depth/2) + 0.05]}
                   />
                 )}
                 {/* Forex vänster vägg */}
@@ -7500,7 +7500,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     imageUrl={forexImageLeft} 
                     wallLength={FLOOR_SIZES[floorIndex].depth}
                     wallHeight={wallHeight}
-                    position={[-(FLOOR_SIZES[floorIndex].width/2) + 0.15, wallHeight/2 + 0.06, 0]}
+                    position={[-(FLOOR_SIZES[floorIndex].width/2) + 0.05, wallHeight/2 + 0.06, 0]}
                     rotation={[0, Math.PI/2, 0]}
                   />
                 )}
@@ -7510,7 +7510,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     imageUrl={forexImageRight} 
                     wallLength={FLOOR_SIZES[floorIndex].depth}
                     wallHeight={wallHeight}
-                    position={[(FLOOR_SIZES[floorIndex].width/2) - 0.15, wallHeight/2 + 0.06, 0]}
+                    position={[(FLOOR_SIZES[floorIndex].width/2) - 0.05, wallHeight/2 + 0.06, 0]}
                     rotation={[0, -Math.PI/2, 0]}
                   />
                 )}
