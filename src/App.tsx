@@ -3957,7 +3957,68 @@ export default function App() {
                   if (file) {
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                      setCounterFrontImage(event.target?.result as string);
+                      const imageData = event.target?.result as string;
+                      setCounterFrontImage(imageData);
+                      
+                      // Om det inte finns några diskar än, skapa automatiskt en standarddisk
+                      if (counters.length === 0 && floorIndex !== null) {
+                        const counterConfig = COUNTER_TYPES[selectedCounterType];
+                        const floor = FLOOR_SIZES[floorIndex];
+                        
+                        // Placera disken i mitten av golvet
+                        const centerX = 0;
+                        const centerZ = 0;
+                        
+                        // Kontrollera att disken passar inom monterområdet
+                        let canPlace = true;
+                        if (counterConfig.type === 'L' || counterConfig.type === 'L-mirrored') {
+                          // L-formad disk: kontrollera både delar
+                          const maxX = floor.width / 2;
+                          const minX = -floor.width / 2;
+                          const maxZ = floor.depth / 2;
+                          const minZ = -floor.depth / 2;
+                          
+                          // Kontrollera första delen (1,5m x 0,5m)
+                          if (centerX + 0.75 > maxX || centerX - 0.75 < minX || 
+                              centerZ + 0.25 > maxZ || centerZ - 0.25 < minZ) {
+                            canPlace = false;
+                          }
+                          
+                          // Kontrollera andra delen beroende på typ
+                          if (counterConfig.type === 'L') {
+                            // Vanlig L: andra delen åt höger
+                            if (centerX + 1.25 > maxX || centerZ + 0.75 > maxZ || centerZ - 0.75 < minZ) {
+                              canPlace = false;
+                            }
+                          } else {
+                            // Spegelvänd L: andra delen åt vänster
+                            if (centerX - 1.25 < minX || centerZ + 0.75 > maxZ || centerZ - 0.75 < minZ) {
+                              canPlace = false;
+                            }
+                          }
+                        } else {
+                          // Rektangulär disk
+                          const maxX = floor.width / 2;
+                          const minX = -floor.width / 2;
+                          const maxZ = floor.depth / 2;
+                          const minZ = -floor.depth / 2;
+                          
+                          if (centerX + counterConfig.width/2 > maxX || centerX - counterConfig.width/2 < minX ||
+                              centerZ + counterConfig.depth/2 > maxZ || centerZ - counterConfig.depth/2 < minZ) {
+                            canPlace = false;
+                          }
+                        }
+                        
+                        if (canPlace) {
+                          const newCounter = {
+                            id: Date.now().toString(),
+                            type: selectedCounterType,
+                            position: { x: centerX, z: centerZ },
+                            rotation: 0
+                          };
+                          setCounters(prev => [...prev, newCounter]);
+                        }
+                      }
                     };
                     reader.readAsDataURL(file);
                   }
