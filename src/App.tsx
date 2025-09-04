@@ -1588,14 +1588,15 @@ function Plant({ plantConfig, position, rotation }: {
   );
 }
 
-function StorageWall({ position, args, color, image, wallType, selectedWalls, storageTexture }: { 
+function StorageWall({ position, args, color, image, wallType, selectedWalls, storageTexture, textureKey }: { 
   position: [number, number, number], 
   args: [number, number, number],
   color: string,
   image: string | null,
   wallType: 'back' | 'left' | 'right' | 'front',
   selectedWalls: { back: boolean; left: boolean; right: boolean; front: boolean; },
-  storageTexture: THREE.Texture | null
+  storageTexture: THREE.Texture | null,
+  textureKey: number
 }) {
   const shouldShowImage = image && selectedWalls[wallType];
 
@@ -1603,6 +1604,7 @@ function StorageWall({ position, args, color, image, wallType, selectedWalls, st
     <mesh position={position}>
       <boxGeometry args={args} />
       <meshStandardMaterial 
+        key={textureKey}
         color={shouldShowImage ? "#ffffff" : color}
         map={shouldShowImage ? storageTexture : null}
         // Match wall material properties so reflections/highlights behave the same
@@ -2100,6 +2102,7 @@ export default function App() {
   
   // State för att tvinga re-render av texturer
   const [textureKey, setTextureKey] = useState(0);
+  const [storageTextureKey, setStorageTextureKey] = useState(0);
 
   // Optimerad textur-cache för att undvika fladdring
   const counterTexture = useMemo(() => {
@@ -2129,12 +2132,26 @@ export default function App() {
   const storageTexture = useMemo(() => {
     if (!storageUploadedImage) return null;
     const loader = new THREE.TextureLoader();
-    const texture = loader.load(storageUploadedImage);
+    const texture = loader.load(storageUploadedImage, () => {
+      // Callback när texturen är laddad
+      texture.needsUpdate = true;
+      // Tvinga re-render genom att uppdatera key
+      setStorageTextureKey(prev => prev + 1);
+    });
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    // texture.flipY = false; // Ta bort denna rad så bilden blir rätt håll
+    texture.flipY = false; // Fixa orienteringen så bilden visas rätt håll
+    texture.needsUpdate = true; // Säkerställ att texturen uppdateras
     return texture;
   }, [storageUploadedImage]);
+
+  // Säkerställ att alla förråd re-renderas när texturen ändras
+  useEffect(() => {
+    if (storageUploadedImage && storageTexture) {
+      // Tvinga re-render genom att uppdatera storageTextureKey
+      setStorageTextureKey(prev => prev + 1);
+    }
+  }, [storageUploadedImage, storageTexture]);
   
   // Förberedd för framtida individuella väggbilder
   // const [storageImages, setStorageImages] = useState({
@@ -4028,7 +4045,7 @@ export default function App() {
                         
                         if (canPlace) {
                           const newCounter = {
-                            id: Date.now().toString(),
+                            id: Date.now(),
                             type: selectedCounterType,
                             position: { x: centerX, z: centerZ },
                             rotation: 0
@@ -8927,6 +8944,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         wallType="back"
                         selectedWalls={storageWallSelections}
                         storageTexture={storageTexture}
+                        textureKey={storageTextureKey}
                       />
                       
                       <StorageWall
@@ -8937,6 +8955,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         wallType="left"
                         selectedWalls={storageWallSelections}
                         storageTexture={storageTexture}
+                        textureKey={storageTextureKey}
                       />
                       
                       <StorageWall
@@ -8947,6 +8966,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         wallType="right"
                         selectedWalls={storageWallSelections}
                         storageTexture={storageTexture}
+                        textureKey={storageTextureKey}
                       />
                       
                       <StorageWall
@@ -8957,6 +8977,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         wallType="front"
                         selectedWalls={storageWallSelections}
                         storageTexture={storageTexture}
+                        textureKey={storageTextureKey}
                       />
                       
                     </group>
