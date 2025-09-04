@@ -206,6 +206,614 @@ const PLANT_TYPES = [
   { label: 'Eucalyptus', width: 0.8, depth: 0.8, height: 2.2, color: '#8FBC8F', leafColor: '#98FB98', type: 'tree', emoji: '🌳', image: '/Models/plants/dracaena.png' }
 ];
 
+// MONTERMALLAR FÖR MÄSSHALLEN
+const EXHIBITION_BOOTH_TEMPLATES = [
+  {
+    id: 'empty',
+    name: 'Tom montör',
+    emoji: '⬜',
+    floorSize: { width: 3, depth: 3 },
+    floor: '3x3',
+    wallShape: '',
+    wallHeight: 2.4,
+    carpet: 0,
+    counters: [],
+    furniture: [],
+    plants: [],
+    storages: [],
+    wallShelves: []
+  },
+  {
+    id: 'tech-startup',
+    name: 'Tech Startup',
+    emoji: '💻',
+    floorSize: { width: 3, depth: 3 },
+    floor: '3x3',
+    wallShape: 'l',
+    wallHeight: 2.4,
+    carpet: 1, // Första färgmattan
+    counters: [
+      { id: 1, type: '2m disk', position: { x: 0.8, z: -0.8 }, rotation: 0 }
+    ],
+    furniture: [
+      { id: 1, type: 'barbord', position: { x: -0.5, z: 0.5 }, rotation: 0 }
+    ],
+    plants: [
+      { id: 1, type: 'Monstera', position: { x: 1.0, z: 1.0 } }
+    ],
+    storages: [],
+    wallShelves: []
+  },
+  {
+    id: 'fashion-brand',
+    name: 'Fashion Brand',
+    emoji: '👗',
+    floorSize: { width: 4, depth: 4 },
+    floor: '4x4',
+    wallShape: 'u',
+    wallHeight: 2.4,
+    carpet: 3, // EXPO färg
+    counters: [
+      { id: 1, type: '1,5m disk', position: { x: 1.2, z: -1.2 }, rotation: 45 }
+    ],
+    furniture: [
+      { id: 1, type: 'soffa', position: { x: -1.0, z: 0 }, rotation: 90 },
+      { id: 2, type: 'fatolj', position: { x: 0, z: 1.0 }, rotation: 180 }
+    ],
+    plants: [
+      { id: 1, type: 'Ficus', position: { x: 1.5, z: 1.5 } }
+    ],
+    storages: [],
+    wallShelves: []
+  },
+  {
+    id: 'food-company',
+    name: 'Food Company',
+    emoji: '🍕',
+    floorSize: { width: 6, depth: 3 },
+    floor: '3x1-5',
+    wallShape: 'straight',
+    wallHeight: 2.4,
+    carpet: 2, // Annan färgmatta
+    counters: [
+      { id: 1, type: '3m disk', position: { x: 0, z: -1.0 }, rotation: 0 },
+      { id: 2, type: '2m disk', position: { x: 2.0, z: 0 }, rotation: 90 }
+    ],
+    furniture: [
+      { id: 1, type: 'barbord', position: { x: -1.5, z: 0 }, rotation: 0 },
+      { id: 2, type: 'barstol', position: { x: -1.2, z: 0.3 }, rotation: 0 },
+      { id: 3, type: 'barstol', position: { x: -1.2, z: -0.3 }, rotation: 0 }
+    ],
+    plants: [],
+    storages: [],
+    wallShelves: []
+  },
+  {
+    id: 'wellness-spa',
+    name: 'Wellness & Spa',
+    emoji: '🧘',
+    floorSize: { width: 4, depth: 4 },
+    floor: '4x4',
+    wallShape: 'l',
+    wallHeight: 2.4,
+    carpet: 4, // SALSA färg
+    counters: [
+      { id: 1, type: '1m disk', position: { x: 1.0, z: -1.0 }, rotation: 0 }
+    ],
+    furniture: [
+      { id: 1, type: 'soffa', position: { x: 0, z: 0.5 }, rotation: 0 },
+      { id: 2, type: 'sidobord', position: { x: -0.8, z: 0.8 }, rotation: 0 }
+    ],
+    plants: [
+      { id: 1, type: 'Palmlilja', position: { x: 1.5, z: 1.5 } },
+      { id: 2, type: 'Bambu', position: { x: -1.2, z: 1.2 } }
+    ],
+    storages: [],
+    wallShelves: []
+  },
+  {
+    id: 'minimal-design',
+    name: 'Minimal Design',
+    emoji: '⚪',
+    floorSize: { width: 3, depth: 3 },
+    floor: '3x3',
+    wallShape: 'straight',
+    wallHeight: 2.4,
+    carpet: 0, // Ingen matta
+    counters: [
+      { id: 1, type: 'L-disk (1,5m + 1m)', position: { x: 0.5, z: -0.5 }, rotation: 0 }
+    ],
+    furniture: [
+      { id: 1, type: 'fatolj', position: { x: -0.8, z: 0.8 }, rotation: 135 }
+    ],
+    plants: [
+      { id: 1, type: 'Monstera', position: { x: 1.2, z: 1.2 } }
+    ],
+    storages: [],
+    wallShelves: []
+  }
+];
+
+// Exhibition booth interfaces
+interface ExhibitionBoothTemplate {
+  id: string;
+  name: string;
+  emoji?: string;
+  floor: string;
+  floorSize?: { width: number; depth: number };
+  wallShape?: string;
+  wallHeight?: number;
+  walls?: {
+    type: 'straight' | 'l-shape' | 'u-shape';
+  };
+  carpet?: string | number;
+  counters?: Array<{
+    id: number;
+    type: '1m' | '1-5m' | '2m' | '2-5m' | '3m' | string;
+    position: { x: number; z: number };
+    rotation?: number;
+  }>;
+  furniture?: Array<{
+    id: number;
+    type: 'fatolj' | 'soffa' | 'barbord' | 'barstol' | 'sidobord' | 'pall' | string;
+    position: { x: number; z: number };
+    rotation?: number;
+  }>;
+  plants?: Array<{
+    id: number;
+    type: 'Monstera' | 'Ficus' | 'Olivträd' | 'kaktus' | string;
+    position: { x: number; z: number };
+  }>;
+  storages: any[];
+  wallShelves: any[];
+}
+
+// Exhibition booth renderer function
+const ExhibitionBoothRenderer: React.FC<{ 
+  booth: ExhibitionBoothTemplate, 
+  position: { x: number, z: number } 
+}> = ({ booth, position }) => {
+  if (!booth) return null;
+
+  const floorSizeMap: { [key: string]: { width: number, length: number } } = {
+    '3x3': { width: 3, length: 3 },
+    '4x4': { width: 4, length: 4 },
+    '3x1-5': { width: 3, length: 1.5 }
+  };
+
+  const floorSize = floorSizeMap[booth.floor] || { width: 3, length: 3 };
+
+  return (
+    <group position={[position.x, 0, position.z]}>
+      {/* ENKEL BOOTH SPOTLIGHT - Lagom intensitet */}
+      <spotLight
+        position={[0, 6, 0]}
+        target-position={[0, 0, 0]}
+        intensity={50}
+        angle={Math.PI / 3}
+        penumbra={0.5}
+        distance={12}
+        color="#ffffff"
+      />
+      
+      {/* Premiumgolv - Glossy finish */}
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[floorSize.width, floorSize.length]} />
+        <meshPhysicalMaterial 
+          color="#2a2a2a" 
+          roughness={0.1}
+          metalness={0.8}
+          clearcoat={1.0}
+          reflectivity={0.9}
+        />
+      </mesh>
+
+      {/* Lyxmatta med textur */}
+      {booth.carpet && (
+        <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[floorSize.width * 0.8, floorSize.length * 0.8]} />
+          <meshPhysicalMaterial 
+            color={booth.carpet} 
+            roughness={0.9}
+            normalScale={[0.5, 0.5]}
+          />
+        </mesh>
+      )}
+
+      {/* PROFESSIONELLA VÄGGAR med tjocklek och hyrgrafik */}
+      {booth.wallShape === 'straight' && (
+        <group>
+          {/* Huvudvägg */}
+          <mesh position={[0, 1.25, -floorSize.length/2]} castShadow receiveShadow>
+            <boxGeometry args={[floorSize.width, 2.5, 0.15]} />
+            <meshPhysicalMaterial 
+              color="#f8f9fa" 
+              roughness={0.3}
+              metalness={0.1}
+              clearcoat={0.3}
+            />
+          </mesh>
+          
+          {/* HYRGRAFIK på bakvägg */}
+          <mesh position={[0, 1.3, -floorSize.length/2 + 0.08]} rotation={[0, 0, 0]}>
+            <planeGeometry args={[floorSize.width * 0.8, 1.8]} />
+            <meshPhysicalMaterial 
+              color="#1e40af"
+              roughness={0.1}
+              metalness={0.2}
+            />
+          </mesh>
+          
+          {/* Monterhyra logotype på grafik */}
+          <mesh position={[0, 1.8, -floorSize.length/2 + 0.085]}>
+            <planeGeometry args={[1.5, 0.3]} />
+            <meshPhysicalMaterial 
+              color="#ffffff"
+              roughness={0.0}
+              metalness={0.0}
+            />
+          </mesh>
+          
+          {/* Dekorativa element */}
+          <mesh position={[-floorSize.width * 0.25, 0.8, -floorSize.length/2 + 0.085]}>
+            <planeGeometry args={[0.6, 0.6]} />
+            <meshPhysicalMaterial 
+              color="#3b82f6"
+              roughness={0.1}
+              metalness={0.3}
+            />
+          </mesh>
+          <mesh position={[floorSize.width * 0.25, 0.8, -floorSize.length/2 + 0.085]}>
+            <planeGeometry args={[0.6, 0.6]} />
+            <meshPhysicalMaterial 
+              color="#3b82f6"
+              roughness={0.1}
+              metalness={0.3}
+            />
+          </mesh>
+          
+          {/* Väggkant - metallisk finish */}
+          <mesh position={[0, 2.52, -floorSize.length/2]}>
+            <boxGeometry args={[floorSize.width, 0.04, 0.16]} />
+            <meshPhysicalMaterial color="#c0c0c0" metalness={0.9} roughness={0.1} />
+          </mesh>
+        </group>
+      )}
+
+      {booth.wallShape === 'l' && (
+        <group>
+          {/* Bakvägg */}
+          <mesh position={[0, 1.25, -floorSize.length/2]} castShadow receiveShadow>
+            <boxGeometry args={[floorSize.width, 2.5, 0.15]} />
+            <meshPhysicalMaterial color="#f8f9fa" roughness={0.3} metalness={0.1} clearcoat={0.3} />
+          </mesh>
+          
+          {/* HYRGRAFIK på bakvägg */}
+          <mesh position={[0, 1.3, -floorSize.length/2 + 0.08]}>
+            <planeGeometry args={[floorSize.width * 0.7, 1.6]} />
+            <meshPhysicalMaterial 
+              color="#dc2626"
+              roughness={0.1}
+              metalness={0.2}
+            />
+          </mesh>
+          
+          {/* Monterhyra logotype */}
+          <mesh position={[0, 1.7, -floorSize.length/2 + 0.085]}>
+            <planeGeometry args={[1.2, 0.25]} />
+            <meshPhysicalMaterial 
+              color="#ffffff"
+            />
+          </mesh>
+          
+          <mesh position={[0, 2.52, -floorSize.length/2]}>
+            <boxGeometry args={[floorSize.width, 0.04, 0.16]} />
+            <meshPhysicalMaterial color="#c0c0c0" metalness={0.9} roughness={0.1} />
+          </mesh>
+          
+          {/* Sidovägg */}
+          <mesh position={[-floorSize.width/2, 1.25, 0]} castShadow receiveShadow>
+            <boxGeometry args={[0.15, 2.5, floorSize.length]} />
+            <meshPhysicalMaterial color="#f8f9fa" roughness={0.3} metalness={0.1} clearcoat={0.3} />
+          </mesh>
+          
+          {/* HYRGRAFIK på sidovägg */}
+          <mesh position={[-floorSize.width/2 + 0.08, 1.2, 0]} rotation={[0, Math.PI/2, 0]}>
+            <planeGeometry args={[floorSize.length * 0.6, 1.4]} />
+            <meshPhysicalMaterial 
+              color="#dc2626"
+              roughness={0.1}
+              metalness={0.2}
+            />
+          </mesh>
+          
+          <mesh position={[-floorSize.width/2, 2.52, 0]}>
+            <boxGeometry args={[0.16, 0.04, floorSize.length]} />
+            <meshPhysicalMaterial color="#c0c0c0" metalness={0.9} roughness={0.1} />
+          </mesh>
+        </group>
+      )}
+
+      {booth.wallShape === 'u' && (
+        <group>
+          {/* Bakvägg */}
+          <mesh position={[0, 1.25, -floorSize.length/2]} castShadow receiveShadow>
+            <boxGeometry args={[floorSize.width, 2.5, 0.15]} />
+            <meshPhysicalMaterial color="#f8f9fa" roughness={0.3} metalness={0.1} clearcoat={0.3} />
+          </mesh>
+          
+          {/* STOR HYRGRAFIK på bakvägg */}
+          <mesh position={[0, 1.4, -floorSize.length/2 + 0.08]}>
+            <planeGeometry args={[floorSize.width * 0.9, 2.0]} />
+            <meshPhysicalMaterial 
+              color="#10b981"
+              roughness={0.1}
+              metalness={0.2}
+            />
+          </mesh>
+          
+          {/* Stor Monterhyra logotype */}
+          <mesh position={[0, 2.0, -floorSize.length/2 + 0.085]}>
+            <planeGeometry args={[2.0, 0.4]} />
+            <meshPhysicalMaterial 
+              color="#ffffff"
+            />
+          </mesh>
+          
+          {/* Premium dekor element */}
+          <mesh position={[0, 0.8, -floorSize.length/2 + 0.085]}>
+            <planeGeometry args={[1.5, 0.8]} />
+            <meshPhysicalMaterial 
+              color="#34d399"
+              roughness={0.0}
+              metalness={0.4}
+            />
+          </mesh>
+          
+          <mesh position={[0, 2.52, -floorSize.length/2]}>
+            <boxGeometry args={[floorSize.width, 0.04, 0.16]} />
+            <meshPhysicalMaterial color="#c0c0c0" metalness={0.9} roughness={0.1} />
+          </mesh>
+          
+          {/* Vänster sidovägg */}
+          <mesh position={[-floorSize.width/2, 1.25, 0]} castShadow receiveShadow>
+            <boxGeometry args={[0.15, 2.5, floorSize.length]} />
+            <meshPhysicalMaterial color="#f8f9fa" roughness={0.3} metalness={0.1} clearcoat={0.3} />
+          </mesh>
+          
+          {/* HYRGRAFIK på vänster sidovägg */}
+          <mesh position={[-floorSize.width/2 + 0.08, 1.3, 0]} rotation={[0, Math.PI/2, 0]}>
+            <planeGeometry args={[floorSize.length * 0.8, 1.6]} />
+            <meshPhysicalMaterial 
+              color="#10b981"
+              roughness={0.1}
+              metalness={0.2}
+            />
+          </mesh>
+          
+          <mesh position={[-floorSize.width/2, 2.52, 0]}>
+            <boxGeometry args={[0.16, 0.04, floorSize.length]} />
+            <meshPhysicalMaterial color="#c0c0c0" metalness={0.9} roughness={0.1} />
+          </mesh>
+          
+          {/* Höger sidovägg */}
+          <mesh position={[floorSize.width/2, 1.25, 0]} castShadow receiveShadow>
+            <boxGeometry args={[0.15, 2.5, floorSize.length]} />
+            <meshPhysicalMaterial color="#f8f9fa" roughness={0.3} metalness={0.1} clearcoat={0.3} />
+          </mesh>
+          
+          {/* HYRGRAFIK på höger sidovägg */}
+          <mesh position={[floorSize.width/2 - 0.08, 1.3, 0]} rotation={[0, -Math.PI/2, 0]}>
+            <planeGeometry args={[floorSize.length * 0.8, 1.6]} />
+            <meshPhysicalMaterial 
+              color="#10b981"
+              roughness={0.1}
+              metalness={0.2}
+            />
+          </mesh>
+          
+          <mesh position={[floorSize.width/2, 2.52, 0]}>
+            <boxGeometry args={[0.16, 0.04, floorSize.length]} />
+            <meshPhysicalMaterial color="#c0c0c0" metalness={0.9} roughness={0.1} />
+          </mesh>
+        </group>
+      )}
+
+      {/* PREMIUM DISKAR med realistiska material */}
+      {booth.counters?.map((counter, index: number) => {
+        const COUNTER_MATERIALS: Record<string, { base: string; metal: string }> = {
+          '1m': { base: '#1a2332', metal: '#4a5568' },
+          '1-5m': { base: '#2d3748', metal: '#718096' }, 
+          '2m': { base: '#1a2332', metal: '#4a5568' },
+          '2-5m': { base: '#2d3748', metal: '#718096' },
+          '3m': { base: '#1a2332', metal: '#4a5568' }
+        };
+        
+        const COUNTER_DIMENSIONS: Record<string, { width: number; length: number; height: number }> = {
+          '1m': { width: 1, length: 0.6, height: 1 },
+          '1-5m': { width: 1.5, length: 0.6, height: 1 },
+          '2m': { width: 2, length: 0.6, height: 1 },
+          '2-5m': { width: 2.5, length: 0.6, height: 1 },
+          '3m': { width: 3, length: 0.6, height: 1 }
+        };
+
+        const dimensions = COUNTER_DIMENSIONS[counter.type] || { width: 1, length: 0.6, height: 1 };
+        const materials = COUNTER_MATERIALS[counter.type] || { base: '#1a2332', metal: '#4a5568' };
+        
+        return (
+          <group 
+            key={index}
+            position={[counter.position.x, 0, counter.position.z]}
+            rotation={[0, (counter.rotation || 0) * Math.PI / 180, 0]}
+          >
+            {/* Disk bas */}
+            <mesh position={[0, dimensions.height/2, 0]} castShadow receiveShadow>
+              <boxGeometry args={[dimensions.width, dimensions.height, dimensions.length]} />
+              <meshPhysicalMaterial 
+                color={materials.base} 
+                roughness={0.2}
+                metalness={0.8}
+                clearcoat={0.5}
+              />
+            </mesh>
+            {/* Disk topp - Glossy finish */}
+            <mesh position={[0, dimensions.height + 0.02, 0]}>
+              <boxGeometry args={[dimensions.width, 0.04, dimensions.length]} />
+              <meshPhysicalMaterial 
+                color={materials.metal} 
+                roughness={0.05}
+                metalness={0.95}
+                clearcoat={1.0}
+              />
+            </mesh>
+          </group>
+        );
+      })}
+
+      {/* REALISTISKA MÖBLER med olika typer */}
+      {booth.furniture?.map((furniture, index: number) => {
+        const furnitureConfig: Record<string, { 
+          color: string; 
+          size: number[]; 
+          metalness: number; 
+          roughness: number; 
+        }> = {
+          'fatolj': { 
+            color: '#8B4513', 
+            size: [0.8, 0.7, 0.8],
+            metalness: 0.1,
+            roughness: 0.8
+          },
+          'soffa': { 
+            color: '#654321', 
+            size: [1.6, 0.7, 0.8],
+            metalness: 0.1,
+            roughness: 0.8
+          },
+          'barbord': { 
+            color: '#2c3e50', 
+            size: [0.6, 1.1, 0.6],
+            metalness: 0.7,
+            roughness: 0.2
+          },
+          'barstol': { 
+            color: '#34495e', 
+            size: [0.4, 1.0, 0.4],
+            metalness: 0.6,
+            roughness: 0.3
+          },
+          'sidobord': { 
+            color: '#8B4513', 
+            size: [0.5, 0.5, 0.5],
+            metalness: 0.2,
+            roughness: 0.7
+          },
+          'pall': { 
+            color: '#A0522D', 
+            size: [0.4, 0.45, 0.4],
+            metalness: 0.1,
+            roughness: 0.9
+          }
+        };
+
+        const config = furnitureConfig[furniture.type] || furnitureConfig['fatolj'];
+        
+        return (
+          <mesh 
+            key={index}
+            position={[furniture.position.x, config.size[1]/2, furniture.position.z]}
+            rotation={[0, (furniture.rotation || 0) * Math.PI / 180, 0]}
+            castShadow
+            receiveShadow
+          >
+            <boxGeometry args={config.size as [number, number, number]} />
+            <meshPhysicalMaterial 
+              color={config.color}
+              roughness={config.roughness}
+              metalness={config.metalness}
+            />
+          </mesh>
+        );
+      })}
+
+      {/* REALISTISKA VÄXTER med olika typer */}
+      {booth.plants?.map((plant, index: number) => {
+        const plantConfig: Record<string, { 
+          pot: string; 
+          leaves: string; 
+          size: number; 
+          height: number; 
+        }> = {
+          'Monstera': { 
+            pot: '#8B4513', 
+            leaves: '#228B22',
+            size: 0.5,
+            height: 1.2
+          },
+          'Ficus': { 
+            pot: '#654321', 
+            leaves: '#2F4F2F',
+            size: 0.4,
+            height: 1.0
+          },
+          'Olivträd': { 
+            pot: '#8B7355', 
+            leaves: '#556B2F',
+            size: 0.3,
+            height: 0.8
+          },
+          'kaktus': { 
+            pot: '#CD853F', 
+            leaves: '#228B22',
+            size: 0.15,
+            height: 0.4
+          }
+        };
+
+        const config = plantConfig[plant.type] || plantConfig['Monstera'];
+        
+        return (
+          <group key={index} position={[plant.position.x, 0, plant.position.z]}>
+            {/* Lyxkruka med textur */}
+            <mesh position={[0, 0.15, 0]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.15, 0.2, 0.3, 12]} />
+              <meshPhysicalMaterial 
+                color={config.pot}
+                roughness={0.6}
+                metalness={0.1}
+                normalScale={[0.3, 0.3]}
+              />
+            </mesh>
+            
+            {/* Realistisk växt med flera former */}
+            <group position={[0, 0.4, 0]}>
+              {/* Huvudstam/löv */}
+              <mesh position={[0, config.height/2, 0]} castShadow>
+                <sphereGeometry args={[config.size, 12, 8]} />
+                <meshLambertMaterial color={config.leaves} />
+              </mesh>
+              
+              {/* Extra löv för större växter */}
+              {config.size > 0.3 && (
+                <>
+                  <mesh position={[-0.2, config.height * 0.7, 0.1]} castShadow>
+                    <sphereGeometry args={[config.size * 0.6, 8, 6]} />
+                    <meshLambertMaterial color={config.leaves} />
+                  </mesh>
+                  <mesh position={[0.15, config.height * 0.8, -0.15]} castShadow>
+                    <sphereGeometry args={[config.size * 0.5, 8, 6]} />
+                    <meshLambertMaterial color={config.leaves} />
+                  </mesh>
+                </>
+              )}
+            </group>
+          </group>
+        );
+      })}
+    </group>
+  );
+};
+
 // Helper component: exposes a captureViews() method via ref that renders three camera positions
 // into an offscreen render target and returns data URLs for each view.
 const CaptureHelper = React.forwardRef<any, {onHideGrid?: (hide: boolean) => void}>((props, ref) => {
@@ -1419,6 +2027,34 @@ export default function App() {
   
   // Mässmiljö toggle
   const [showExhibitionHall, setShowExhibitionHall] = useState(false);
+  
+  // Mässhalls-montrar state  
+  const [exhibitionBooths] = useState<Record<string, string>>({
+    // Rad 1 - Vänster sida
+    'booth-1': 'tech-startup',
+    'booth-2': 'fashion-brand', 
+    'booth-3': 'food-company',
+    'booth-4': 'wellness-spa',
+    'booth-5': 'minimal-design',
+    
+    // Rad 2 - Mitt-vänster  
+    'booth-6': 'tech-startup',
+    'booth-7': 'fashion-brand',
+    'booth-8': 'food-company',
+    
+    // Rad 4 - Mitt-höger
+    'booth-9': 'wellness-spa',
+    'booth-10': 'minimal-design',
+    'booth-11': 'tech-startup', 
+    'booth-12': 'fashion-brand',
+    
+    // Rad 5 - Höger sida
+    'booth-13': 'food-company',
+    'booth-14': 'wellness-spa',
+    'booth-15': 'minimal-design',
+    'booth-16': 'tech-startup',
+    'booth-17': 'fashion-brand'
+  });
   
   // Dölja grid under PDF-generering
   const [hideGridForCapture, setHideGridForCapture] = useState(false);
@@ -5501,64 +6137,328 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
             <CaptureHelper ref={captureRef} onHideGrid={setHideGridForCapture} />
             {/* Visa golvplatta - dölj under PDF-generering */}
             {!hideGridForCapture && <Grid args={[20, 20]} cellColor="#bbb" sectionColor="#888" fadeDistance={20} position={[0, 0, 0]} />}
-            <ambientLight intensity={0.8} />
-            <directionalLight position={[5, 10, 5]} intensity={0.5} />
+            
+            {/* ÅTERGÅ TILL FUNGERANDE BELYSNING */}
+            {showExhibitionHall ? (
+              <>
+                <ambientLight intensity={0.4} />
+                <directionalLight position={[5, 10, 5]} intensity={0.3} />
+              </>
+            ) : (
+              <>
+                <ambientLight intensity={0.8} />
+                <directionalLight position={[5, 10, 5]} intensity={0.5} />
+              </>
+            )}
             
             {/* Mässhallsmiljö - visas bara när showExhibitionHall är true */}
             {showExhibitionHall && (
               <>
-                {/* Stort tunt golv under montern */}
+                {/* PREMIUM MÄSSGOLV - Polerat betong-look */}
                 <mesh position={[0, -0.02, 0]} receiveShadow>
                   <boxGeometry args={[100, 0.04, 100]} />
-                  <meshStandardMaterial 
-                    color="#f0f0f0" 
-                    roughness={0.8}
-                    metalness={0.0}
+                  <meshPhysicalMaterial 
+                    color="#e8e8e8" 
+                    roughness={0.2}
+                    metalness={0.1}
+                    clearcoat={0.8}
+                    reflectivity={0.3}
                   />
                 </mesh>
                 
-                {/* Väggar runt golvet */}
+                {/* Mässgolv detaljer - Texturerade sektioner */}
+                {[-40, -20, 0, 20, 40].map((x, i) => 
+                  [-40, -20, 0, 20, 40].map((z, j) => (
+                    <mesh key={`floor-${i}-${j}`} position={[x, -0.015, z]} receiveShadow>
+                      <boxGeometry args={[18, 0.01, 18]} />
+                      <meshPhysicalMaterial 
+                        color="#f2f2f2" 
+                        roughness={0.3}
+                        metalness={0.0}
+                      />
+                    </mesh>
+                  ))
+                )}
+                
+                {/* INDUSTRIELLA HÖGA VÄGGAR - Dubbelt så höga (8m) */}
                 {/* Fram-vägg */}
-                <mesh position={[0, 2, 50]} castShadow>
-                  <boxGeometry args={[100, 4, 0.2]} />
-                  <meshStandardMaterial color="#e0e0e0" roughness={0.7} />
+                <mesh position={[0, 4, 50]} castShadow>
+                  <boxGeometry args={[100, 8, 0.2]} />
+                  <meshStandardMaterial color="#d5d5d5" roughness={0.8} metalness={0.1} />
                 </mesh>
                 
                 {/* Bak-vägg */}
-                <mesh position={[0, 2, -50]} castShadow>
-                  <boxGeometry args={[100, 4, 0.2]} />
-                  <meshStandardMaterial color="#e0e0e0" roughness={0.7} />
+                <mesh position={[0, 4, -50]} castShadow>
+                  <boxGeometry args={[100, 8, 0.2]} />
+                  <meshStandardMaterial color="#d5d5d5" roughness={0.8} metalness={0.1} />
                 </mesh>
                 
                 {/* Vänster vägg */}
-                <mesh position={[-50, 2, 0]} castShadow>
-                  <boxGeometry args={[0.2, 4, 100]} />
-                  <meshStandardMaterial color="#e0e0e0" roughness={0.7} />
+                <mesh position={[-50, 4, 0]} castShadow>
+                  <boxGeometry args={[0.2, 8, 100]} />
+                  <meshStandardMaterial color="#d5d5d5" roughness={0.8} metalness={0.1} />
                 </mesh>
                 
                 {/* Höger vägg */}
-                <mesh position={[50, 2, 0]} castShadow>
-                  <boxGeometry args={[0.2, 4, 100]} />
-                  <meshStandardMaterial color="#e0e0e0" roughness={0.7} />
+                <mesh position={[50, 4, 0]} castShadow>
+                  <boxGeometry args={[0.2, 8, 100]} />
+                  <meshStandardMaterial color="#d5d5d5" roughness={0.8} metalness={0.1} />
                 </mesh>
                 
-                {/* Ljusa monterplatser */}
-                <mesh position={[-30, 0.01, -35]} receiveShadow>
-                  <boxGeometry args={[8, 0.02, 6]} />
-                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
-                </mesh>
-                <mesh position={[-10, 0.01, -35]} receiveShadow>
+                {/* INDUSTRIELL MÄSSBELYSNING - Högt upp över väggarna (12m höjd) */}
+                {/* Spotlight rad 1 - längs fram-sidan */}
+                <spotLight
+                  position={[-30, 12, 40]}
+                  target-position={[-30, 0, 0]}
+                  intensity={200}
+                  angle={Math.PI / 6}
+                  penumbra={0.3}
+                  distance={50}
+                  color="#ffffff"
+                  castShadow
+                />
+                <spotLight
+                  position={[0, 12, 40]}
+                  target-position={[0, 0, 0]}
+                  intensity={200}
+                  angle={Math.PI / 6}
+                  penumbra={0.3}
+                  distance={50}
+                  color="#ffffff"
+                  castShadow
+                />
+                <spotLight
+                  position={[30, 12, 40]}
+                  target-position={[30, 0, 0]}
+                  intensity={200}
+                  angle={Math.PI / 6}
+                  penumbra={0.3}
+                  distance={50}
+                  color="#ffffff"
+                  castShadow
+                />
+                
+                {/* Spotlight rad 2 - längs mitten */}
+                <spotLight
+                  position={[-20, 12, 0]}
+                  target-position={[-20, 0, 0]}
+                  intensity={180}
+                  angle={Math.PI / 5}
+                  penumbra={0.3}
+                  distance={50}
+                  color="#ffffff"
+                  castShadow
+                />
+                <spotLight
+                  position={[20, 12, 0]}
+                  target-position={[20, 0, 0]}
+                  intensity={180}
+                  angle={Math.PI / 5}
+                  penumbra={0.3}
+                  distance={50}
+                  color="#ffffff"
+                  castShadow
+                />
+                
+                {/* Spotlight rad 3 - längs bak-sidan */}
+                <spotLight
+                  position={[-30, 12, -40]}
+                  target-position={[-30, 0, 0]}
+                  intensity={200}
+                  angle={Math.PI / 6}
+                  penumbra={0.3}
+                  distance={50}
+                  color="#ffffff"
+                  castShadow
+                />
+                <spotLight
+                  position={[30, 12, -40]}
+                  target-position={[30, 0, 0]}
+                  intensity={200}
+                  angle={Math.PI / 6}
+                  penumbra={0.3}
+                  distance={50}
+                  color="#ffffff"
+                  castShadow
+                />
+                
+                {/* Metalliska lamparmatur - Industriell känsla */}
+                {[
+                  [-30, 40], [0, 40], [30, 40],  // Fram-rad
+                  [-20, 0], [20, 0],             // Mitt-rad  
+                  [-30, -40], [30, -40]          // Bak-rad
+                ].map(([x, z], index) => (
+                  <group key={`fixture-${index}`} position={[x, 11.5, z]}>
+                    {/* Metallisk lamphållare */}
+                    <mesh>
+                      <cylinderGeometry args={[0.3, 0.4, 0.8, 8]} />
+                      <meshPhysicalMaterial 
+                        color="#2a2a2a" 
+                        roughness={0.3} 
+                        metalness={0.9}
+                      />
+                    </mesh>
+                    {/* Kabel uppåt */}
+                    <mesh position={[0, 1, 0]}>
+                      <cylinderGeometry args={[0.02, 0.02, 2, 8]} />
+                      <meshStandardMaterial color="#000" />
+                    </mesh>
+                  </group>
+                ))}
+                
+                {/* Ljusa monterplatser - UTÖKAD LAYOUT MED GÅNGAR */}
+                {/* Rad 1 - Vänster sida */}
+                <mesh position={[-35, 0.01, -30]} receiveShadow>
                   <boxGeometry args={[6, 0.02, 6]} />
                   <meshStandardMaterial color="#ffffff" roughness={0.3} />
                 </mesh>
-                <mesh position={[10, 0.01, -35]} receiveShadow>
-                  <boxGeometry args={[6, 0.02, 6]} />
-                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
-                </mesh>
-                <mesh position={[30, 0.01, -35]} receiveShadow>
+                <mesh position={[-35, 0.01, -15]} receiveShadow>
                   <boxGeometry args={[8, 0.02, 6]} />
                   <meshStandardMaterial color="#ffffff" roughness={0.3} />
                 </mesh>
+                <mesh position={[-35, 0.01, 0]} receiveShadow>
+                  <boxGeometry args={[6, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[-35, 0.01, 15]} receiveShadow>
+                  <boxGeometry args={[8, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[-35, 0.01, 30]} receiveShadow>
+                  <boxGeometry args={[6, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                
+                {/* Rad 2 - Mitt-vänster (vår huvudmontör här) */}
+                <mesh position={[-15, 0.01, -30]} receiveShadow>
+                  <boxGeometry args={[8, 0.02, 8]} />
+                  <meshStandardMaterial color="#e6f3ff" roughness={0.3} />
+                </mesh>
+                {/* Tom plats för huvudmontör - här renderas vår designade montör */}
+                <mesh position={[-15, 0.01, 15]} receiveShadow>
+                  <boxGeometry args={[6, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[-15, 0.01, 30]} receiveShadow>
+                  <boxGeometry args={[8, 0.02, 8]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                
+                {/* Rad 3 - Centrum (tom gång) */}
+                {/* Ingen montör här - öppen gång för rörelse */}
+                
+                {/* Rad 4 - Mitt-höger */}
+                <mesh position={[15, 0.01, -30]} receiveShadow>
+                  <boxGeometry args={[6, 0.02, 8]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[15, 0.01, -10]} receiveShadow>
+                  <boxGeometry args={[8, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[15, 0.01, 10]} receiveShadow>
+                  <boxGeometry args={[6, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[15, 0.01, 30]} receiveShadow>
+                  <boxGeometry args={[8, 0.02, 8]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                
+                {/* Rad 5 - Höger sida */}
+                <mesh position={[35, 0.01, -30]} receiveShadow>
+                  <boxGeometry args={[6, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[35, 0.01, -15]} receiveShadow>
+                  <boxGeometry args={[8, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[35, 0.01, 0]} receiveShadow>
+                  <boxGeometry args={[6, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[35, 0.01, 15]} receiveShadow>
+                  <boxGeometry args={[8, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                <mesh position={[35, 0.01, 30]} receiveShadow>
+                  <boxGeometry args={[6, 0.02, 6]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+                
+                {/* GÅNG-MARKERINGAR - Grå banor mellan montrar */}
+                {/* Huvudgång genom mitten (nord-syd) */}
+                <mesh position={[0, 0.005, 0]} receiveShadow>
+                  <boxGeometry args={[8, 0.01, 80]} />
+                  <meshStandardMaterial color="#d0d0d0" roughness={0.7} />
+                </mesh>
+                
+                {/* Tvärsgångar (öst-väst) */}
+                <mesh position={[-25, 0.005, -30]} receiveShadow>
+                  <boxGeometry args={[20, 0.01, 4]} />
+                  <meshStandardMaterial color="#d0d0d0" roughness={0.7} />
+                </mesh>
+                <mesh position={[25, 0.005, -30]} receiveShadow>
+                  <boxGeometry args={[20, 0.01, 4]} />
+                  <meshStandardMaterial color="#d0d0d0" roughness={0.7} />
+                </mesh>
+                
+                <mesh position={[-25, 0.005, 0]} receiveShadow>
+                  <boxGeometry args={[20, 0.01, 4]} />
+                  <meshStandardMaterial color="#d0d0d0" roughness={0.7} />
+                </mesh>
+                <mesh position={[25, 0.005, 0]} receiveShadow>
+                  <boxGeometry args={[20, 0.01, 4]} />
+                  <meshStandardMaterial color="#d0d0d0" roughness={0.7} />
+                </mesh>
+                
+                <mesh position={[-25, 0.005, 30]} receiveShadow>
+                  <boxGeometry args={[20, 0.01, 4]} />
+                  <meshStandardMaterial color="#d0d0d0" roughness={0.7} />
+                </mesh>
+                <mesh position={[25, 0.005, 30]} receiveShadow>
+                  <boxGeometry args={[20, 0.01, 4]} />
+                  <meshStandardMaterial color="#d0d0d0" roughness={0.7} />
+                </mesh>
+
+                {/* RENDER BOOTH TEMPLATES PÅ MÄSSHALLSPLATSER */}
+                {Object.entries(exhibitionBooths).map(([boothId, templateId]) => {
+                  const template = EXHIBITION_BOOTH_TEMPLATES.find(t => t.id === templateId);
+                  if (!template) return null;
+                  
+                  // Booth positioner baserat på booth ID
+                  const boothPositions: { [key: string]: { x: number, z: number } } = {
+                    'booth-1': { x: -35, z: -30 },
+                    'booth-2': { x: -35, z: -15 }, 
+                    'booth-3': { x: -35, z: 0 },
+                    'booth-4': { x: -35, z: 15 },
+                    'booth-5': { x: -35, z: 30 },
+                    'booth-6': { x: -15, z: -30 },
+                    'booth-7': { x: -15, z: 15 },
+                    'booth-8': { x: -15, z: 30 },
+                    'booth-9': { x: 15, z: -30 },
+                    'booth-10': { x: 15, z: -10 },
+                    'booth-11': { x: 15, z: 10 },
+                    'booth-12': { x: 15, z: 30 },
+                    'booth-13': { x: 35, z: -30 },
+                    'booth-14': { x: 35, z: -15 },
+                    'booth-15': { x: 35, z: 0 },
+                    'booth-16': { x: 35, z: 15 },
+                    'booth-17': { x: 35, z: 30 }
+                  };
+                  
+                  const position = boothPositions[boothId];
+                  if (!position) return null;
+                  
+                  return (
+                    <ExhibitionBoothRenderer 
+                      key={boothId}
+                      booth={template}
+                      position={position}
+                    />
+                  );
+                })}
               </>
             )}
             
