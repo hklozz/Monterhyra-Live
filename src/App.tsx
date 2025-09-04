@@ -1588,33 +1588,67 @@ function Plant({ plantConfig, position, rotation }: {
   );
 }
 
-function StorageWall({ position, args, color, image, wallType, selectedWalls, storageTexture }: { 
+function StorageWall({ position, args, color, image, graphicType, wallType, selectedWalls, storageTexture }: { 
   position: [number, number, number], 
   args: [number, number, number],
   color: string,
   image: string | null,
+  graphicType?: string,
   wallType: 'back' | 'left' | 'right' | 'front',
   selectedWalls: { back: boolean; left: boolean; right: boolean; front: boolean; },
   storageTexture: THREE.Texture | null
 }) {
   const shouldShowImage = image && selectedWalls[wallType];
+  
+  // Hantera olika grafikalternativ
+  const getWallMaterial = () => {
+    if (graphicType === 'hyr' && selectedWalls[wallType]) {
+      // Hyrgrafik - använd blå/röd/grön tema
+      const colors = ['#1e40af', '#dc2626', '#16a34a'];
+      const wallIndex = ['back', 'left', 'right', 'front'].indexOf(wallType);
+      return {
+        color: colors[wallIndex % colors.length],
+        roughness: 0.1,
+        metalness: 0.2,
+        emissive: colors[wallIndex % colors.length],
+        emissiveIntensity: 0.1
+      };
+    } else if ((graphicType === 'forex' || graphicType === 'vepa') && selectedWalls[wallType]) {
+      // Eget tryck placeholder - visa vit bakgrund för att indikera att tryck kommer
+      return {
+        color: "#f8f9fa",
+        roughness: 0.2,
+        metalness: 0.0
+      };
+    } else if (shouldShowImage) {
+      // Uppladdad bild
+      return {
+        color: "#ffffff",
+        map: storageTexture,
+        roughness: 0.7,
+        metalness: 0.0,
+        transparent: true,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1
+      };
+    } else {
+      // Standard förrådfärg
+      return {
+        color: color,
+        roughness: 0.7,
+        metalness: 0.0
+      };
+    }
+  };
+
+  const materialProps = getWallMaterial();
 
   return (
     <mesh position={position}>
       <boxGeometry args={args} />
-      <meshStandardMaterial 
-        color={shouldShowImage ? "#ffffff" : color}
-        map={shouldShowImage ? storageTexture : null}
-        // Match wall material properties so reflections/highlights behave the same
-        roughness={0.7}
-        metalness={0.0}
-        // Keep image-related flags when an image is shown
-        transparent={shouldShowImage ? true : false}
-        depthWrite={shouldShowImage ? false : true}
-        polygonOffset={shouldShowImage ? true : false}
-        polygonOffsetFactor={shouldShowImage ? -1 : 0}
-        polygonOffsetUnits={shouldShowImage ? -1 : 0}
-      />
+      <meshStandardMaterial {...materialProps} />
     </mesh>
   );
 }
@@ -2080,6 +2114,7 @@ export default function App() {
   // Diskars färginställningar
   const [counterPanelColor, setCounterPanelColor] = useState('#ffffff'); // Färg på diskpaneler (framsida + sidor)
   const [counterFrontImage, setCounterFrontImage] = useState<string | null>(null); // Eget tryck på framsidan
+  const [counterGraphic, setCounterGraphic] = useState('none'); // Grafikalternativ för diskar
   
   // Registrerings-modal state
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
@@ -3834,18 +3869,27 @@ export default function App() {
               <label style={{ fontWeight: 600, marginBottom: 4, display: 'block' }}>Grafik på förråd:</label>
               <select 
                 value={storageGraphic} 
-                onChange={e => setStorageGraphic(e.target.value)}
+                onChange={(e) => {
+                  setStorageGraphic(e.target.value);
+                  // Rensa uppladdad bild om användaren väljer något annat än upload/forex/vepa
+                  if (e.target.value !== 'upload' && e.target.value !== 'forex' && e.target.value !== 'vepa') {
+                    setStorageUploadedImage(null);
+                  }
+                }}
                 style={{width:'100%', padding:8, borderRadius:4, border:'1px solid #ccs'}}
               >
                 <option value="none">Ingen grafik</option>
+                <option value="hyr">Hyr grafik</option>
+                <option value="forex">Eget tryck (forex)</option>
+                <option value="vepa">Eget tryck (vepa)</option>
                 <option value="upload">Ladda upp egen bild</option>
               </select>
             </div>
           </div>
         )}
 
-        {/* Bildkontroller för förråd - visas alltid när vi har förråd och valt 'ladda upp' */}
-        {storages.length > 0 && storageGraphic === 'upload' && (
+        {/* Bildkontroller för förråd - visas när vi har förråd och valt forex, vepa eller upload */}
+        {storages.length > 0 && (storageGraphic === 'forex' || storageGraphic === 'vepa' || storageGraphic === 'upload') && (
           <div style={{marginTop:16}}>
             <label style={{ fontWeight: 600, marginRight: 8 }}>Förrådbilder:</label>
             
@@ -3947,16 +3991,40 @@ export default function App() {
           <div style={{marginTop:16}}>
             <label style={{ fontWeight: 600, marginRight: 8 }}>Diskbilder:</label>
             
+            {/* Grafikalternativ för diskar */}
             <div style={{marginTop:8}}>
-              <label style={{ fontWeight: 600, marginBottom: 4, display: 'block' }}>Eget tryck på framsida:</label>
-              <input
-                type="file"
-                accept="image/*"
+              <label style={{ fontWeight: 600, marginBottom: 4, display: 'block' }}>Grafikalternativ:</label>
+              <select
+                value={counterGraphic}
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
+                  setCounterGraphic(e.target.value);
+                  // Rensa eget tryck-bilden om användaren väljer något annat än eget tryck
+                  if (e.target.value !== 'forex' && e.target.value !== 'vepa') {
+                    setCounterFrontImage(null);
+                  }
+                }}
+                style={{ width: '100%', height: 30, padding: 4, border: '1px solid #ccc', borderRadius: 4 }}
+              >
+                {GRAPHICS.map((graphic) => (
+                  <option key={graphic.value} value={graphic.value}>
+                    {graphic.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Filuppladdning för eget tryck - visas bara när forex eller vepa är valt */}
+            {(counterGraphic === 'forex' || counterGraphic === 'vepa') && (
+              <div style={{marginTop:8}}>
+                <label style={{ fontWeight: 600, marginBottom: 4, display: 'block' }}>Eget tryck på framsida:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
                       setCounterFrontImage(event.target?.result as string);
                     };
                     reader.readAsDataURL(file);
@@ -8836,6 +8904,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         args={[storageConfig.width, storageHeight, wallThickness]}
                         color={storageColor}
                         image={storageGraphic === 'upload' ? storageUploadedImage : null}
+                        graphicType={storageGraphic}
                         wallType="back"
                         selectedWalls={storageWallSelections}
                         storageTexture={storageTexture}
@@ -8846,6 +8915,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         args={[wallThickness, storageHeight, storageConfig.depth]}
                         color={storageColor}
                         image={storageGraphic === 'upload' ? storageUploadedImage : null}
+                        graphicType={storageGraphic}
                         wallType="left"
                         selectedWalls={storageWallSelections}
                         storageTexture={storageTexture}
@@ -8856,6 +8926,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         args={[wallThickness, storageHeight, storageConfig.depth]}
                         color={storageColor}
                         image={storageGraphic === 'upload' ? storageUploadedImage : null}
+                        graphicType={storageGraphic}
                         wallType="right"
                         selectedWalls={storageWallSelections}
                         storageTexture={storageTexture}
@@ -8866,6 +8937,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         args={[storageConfig.width, storageHeight, wallThickness]}
                         color={storageColor}
                         image={storageGraphic === 'upload' ? storageUploadedImage : null}
+                        graphicType={storageGraphic}
                         wallType="front"
                         selectedWalls={storageWallSelections}
                         storageTexture={storageTexture}
