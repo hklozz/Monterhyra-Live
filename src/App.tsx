@@ -2138,9 +2138,9 @@ export default function App() {
     if (!counterFrontImage) return null;
     const loader = new THREE.TextureLoader();
     const texture = loader.load(counterFrontImage);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.flipY = true; // Explicit sätt flipY till true för korrekt orientering
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.flipY = false; // Ändra till false för korrekt orientering
     return texture;
   }, [counterFrontImage]);
 
@@ -7856,8 +7856,8 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                           <meshStandardMaterial 
                             color={counterFrontImage ? "#ffffff" : counterPanelColor} 
                             map={counterTexture}
-                            roughness={0.3} 
-                            metalness={0.1}
+                            roughness={counterFrontImage ? 0.8 : 0.3} 
+                            metalness={counterFrontImage ? 0.0 : 0.1}
                           />
                         </mesh>
                         
@@ -7867,6 +7867,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                             <boxGeometry args={[1.4, counterHeight - counterThickness, 0.05]} />
                             <meshStandardMaterial 
                               color="#ffffff"
+                              map={counterTexture}
                               roughness={0.3} 
                               metalness={0.1}
                             />
@@ -8021,6 +8022,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                             <boxGeometry args={[0.4, counterHeight - counterThickness, 0.05]} />
                             <meshStandardMaterial 
                               color="#ffffff"
+                              map={counterTexture}
                               roughness={0.3} 
                               metalness={0.1}
                             />
@@ -8222,6 +8224,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                             <boxGeometry args={[1.4, counterHeight - counterThickness, 0.05]} />
                             <meshStandardMaterial 
                               color="#ffffff"
+                              map={counterTexture}
                               roughness={0.3} 
                               metalness={0.1}
                             />
