@@ -7073,7 +7073,9 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     let position: [number, number, number];
                     let rotation: [number, number, number] = [0, 0, 0];
                     if (wall === 'back') {
-                      position = [wallStartX + tv.position * (boxSize + gap), heightConfig.y, -(floor.depth/2) + 0.065 + 0.025];
+                      // Flytta 75" beTV lite längre in i väggen för integrerad look
+                      const zOffset = tvConfig.label === '75" beTV' ? -(floor.depth/2) + 0.065 - 0.02 : -(floor.depth/2) + 0.065 + 0.025;
+                      position = [wallStartX + tv.position * (boxSize + gap), heightConfig.y, zOffset];
                     } else if (wall === 'left') {
                       position = [-(floor.width/2) + 0.065 + 0.025, heightConfig.y, wallStartX + tv.position * (boxSize + gap)];
                       rotation = [0, Math.PI/2, 0];
