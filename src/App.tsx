@@ -7350,7 +7350,10 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     let rotation: [number, number, number] = [0, 0, 0];
                     
                     if (wall === 'back') {
-                      position = [wallStartX + positionIndex * (boxSize + gap), heightConfig.y, -(floor.depth/2) + 0.065 + 0.015];
+                      // Använd samma positioneringslogik som för TV:erna
+                      const tvConfig = TV_SIZES[selectedTvSize];
+                      const zOffset = tvConfig.label === '75" beTV' ? -(floor.depth/2) + 0.065 - 0.02 : -(floor.depth/2) + 0.065 + 0.015;
+                      position = [wallStartX + positionIndex * (boxSize + gap), heightConfig.y, zOffset];
                     } else if (wall === 'left') {
                       position = [-(floor.width/2) + 0.065 + 0.015, heightConfig.y, wallStartX + positionIndex * (boxSize + gap)];
                       rotation = [0, Math.PI/2, 0];
