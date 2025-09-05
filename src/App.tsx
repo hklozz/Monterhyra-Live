@@ -7073,14 +7073,18 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     let position: [number, number, number];
                     let rotation: [number, number, number] = [0, 0, 0];
                     if (wall === 'back') {
-                      // Flytta 75" beTV lite längre in i väggen för integrerad look
-                      const zOffset = tvConfig.label === '75" beTV' ? -(floor.depth/2) + 0.065 - 0.02 : -(floor.depth/2) + 0.065 + 0.025;
+                      // Justera positionering för 75" beTV - mindre aggressiv för att inte försvinna i trycket
+                      const zOffset = tvConfig.label === '75" beTV' ? -(floor.depth/2) + 0.065 - 0.005 : -(floor.depth/2) + 0.065 + 0.025;
                       position = [wallStartX + tv.position * (boxSize + gap), heightConfig.y, zOffset];
                     } else if (wall === 'left') {
-                      position = [-(floor.width/2) + 0.065 + 0.025, heightConfig.y, wallStartX + tv.position * (boxSize + gap)];
+                      // Justera positionering för 75" beTV på vänster vägg
+                      const xOffset = tvConfig.label === '75" beTV' ? -(floor.width/2) + 0.065 - 0.005 : -(floor.width/2) + 0.065 + 0.025;
+                      position = [xOffset, heightConfig.y, wallStartX + tv.position * (boxSize + gap)];
                       rotation = [0, Math.PI/2, 0];
                     } else {
-                      position = [(floor.width/2) - 0.065 - 0.025, heightConfig.y, wallStartX + tv.position * (boxSize + gap)];
+                      // Justera positionering för 75" beTV på höger vägg
+                      const xOffset = tvConfig.label === '75" beTV' ? (floor.width/2) - 0.065 + 0.005 : (floor.width/2) - 0.065 - 0.025;
+                      position = [xOffset, heightConfig.y, wallStartX + tv.position * (boxSize + gap)];
                       rotation = [0, -Math.PI/2, 0];
                     }
                     
@@ -7352,13 +7356,19 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     if (wall === 'back') {
                       // Använd samma positioneringslogik som för TV:erna
                       const tvConfig = TV_SIZES[selectedTvSize];
-                      const zOffset = tvConfig.label === '75" beTV' ? -(floor.depth/2) + 0.065 - 0.02 : -(floor.depth/2) + 0.065 + 0.015;
+                      const zOffset = tvConfig.label === '75" beTV' ? -(floor.depth/2) + 0.065 - 0.005 : -(floor.depth/2) + 0.065 + 0.015;
                       position = [wallStartX + positionIndex * (boxSize + gap), heightConfig.y, zOffset];
                     } else if (wall === 'left') {
-                      position = [-(floor.width/2) + 0.065 + 0.015, heightConfig.y, wallStartX + positionIndex * (boxSize + gap)];
+                      // Använd samma positioneringslogik som för TV:erna
+                      const tvConfig = TV_SIZES[selectedTvSize];
+                      const xOffset = tvConfig.label === '75" beTV' ? -(floor.width/2) + 0.065 - 0.005 : -(floor.width/2) + 0.065 + 0.015;
+                      position = [xOffset, heightConfig.y, wallStartX + positionIndex * (boxSize + gap)];
                       rotation = [0, Math.PI/2, 0];
                     } else {
-                      position = [(floor.width/2) - 0.065 - 0.015, heightConfig.y, wallStartX + positionIndex * (boxSize + gap)];
+                      // Använd samma positioneringslogik som för TV:erna
+                      const tvConfig = TV_SIZES[selectedTvSize];
+                      const xOffset = tvConfig.label === '75" beTV' ? (floor.width/2) - 0.065 + 0.005 : (floor.width/2) - 0.065 - 0.015;
+                      position = [xOffset, heightConfig.y, wallStartX + positionIndex * (boxSize + gap)];
                       rotation = [0, -Math.PI/2, 0];
                     }
                     
@@ -7462,11 +7472,15 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                             setNextTvId(prev => prev + 1);
                           }}
                         >
-                          <boxGeometry args={[boxSize * 0.8, boxSize * 0.6, 0.02]} />
+                          <boxGeometry args={[
+                            boxSize * 0.8, 
+                            boxSize * 0.6, 
+                            TV_SIZES[selectedTvSize].label === '75" beTV' ? 0.08 : 0.02
+                          ]} />
                           <meshStandardMaterial 
                             color={isPlaced ? "#ff4444" : "#4CAF50"} 
                             transparent 
-                            opacity={isPlaced ? 0.3 : 0.7}
+                            opacity={TV_SIZES[selectedTvSize].label === '75" beTV' ? 0.9 : (isPlaced ? 0.3 : 0.7)}
                           />
                         </mesh>
                         
