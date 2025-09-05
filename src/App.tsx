@@ -3267,41 +3267,7 @@ export default function App() {
             style={{ width: '100%' }}
           />
         </div>
-        <div style={{ marginTop: '16px' }}>
-          <label style={{ 
-            fontWeight: 600, 
-            fontSize: '14px',
-            color: '#2c3e50',
-            marginBottom: '8px',
-            display: 'block'
-          }}>Grafik:</label>
-          
-          <CustomDropdown
-            options={GRAPHICS}
-            value={graphic}
-            onChange={(value) => setGraphic(value)}
-            placeholder="Välj grafik"
-            renderOption={(option) => (
-              <>
-                <span style={{ 
-                  display: 'inline-block',
-                  width: '24px',
-                  height: '24px',
-                  marginRight: '8px',
-                  textAlign: 'center',
-                  lineHeight: '24px',
-                  fontSize: '16px',
-                  color: '#666'
-                }}>
-                  🎨
-                </span>
-                {option.label}
-              </>
-            )}
-            style={{ width: '100%' }}
-          />
-        </div>
-        {/* Lampor: flyttad placering i menyn - ligger nu under Grafik */}
+        {/* Lampor: flyttad placering i menyn - ligger nu ovanför Grafik */}
         <div style={{
           marginTop: '16px',
           padding: '16px',
@@ -3507,6 +3473,40 @@ export default function App() {
             )}
           </div>
         )}
+        <div style={{ marginTop: '16px' }}>
+          <label style={{ 
+            fontWeight: 600, 
+            fontSize: '14px',
+            color: '#2c3e50',
+            marginBottom: '8px',
+            display: 'block'
+          }}>Grafik:</label>
+          
+          <CustomDropdown
+            options={GRAPHICS}
+            value={graphic}
+            onChange={(value) => setGraphic(value)}
+            placeholder="Välj grafik"
+            renderOption={(option) => (
+              <>
+                <span style={{ 
+                  display: 'inline-block',
+                  width: '24px',
+                  height: '24px',
+                  marginRight: '8px',
+                  textAlign: 'center',
+                  lineHeight: '24px',
+                  fontSize: '16px',
+                  color: '#666'
+                }}>
+                  🎨
+                </span>
+                {option.label}
+              </>
+            )}
+            style={{ width: '100%' }}
+          />
+        </div>
         <div style={{ marginTop: '16px' }}>
           <label style={{ 
             fontWeight: 600, 
