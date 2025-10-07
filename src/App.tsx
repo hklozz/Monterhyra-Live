@@ -10233,12 +10233,26 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
 
             {/* Golvmarkörer för högtalare */}
             {speakerMarkersVisible && (() => {
+              if (!floorIndex) {
+                console.warn('❌ Cannot show speaker markers: floorIndex is null');
+                return null;
+              }
+              
               const floor = FLOOR_SIZES[floorIndex];
+              const actualWidth = floor.custom ? customFloorWidth : floor.width;
+              const actualDepth = floor.custom ? customFloorDepth : floor.depth;
+              
+              console.log('🔊 Rendering speaker markers with dimensions:', { 
+                actualWidth, 
+                actualDepth, 
+                custom: floor.custom 
+              });
+              
               const floorMarkers = [];
               const markerSize = 0.5; // 4 per kvadratmeter = 0.5m avstånd
               
-              for (let x = -floor.width/2 + markerSize/2; x < floor.width/2; x += markerSize) {
-                for (let z = -floor.depth/2 + markerSize/2; z < floor.depth/2; z += markerSize) {
+              for (let x = -actualWidth/2 + markerSize/2; x < actualWidth/2; x += markerSize) {
+                for (let z = -actualDepth/2 + markerSize/2; z < actualDepth/2; z += markerSize) {
                   // Undvik områden där det finns diskar eller förråd
                   const tooCloseToCounter = counters.some(counter => {
                     const counterConfig = COUNTER_TYPES[counter.type];
@@ -10270,6 +10284,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         position={[x, 0.06, z]}
                         onClick={(e) => {
                           e.stopPropagation();
+                          console.log('🔊 Speaker marker clicked! Placing at:', { x, z });
                           setSpeakers(prev => [...prev, {
                             id: nextSpeakerId,
                             position: { x, z },
