@@ -369,7 +369,7 @@ export default function StoragePDFGenerator({
   
   if (!currentDesign) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{zIndex: 10000}}>
         <div className="bg-white rounded-lg p-8 max-w-md w-full">
           <h2 className="text-2xl font-bold mb-4">❌ Inga fria väggar</h2>
           <p className="mb-4">Detta förråd har inga fria väggar som behöver grafik.</p>
@@ -385,7 +385,7 @@ export default function StoragePDFGenerator({
   }
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto" style={{zIndex: 10000}}>
       <div className="bg-white rounded-lg p-6 max-w-7xl w-full my-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold">🎨 Förråd {printType.toUpperCase()} Designer</h2>

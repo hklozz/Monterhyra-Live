@@ -1509,6 +1509,104 @@ function StorageWallOverlay({ imageUrl, wallWidth, wallHeight, position, rotatio
   );
 }
 
+// Storage Wall Design Overlay - för VEPA/Forex designs från StoragePDFGenerator
+function StorageWallDesignOverlay({ design, wallWidth, wallHeight, position, rotation }: {
+  design: StorageWallDesign,
+  wallWidth: number,
+  wallHeight: number,
+  position: [number, number, number],
+  rotation?: [number, number, number]
+}) {
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  
+  useEffect(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      console.error('❌ StorageWallDesignOverlay: Could not get canvas context');
+      return;
+    }
+    
+    // Rita bakgrundsfärg
+    ctx.fillStyle = design.backgroundColorRGB || '#FFFFFF';
+    ctx.fillRect(0, 0, 512, 512);
+    
+    const updateTexture = () => {
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.flipY = true;
+      tex.needsUpdate = true;
+      setTexture(tex);
+    };
+    
+    // Rita bakgrundsbild om den finns
+    if (design.backgroundImage) {
+      const bgImg = new Image();
+      bgImg.onload = () => {
+        ctx.drawImage(bgImg, 0, 0, 512, 512);
+        if (design.logo) {
+          loadLogo();
+        } else {
+          updateTexture();
+        }
+      };
+      bgImg.onerror = () => {
+        console.error('❌ Failed to load background image for storage design');
+        if (design.logo) {
+          loadLogo();
+        } else {
+          updateTexture();
+        }
+      };
+      bgImg.src = design.backgroundImage;
+    } else if (design.logo) {
+      loadLogo();
+    } else {
+      updateTexture();
+    }
+    
+    function loadLogo() {
+      if (!design.logo) return;
+      const logoImg = new Image();
+      logoImg.onload = () => {
+        const scaleX = 512 / design.widthMM;
+        const scaleY = 512 / design.heightMM;
+        ctx.drawImage(
+          logoImg,
+          design.logo!.x * scaleX,
+          design.logo!.y * scaleY,
+          design.logo!.width * scaleX,
+          design.logo!.height * scaleY
+        );
+        updateTexture();
+      };
+      logoImg.onerror = () => {
+        console.error('❌ Failed to load logo for storage design');
+        updateTexture();
+      };
+      logoImg.src = design.logo.imageData;
+    }
+  }, [design]);
+  
+  if (!texture) return null;
+  
+  return (
+    <mesh position={position} rotation={rotation || [0, 0, 0]}>
+      <planeGeometry args={[wallWidth, wallHeight]} />
+      <meshBasicMaterial 
+        map={texture}
+        transparent={true}
+        opacity={1}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+
 function ImageOverlay({ imageUrl, wallLength, wallHeight, position, rotation }: { 
   imageUrl: string, 
   wallLength: number, 
@@ -1970,14 +2068,15 @@ function Plant({ plantConfig, position, rotation }: {
   );
 }
 
-function StorageWall({ position, args, color, image, wallType, selectedWalls, wallHeight }: { 
+function StorageWall({ position, args, color, image, wallType, selectedWalls, wallHeight, design }: { 
   position: [number, number, number], 
   args: [number, number, number],
   color: string,
   image: string | null,
   wallType: 'back' | 'left' | 'right' | 'front',
   selectedWalls: { back: boolean; left: boolean; right: boolean; front: boolean; },
-  wallHeight: number
+  wallHeight: number,
+  design?: StorageWallDesign | null
 }) {
   const shouldShowImage = image && selectedWalls[wallType];
   const [width, , depth] = args;
@@ -1991,14 +2090,33 @@ function StorageWall({ position, args, color, image, wallType, selectedWalls, wa
       <mesh position={position}>
         <boxGeometry args={args} />
         <meshStandardMaterial 
-          color={color}
+          color={design ? '#FFFFFF' : color}
           roughness={0.7}
           metalness={0.0}
         />
       </mesh>
       
-      {/* Högupplöst bildoverlay om bild är vald */}
-      {shouldShowImage && (
+      {/* Högupplöst design overlay från StoragePDFGenerator */}
+      {design && (
+        <StorageWallDesignOverlay
+          design={design}
+          wallWidth={wallWidth}
+          wallHeight={wallHeight}
+          position={[
+            position[0],
+            position[1],
+            position[2] + (wallType === 'back' ? 0.055 : wallType === 'front' ? -0.055 : 0)
+          ]}
+          rotation={
+            wallType === 'left' ? [0, Math.PI / 2, 0] : 
+            wallType === 'right' ? [0, -Math.PI / 2, 0] : 
+            [0, 0, 0]
+          }
+        />
+      )}
+      
+      {/* Högupplöst bildoverlay om bild är vald (fallback för gamla systemet) */}
+      {!design && shouldShowImage && (
         <StorageWallOverlay
           imageUrl={image}
           wallWidth={wallWidth}
@@ -9623,6 +9741,12 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                   const storageHeight = wallHeight; // Samma höjd som väggarna
                   const wallThickness = 0.1; // 10cm tjocka väggar
                   
+                  // Hämta designs för detta förråd
+                  const storageDesignData = storageDesigns.get(storage.id);
+                  const getDesignForWall = (wallType: 'back' | 'left' | 'right' | 'front') => {
+                    return storageDesignData?.designs.find(d => d.wallId === wallType) || null;
+                  };
+                  
                   return (
                     <group 
                       key={storage.id}
@@ -9683,6 +9807,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         wallType="back"
                         selectedWalls={storageWallSelections}
                         wallHeight={storageHeight}
+                        design={getDesignForWall('back')}
                       />
                       
                       <StorageWall
@@ -9693,6 +9818,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         wallType="left"
                         selectedWalls={storageWallSelections}
                         wallHeight={storageHeight}
+                        design={getDesignForWall('left')}
                       />
                       
                       <StorageWall
@@ -9703,6 +9829,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         wallType="right"
                         selectedWalls={storageWallSelections}
                         wallHeight={storageHeight}
+                        design={getDesignForWall('right')}
                       />
                       
                       <StorageWall
@@ -9713,6 +9840,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         wallType="front"
                         selectedWalls={storageWallSelections}
                         wallHeight={storageHeight}
+                        design={getDesignForWall('front')}
                       />
                       
                     </group>
