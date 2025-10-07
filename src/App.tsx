@@ -7098,25 +7098,37 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                     position={[posX, 0.14, posZ]}
                     rotation={[-Math.PI / 2, 0, 0]}
                     onClick={() => {
+                      console.log('🔵 Storage marker clicked!', { posX, posZ, floorIndex, selectedStorageType });
                       // Skapa förråd direkt med vald typ
+                      if (!floorIndex || selectedStorageType <= 0) {
+                        console.warn('❌ Cannot place storage:', { floorIndex, selectedStorageType });
+                        return;
+                      }
+                      
                       const floor = FLOOR_SIZES[floorIndex];
+                      const actualWidth = floor.custom ? customFloorWidth : floor.width;
+                      const actualDepth = floor.custom ? customFloorDepth : floor.depth;
                       const storageConfig = STORAGE_TYPES[selectedStorageType];
+                      
+                      console.log('✅ Storage config:', storageConfig, 'Floor:', { actualWidth, actualDepth });
                       
                       // Justera position så förrådet håller sig inom monterområdet
                       let adjustedX = posX;
                       let adjustedZ = posZ;
                       
                       // Kontrollera och justera X-position
-                      const maxX = floor.width / 2 - storageConfig.width / 2;
-                      const minX = -floor.width / 2 + storageConfig.width / 2;
+                      const maxX = actualWidth / 2 - storageConfig.width / 2;
+                      const minX = -actualWidth / 2 + storageConfig.width / 2;
                       if (adjustedX > maxX) adjustedX = maxX;
                       if (adjustedX < minX) adjustedX = minX;
                       
                       // Kontrollera och justera Z-position
-                      const maxZ = floor.depth / 2 - storageConfig.depth / 2;
-                      const minZ = -floor.depth / 2 + storageConfig.depth / 2;
+                      const maxZ = actualDepth / 2 - storageConfig.depth / 2;
+                      const minZ = -actualDepth / 2 + storageConfig.depth / 2;
                       if (adjustedZ > maxZ) adjustedZ = maxZ;
                       if (adjustedZ < minZ) adjustedZ = minZ;
+                      
+                      console.log('📍 Placing storage at:', { adjustedX, adjustedZ });
                       
                       setStorages(prev => [...prev, {
                         id: nextStorageId,
