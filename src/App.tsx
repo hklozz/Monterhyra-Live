@@ -7001,18 +7001,27 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                       position={[posX, 0.13, posZ]}
                       rotation={[-Math.PI / 2, 0, 0]}
                       onClick={() => {
+                        console.log('🟢 Disk marker clicked!', { floorIndex, selectedCounterType });
                         // Skapa disk direkt med vald typ
+                        if (!floorIndex || selectedCounterType <= 0) {
+                          console.warn('❌ Cannot place counter:', { floorIndex, selectedCounterType });
+                          return;
+                        }
+                        
                         const counterConfig = COUNTER_TYPES[selectedCounterType];
+                        console.log('✅ Counter config:', counterConfig);
                         const floor = FLOOR_SIZES[floorIndex];
+                        const actualWidth = floor.custom ? customFloorWidth : floor.width;
+                        const actualDepth = floor.custom ? customFloorDepth : floor.depth;
                         
                         // Kontrollera att disken passar inom monterområdet
                         let canPlace = true;
                         if (counterConfig.type === 'L' || counterConfig.type === 'L-mirrored') {
                           // L-formad disk: kontrollera både delar
-                          const maxX = floor.width / 2;
-                          const minX = -floor.width / 2;
-                          const maxZ = floor.depth / 2;
-                          const minZ = -floor.depth / 2;
+                          const maxX = actualWidth / 2;
+                          const minX = -actualWidth / 2;
+                          const maxZ = actualDepth / 2;
+                          const minZ = -actualDepth / 2;
                           
                           // Kontrollera första delen (1,5m x 0,5m)
                           if (posX + 0.75 > maxX || posX - 0.75 < minX || 
@@ -7034,10 +7043,10 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                           }
                         } else {
                           // Vanlig rak disk
-                          const maxX = floor.width / 2 - counterConfig.width / 2;
-                          const minX = -floor.width / 2 + counterConfig.width / 2;
-                          const maxZ = floor.depth / 2 - counterConfig.depth / 2;
-                          const minZ = -floor.depth / 2 + counterConfig.depth / 2;
+                          const maxX = actualWidth / 2 - counterConfig.width / 2;
+                          const minX = -actualWidth / 2 + counterConfig.width / 2;
+                          const maxZ = actualDepth / 2 - counterConfig.depth / 2;
+                          const minZ = -actualDepth / 2 + counterConfig.depth / 2;
                           
                           if (posX > maxX || posX < minX || posZ > maxZ || posZ < minZ) {
                             canPlace = false;
@@ -7045,6 +7054,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         }
                         
                         if (canPlace && selectedCounterType > 0) {
+                          console.log('✅ Placing counter at:', { posX, posZ });
                           setCounters(prev => [...prev, {
                             id: nextCounterId,
                             type: selectedCounterType,
@@ -7052,6 +7062,8 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                             rotation: 0
                           }]);
                           setNextCounterId(prev => prev + 1);
+                        } else {
+                          console.warn('❌ Cannot place - out of bounds or invalid type');
                         }
                       }}
                     >
