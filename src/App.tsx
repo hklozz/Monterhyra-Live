@@ -15,6 +15,8 @@ import * as THREE from 'three';
 import { EspressoMachine, FlowerVase, CandyBowl } from './CounterItems';
 import computePacklista from './packlista';
 import { WallShelf, ClothingRack, SpeakerOnStand } from './WallDecorations';
+import VepaPDFGenerator from './VepaPDFGenerator';
+import ForexPDFGenerator from './ForexPDFGenerator';
 
 // Custom Dropdown Component for visual elements
 const CustomDropdown = ({ 
@@ -1128,6 +1130,321 @@ function Carpet({ width, depth, color }: { width: number, depth: number, color: 
   );
 }
 
+// VEPA Wall component - renderar design från VepaPDFGenerator
+// Hook för att skapa VEPA texture från design
+function useVepaTexture(design: any) {
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+
+  useEffect(() => {
+    if (!design) return;
+
+    const canvas = document.createElement('canvas');
+    const mmToPixels = 2;
+    canvas.width = design.widthMM * mmToPixels;
+    canvas.height = design.heightMM * mmToPixels;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return;
+
+    // Rita bakgrundsfärg
+    ctx.fillStyle = design.backgroundColorRGB || '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const updateTexture = () => {
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.flipY = true;
+      tex.needsUpdate = true;
+      setTexture(tex);
+    };
+
+    // Rita bakgrundsbild om den finns
+    if (design.backgroundImage) {
+      const bgImg = new Image();
+      bgImg.onload = () => {
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+        if (design.logo) {
+          const logoImg = new Image();
+          logoImg.onload = () => {
+            ctx.drawImage(
+              logoImg,
+              design.logo.x * mmToPixels,
+              design.logo.y * mmToPixels,
+              design.logo.width * mmToPixels,
+              design.logo.height * mmToPixels
+            );
+            updateTexture();
+          };
+          logoImg.onerror = updateTexture;
+          logoImg.src = design.logo.imageData;
+        } else {
+          updateTexture();
+        }
+      };
+      bgImg.onerror = () => {
+        if (design.logo) {
+          const logoImg = new Image();
+          logoImg.onload = () => {
+            ctx.drawImage(
+              logoImg,
+              design.logo.x * mmToPixels,
+              design.logo.y * mmToPixels,
+              design.logo.width * mmToPixels,
+              design.logo.height * mmToPixels
+            );
+            updateTexture();
+          };
+          logoImg.onerror = updateTexture;
+          logoImg.src = design.logo.imageData;
+        } else {
+          updateTexture();
+        }
+      };
+      bgImg.src = design.backgroundImage;
+    } else if (design.logo) {
+      const logoImg = new Image();
+      logoImg.onload = () => {
+        ctx.drawImage(
+          logoImg,
+          design.logo.x * mmToPixels,
+          design.logo.y * mmToPixels,
+          design.logo.width * mmToPixels,
+          design.logo.height * mmToPixels
+        );
+        updateTexture();
+      };
+      logoImg.onerror = updateTexture;
+      logoImg.src = design.logo.imageData;
+    } else {
+      updateTexture();
+    }
+  }, [design]);
+
+  return texture;
+}
+
+function VepaWallOverlay({ design, wallLength, wallHeight, position, rotation }: {
+  design: any,
+  wallLength: number,
+  wallHeight: number,
+  position: [number, number, number],
+  rotation?: [number, number, number]
+}) {
+  console.log('🎨 VepaWallOverlay called with design:', design);
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  
+  useEffect(() => {
+    console.log('🔧 VepaWallOverlay useEffect running');
+    
+    // FAST STORLEK 512x512 som vi vet fungerar
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      console.error('❌ Could not get canvas context');
+      return;
+    }
+    
+    console.log('✅ Canvas created: 512x512');
+    
+    // Rita bakgrundsfärg
+    ctx.fillStyle = design.backgroundColorRGB || '#FF00FF';
+    ctx.fillRect(0, 0, 512, 512);
+    console.log('✅ Background color drawn:', design.backgroundColorRGB);
+    
+    const updateTexture = () => {
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.flipY = true;
+      tex.needsUpdate = true;
+      setTexture(tex);
+      console.log('✅ Texture updated!');
+    };
+    
+    // Rita bakgrundsbild om den finns
+    if (design.backgroundImage) {
+      const bgImg = new Image();
+      bgImg.onload = () => {
+        ctx.drawImage(bgImg, 0, 0, 512, 512);
+        console.log('✅ Background image drawn');
+        if (design.logo) {
+          loadLogo();
+        } else {
+          updateTexture();
+        }
+      };
+      bgImg.onerror = () => {
+        console.error('❌ Failed to load background image');
+        if (design.logo) {
+          loadLogo();
+        } else {
+          updateTexture();
+        }
+      };
+      bgImg.src = design.backgroundImage;
+    } else if (design.logo) {
+      loadLogo();
+    } else {
+      updateTexture();
+    }
+    
+    function loadLogo() {
+      if (!design.logo) return;
+      console.log('📷 Loading logo...');
+      const logoImg = new Image();
+      logoImg.onload = () => {
+        const scaleX = 512 / design.widthMM;
+        const scaleY = 512 / design.heightMM;
+        ctx.drawImage(
+          logoImg,
+          design.logo.x * scaleX,
+          design.logo.y * scaleY,
+          design.logo.width * scaleX,
+          design.logo.height * scaleY
+        );
+        console.log('✅ Logo drawn at', design.logo.x * scaleX, design.logo.y * scaleY);
+        updateTexture();
+      };
+      logoImg.onerror = () => {
+        console.error('❌ Failed to load logo');
+        updateTexture();
+      };
+      logoImg.src = design.logo.imageData;
+    }
+  }, [design]);
+  
+  console.log('🖼️ VepaWallOverlay render, texture:', texture ? 'EXISTS' : 'NULL');
+  console.log('📏 Wall dimensions:', wallLength, 'x', wallHeight);
+  console.log('📍 Position:', position);
+  
+  if (!texture) return null;
+  
+  return (
+    <mesh position={position} rotation={rotation || [0, 0, 0]}>
+      <planeGeometry args={[wallLength, wallHeight]} />
+      <meshBasicMaterial 
+        map={texture} 
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+
+// Forex Wall Overlay Component (samma som VEPA men för Forex)
+function ForexWallOverlay({ design, wallLength, wallHeight, position, rotation }: {
+  design: any,
+  wallLength: number,
+  wallHeight: number,
+  position: [number, number, number],
+  rotation?: [number, number, number]
+}) {
+  console.log('🖼️ ForexWallOverlay called with design:', design);
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  
+  useEffect(() => {
+    console.log('🔧 ForexWallOverlay useEffect running');
+    
+    // FAST STORLEK 512x512 som vi vet fungerar
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      console.error('❌ Could not get canvas context');
+      return;
+    }
+    
+    console.log('✅ Canvas created: 512x512');
+    
+    // Rita bakgrundsfärg
+    ctx.fillStyle = design.backgroundColorRGB || '#FF00FF';
+    ctx.fillRect(0, 0, 512, 512);
+    console.log('✅ Background color drawn:', design.backgroundColorRGB);
+    
+    const updateTexture = () => {
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.flipY = true;
+      tex.needsUpdate = true;
+      setTexture(tex);
+      console.log('✅ Texture updated!');
+    };
+    
+    // Rita bakgrundsbild om den finns
+    if (design.backgroundImage) {
+      const bgImg = new Image();
+      bgImg.onload = () => {
+        ctx.drawImage(bgImg, 0, 0, 512, 512);
+        console.log('✅ Background image drawn');
+        if (design.logo) {
+          loadLogo();
+        } else {
+          updateTexture();
+        }
+      };
+      bgImg.onerror = () => {
+        console.error('❌ Failed to load background image');
+        if (design.logo) {
+          loadLogo();
+        } else {
+          updateTexture();
+        }
+      };
+      bgImg.src = design.backgroundImage;
+    } else if (design.logo) {
+      loadLogo();
+    } else {
+      updateTexture();
+    }
+    
+    function loadLogo() {
+      if (!design.logo) return;
+      console.log('📷 Loading logo...');
+      const logoImg = new Image();
+      logoImg.onload = () => {
+        const scaleX = 512 / design.widthMM;
+        const scaleY = 512 / design.heightMM;
+        ctx.drawImage(
+          logoImg,
+          design.logo.x * scaleX,
+          design.logo.y * scaleY,
+          design.logo.width * scaleX,
+          design.logo.height * scaleY
+        );
+        console.log('✅ Logo drawn at', design.logo.x * scaleX, design.logo.y * scaleY);
+        updateTexture();
+      };
+      logoImg.onerror = () => {
+        console.error('❌ Failed to load logo');
+        updateTexture();
+      };
+      logoImg.src = design.logo.imageData;
+    }
+  }, [design]);
+  
+  console.log('🖼️ ForexWallOverlay render, texture:', texture ? 'EXISTS' : 'NULL');
+  console.log('📏 Wall dimensions:', wallLength, 'x', wallHeight);
+  console.log('📍 Position:', position);
+  
+  if (!texture) return null;
+  
+  return (
+    <mesh position={position} rotation={rotation || [0, 0, 0]}>
+      <planeGeometry args={[wallLength, wallHeight]} />
+      <meshBasicMaterial 
+        map={texture} 
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+
 function ImageOverlay({ imageUrl, wallLength, wallHeight, position, rotation }: { 
   imageUrl: string, 
   wallLength: number, 
@@ -2020,6 +2337,13 @@ export default function App() {
   const [speakerMarkersVisible, setSpeakerMarkersVisible] = useState(false);
   const [nextSpeakerId, setNextSpeakerId] = useState(1);
   const [speakerSize, setSpeakerSize] = useState<'small' | 'medium' | 'large'>('medium');
+  
+  // VEPA PDF Generator state
+  const [showVepaPDFGenerator, setShowVepaPDFGenerator] = useState(false);
+  const [showForexPDFGenerator, setShowForexPDFGenerator] = useState(false);
+  const [vepaWallDesigns, setVepaWallDesigns] = useState<any[]>([]);
+  const [forexWallDesigns, setForexWallDesigns] = useState<any[]>([]);
+  
   // Collapsed state for live packlists - standardmässigt minimerade
   const [floatingPacklistCollapsed, setFloatingPacklistCollapsed] = useState(true);
   // const [compactPacklistCollapsed, setCompactPacklistCollapsed] = useState(true); // Unused - commented out
@@ -3319,7 +3643,8 @@ export default function App() {
             }}>SAM-LED</span>
           </label>
         </div>
-        {graphic === 'vepa' && (
+        {/* Gamla upload-knappar - nu ersatta av VepaPDFGenerator */}
+        {graphic === 'vepa' && false && (
           <div style={{ marginTop: '16px' }}>
             <label style={{ 
               fontWeight: 600, 
@@ -3404,7 +3729,8 @@ export default function App() {
             )}
           </div>
         )}
-        {graphic === 'forex' && (
+        {/* GAMMAL FOREX BILDUPPLADDNING - DOLD, använd nu ForexPDFGenerator istället */}
+        {false && graphic === 'forex' && (
           <div>
             <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Ladda upp egen bild för bakvägg (forex med silvriga lister):</label>
             <input 
@@ -3508,6 +3834,96 @@ export default function App() {
             )}
             style={{ width: '100%' }}
           />
+          
+          {/* VEPA PDF Generator knapp */}
+          {graphic === 'vepa' && wallShape && wallShape !== '' && (
+            <div style={{ marginTop: '12px' }}>
+              <button
+                onClick={() => setShowVepaPDFGenerator(true)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  backgroundColor: '#4CAF50',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#45a049';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#4CAF50';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                }}
+              >
+                <span>🎨</span>
+                <span>Skapa VEPA tryckfiler</span>
+              </button>
+              <div style={{
+                fontSize: '12px',
+                color: '#666',
+                marginTop: '8px',
+                textAlign: 'center'
+              }}>
+                Designa och ladda ner print-ready PDF:er
+              </div>
+            </div>
+          )}
+          
+          {/* Forex PDF Generator knapp */}
+          {graphic === 'forex' && wallShape && wallShape !== '' && (
+            <div style={{ marginTop: '12px' }}>
+              <button
+                onClick={() => setShowForexPDFGenerator(true)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  backgroundColor: '#FF9800',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F57C00';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#FF9800';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                }}
+              >
+                <span>🖼️</span>
+                <span>Skapa FOREX tryckfiler</span>
+              </button>
+              <div style={{
+                fontSize: '12px',
+                color: '#666',
+                marginTop: '8px',
+                textAlign: 'center'
+              }}>
+                Rambaserade Forex-skyltar med skärstreck
+              </div>
+            </div>
+          )}
         </div>
         <div style={{ marginTop: '16px' }}>
           <label style={{ 
@@ -7569,8 +7985,101 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                 {back}
                 {left}
                 {right}
-                {/* Bildlager för bakvägg - ett stort plan över hela väggen */}
-                {graphic === 'vepa' && uploadedImage && floorIndex !== null && (
+                
+                {/* VEPA väggar med design från VepaPDFGenerator */}
+                {graphic === 'vepa' && vepaWallDesigns.length > 0 && floorIndex !== null && (() => {
+                  console.log('🏗️ RENDERING VEPA WALLS BLOCK, designs:', vepaWallDesigns.length);
+                  const floor = FLOOR_SIZES[floorIndex];
+                  const actualWidth = floor.custom ? customFloorWidth : floor.width;
+                  const actualDepth = floor.custom ? customFloorDepth : floor.depth;
+                  console.log('📐 Using dimensions:', actualWidth, 'x', actualDepth);
+                  return (
+                    <>
+                      {/* Bakvägg */}
+                      {vepaWallDesigns.find(d => d.wallId === 'back') && (() => {
+                        const wallZ = -(actualDepth/2) + 0.09;
+                        return (
+                          <VepaWallOverlay
+                            design={vepaWallDesigns.find(d => d.wallId === 'back')}
+                            wallLength={actualWidth}
+                            wallHeight={wallHeight}
+                            position={[0, wallHeight/2 + 0.06, wallZ]}
+                            rotation={[0, 0, 0]}
+                          />
+                        );
+                      })()}
+                      {/* Vänster vägg */}
+                      {(wallShape === 'l' || wallShape === 'u') && vepaWallDesigns.find(d => d.wallId === 'left') && (
+                        <VepaWallOverlay
+                          design={vepaWallDesigns.find(d => d.wallId === 'left')}
+                          wallLength={actualDepth}
+                          wallHeight={wallHeight}
+                          position={[-(actualWidth/2) + 0.09, wallHeight/2 + 0.06, 0]}
+                          rotation={[0, Math.PI/2, 0]}
+                        />
+                      )}
+                      {/* Höger vägg */}
+                      {wallShape === 'u' && vepaWallDesigns.find(d => d.wallId === 'right') && (
+                        <VepaWallOverlay
+                          design={vepaWallDesigns.find(d => d.wallId === 'right')}
+                          wallLength={actualDepth}
+                          wallHeight={wallHeight}
+                          position={[(actualWidth/2) - 0.09, wallHeight/2 + 0.06, 0]}
+                          rotation={[0, -Math.PI/2, 0]}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
+                
+                {/* FOREX väggar med design från ForexPDFGenerator */}
+                {graphic === 'forex' && forexWallDesigns.length > 0 && floorIndex !== null && (() => {
+                  console.log('🏗️ RENDERING FOREX WALLS BLOCK, designs:', forexWallDesigns.length);
+                  const floor = FLOOR_SIZES[floorIndex];
+                  const actualWidth = floor.custom ? customFloorWidth : floor.width;
+                  const actualDepth = floor.custom ? customFloorDepth : floor.depth;
+                  console.log('📐 Using dimensions:', actualWidth, 'x', actualDepth);
+                  return (
+                    <>
+                      {/* Bakvägg */}
+                      {forexWallDesigns.find(d => d.wallId === 'back') && (() => {
+                        const wallZ = -(actualDepth/2) + 0.09;
+                        return (
+                          <ForexWallOverlay
+                            design={forexWallDesigns.find(d => d.wallId === 'back')}
+                            wallLength={actualWidth}
+                            wallHeight={wallHeight}
+                            position={[0, wallHeight/2 + 0.06, wallZ]}
+                            rotation={[0, 0, 0]}
+                          />
+                        );
+                      })()}
+                      {/* Vänster vägg */}
+                      {(wallShape === 'l' || wallShape === 'u') && forexWallDesigns.find(d => d.wallId === 'left') && (
+                        <ForexWallOverlay
+                          design={forexWallDesigns.find(d => d.wallId === 'left')}
+                          wallLength={actualDepth}
+                          wallHeight={wallHeight}
+                          position={[-(actualWidth/2) + 0.09, wallHeight/2 + 0.06, 0]}
+                          rotation={[0, Math.PI/2, 0]}
+                        />
+                      )}
+                      {/* Höger vägg */}
+                      {wallShape === 'u' && forexWallDesigns.find(d => d.wallId === 'right') && (
+                        <ForexWallOverlay
+                          design={forexWallDesigns.find(d => d.wallId === 'right')}
+                          wallLength={actualDepth}
+                          wallHeight={wallHeight}
+                          position={[(actualWidth/2) - 0.09, wallHeight/2 + 0.06, 0]}
+                          rotation={[0, -Math.PI/2, 0]}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
+                
+                {/* Gamla bildlager för bakvägg (fallback om inte VEPA design finns) */}
+                {graphic === 'vepa' && uploadedImage && vepaWallDesigns.length === 0 && floorIndex !== null && (
                   <ImageOverlay 
                     imageUrl={uploadedImage} 
                     wallLength={FLOOR_SIZES[floorIndex].width}
@@ -7580,7 +8089,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                   />
                 )}
                 {/* Bildlager för vänster vägg - visas i L-form och U-form */}
-                {graphic === 'vepa' && uploadedImageLeft && floorIndex !== null && (wallShape === 'l' || wallShape === 'u') && (
+                {graphic === 'vepa' && uploadedImageLeft && vepaWallDesigns.length === 0 && floorIndex !== null && (wallShape === 'l' || wallShape === 'u') && (
                   <ImageOverlay 
                     imageUrl={uploadedImageLeft} 
                     wallLength={FLOOR_SIZES[floorIndex].depth}
@@ -7590,7 +8099,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                   />
                 )}
                 {/* Bildlager för höger vägg - visas endast i U-form */}
-                {graphic === 'vepa' && uploadedImageRight && floorIndex !== null && wallShape === 'u' && (
+                {graphic === 'vepa' && uploadedImageRight && vepaWallDesigns.length === 0 && floorIndex !== null && wallShape === 'u' && (
                   <ImageOverlay 
                     imageUrl={uploadedImageRight} 
                     wallLength={FLOOR_SIZES[floorIndex].depth}
@@ -7600,9 +8109,9 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                   />
                 )}
                 
-                {/* FOREX bildlager med silvriga lister varje meter */}
+                {/* GAMLA FOREX bildlager - DOLDA, använd ForexPDFGenerator istället */}
                 {/* Forex bakvägg */}
-                {graphic === 'forex' && forexImageBack && floorIndex !== null && (
+                {false && graphic === 'forex' && forexImageBack && floorIndex !== null && (
                   <ForexImageOverlay 
                     imageUrl={forexImageBack} 
                     wallLength={FLOOR_SIZES[floorIndex].width}
@@ -7611,7 +8120,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                   />
                 )}
                 {/* Forex vänster vägg */}
-                {graphic === 'forex' && forexImageLeft && floorIndex !== null && (wallShape === 'l' || wallShape === 'u') && (
+                {false && graphic === 'forex' && forexImageLeft && floorIndex !== null && (wallShape === 'l' || wallShape === 'u') && (
                   <ForexImageOverlay 
                     imageUrl={forexImageLeft} 
                     wallLength={FLOOR_SIZES[floorIndex].depth}
@@ -7621,7 +8130,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                   />
                 )}
                 {/* Forex höger vägg */}
-                {graphic === 'forex' && forexImageRight && floorIndex !== null && wallShape === 'u' && (
+                {false && graphic === 'forex' && forexImageRight && floorIndex !== null && wallShape === 'u' && (
                   <ForexImageOverlay 
                     imageUrl={forexImageRight} 
                     wallLength={FLOOR_SIZES[floorIndex].depth}
@@ -10281,6 +10790,50 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
           title="🔓"
         />
       )}
+
+      {/* VEPA PDF Generator Popup */}
+      {showVepaPDFGenerator && (() => {
+        const floorConfig = floorIndex !== null ? FLOOR_SIZES[floorIndex] : null;
+        const wallWidth = floorConfig?.custom ? customFloorWidth : (floorConfig?.width || 3);
+        const wallDepth = floorConfig?.custom ? customFloorDepth : (floorConfig?.depth || 1.5);
+        
+        return (
+          <VepaPDFGenerator
+            wallShape={wallShape}
+            wallWidth={wallWidth}
+            wallDepth={wallDepth}
+            wallHeight={wallHeight}
+            existingDesigns={vepaWallDesigns.length > 0 ? vepaWallDesigns : undefined}
+            onClose={() => setShowVepaPDFGenerator(false)}
+            onApplyDesigns={(designs) => {
+              setVepaWallDesigns(designs);
+              console.log('📐 VEPA designs applicerade:', designs);
+            }}
+          />
+        );
+      })()}
+
+      {/* Forex PDF Generator Popup */}
+      {showForexPDFGenerator && (() => {
+        const floorConfig = floorIndex !== null ? FLOOR_SIZES[floorIndex] : null;
+        const wallWidth = floorConfig?.custom ? customFloorWidth : (floorConfig?.width || 3);
+        const wallDepth = floorConfig?.custom ? customFloorDepth : (floorConfig?.depth || 1.5);
+        
+        return (
+          <ForexPDFGenerator
+            wallShape={wallShape as 'straight' | 'l' | 'u'}
+            wallWidth={wallWidth}
+            wallDepth={wallDepth}
+            wallHeight={wallHeight}
+            existingDesigns={forexWallDesigns.length > 0 ? forexWallDesigns : undefined}
+            onClose={() => setShowForexPDFGenerator(false)}
+            onApplyDesigns={(designs) => {
+              setForexWallDesigns(designs);
+              console.log('🖼️ Forex designs applicerade:', designs);
+            }}
+          />
+        );
+      })()}
 
     </div>
   );
