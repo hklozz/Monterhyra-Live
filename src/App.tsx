@@ -17,6 +17,8 @@ import computePacklista from './packlista';
 import { WallShelf, ClothingRack, SpeakerOnStand } from './WallDecorations';
 import VepaPDFGenerator from './VepaPDFGenerator';
 import ForexPDFGenerator from './ForexPDFGenerator';
+import StoragePDFGenerator from './StoragePDFGenerator';
+import type { StorageWallDesign } from './StoragePDFGenerator';
 
 // Custom Dropdown Component for visual elements
 const CustomDropdown = ({ 
@@ -2419,8 +2421,11 @@ export default function App() {
   // VEPA PDF Generator state
   const [showVepaPDFGenerator, setShowVepaPDFGenerator] = useState(false);
   const [showForexPDFGenerator, setShowForexPDFGenerator] = useState(false);
+  const [showStoragePDFGenerator, setShowStoragePDFGenerator] = useState(false);
+  const [selectedStorageForDesign, setSelectedStorageForDesign] = useState<number | null>(null);
   const [vepaWallDesigns, setVepaWallDesigns] = useState<any[]>([]);
   const [forexWallDesigns, setForexWallDesigns] = useState<any[]>([]);
+  const [storageDesigns, setStorageDesigns] = useState<Map<number, { designs: StorageWallDesign[], printType: 'vepa' | 'forex' }>>(new Map());
   
   // Collapsed state for live packlists - standardmässigt minimerade
   const [floatingPacklistCollapsed, setFloatingPacklistCollapsed] = useState(true);
@@ -2754,6 +2759,81 @@ export default function App() {
     }
     
     return totalPrice;
+  };
+
+  // Beräkna vilka förrådsväggar som är fria (inte mot montervägg)
+  const calculateFreeStorageWalls = (storage: {type: number, position: {x: number, z: number}, rotation: number}) => {
+    if (!floorIndex) return { back: true, left: true, right: true, front: true };
+    
+    const floor = FLOOR_SIZES[floorIndex];
+    const actualWidth = floor.custom ? customFloorWidth : floor.width;
+    const actualDepth = floor.custom ? customFloorDepth : floor.depth;
+    const storageConfig = STORAGE_TYPES[storage.type];
+    
+    // Definiera tröskelvärde för när en vägg är "mot" monterväggen (0.6m = 60cm marginal)
+    const WALL_THRESHOLD = 0.6;
+    
+    // Förrådens väggar i lokalkoordinater (före rotation)
+    const localBack = -storageConfig.depth / 2;
+    const localFront = storageConfig.depth / 2;
+    const localLeft = -storageConfig.width / 2;
+    const localRight = storageConfig.width / 2;
+    
+    // Rotera förrådet och kolla mot monterväggarna
+    const rad = (storage.rotation * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    
+    // Monterväggpositioner
+    const boothBackWall = -actualDepth / 2;
+    const boothFrontWall = actualDepth / 2;
+    const boothLeftWall = -actualWidth / 2;
+    const boothRightWall = actualWidth / 2;
+    
+    // Beräkna världspositioner för förråd väggar
+    const backWorldZ = storage.position.z + localBack * cos;
+    const frontWorldZ = storage.position.z + localFront * cos;
+    const leftWorldX = storage.position.x + localLeft * cos;
+    const rightWorldX = storage.position.x + localRight * cos;
+    
+    // Kolla vilka väggar som är nära monterväggar
+    const freeWalls = {
+      back: true,
+      left: true,
+      right: true,
+      front: true
+    };
+    
+    // Kolla bakvägg mot booth back wall (endast för straight, l, u)
+    if (wallShape === 'straight' || wallShape === 'l' || wallShape === 'u') {
+      if (Math.abs(backWorldZ - boothBackWall) < WALL_THRESHOLD) {
+        freeWalls.back = false;
+      }
+    }
+    
+    // Kolla vänster vägg mot booth left wall (endast för l, u)
+    if (wallShape === 'l' || wallShape === 'u') {
+      if (Math.abs(leftWorldX - boothLeftWall) < WALL_THRESHOLD) {
+        freeWalls.left = false;
+      }
+    }
+    
+    // Kolla höger vägg mot booth right wall (endast för u)
+    if (wallShape === 'u') {
+      if (Math.abs(rightWorldX - boothRightWall) < WALL_THRESHOLD) {
+        freeWalls.right = false;
+      }
+    }
+    
+    console.log('🧮 Calculated free storage walls:', { 
+      storageId: storage, 
+      freeWalls, 
+      wallShape,
+      positions: { backWorldZ, frontWorldZ, leftWorldX, rightWorldX },
+      boothWalls: { boothBackWall, boothLeftWall, boothRightWall }
+    });
+    
+    return freeWalls;
   };
 
   // Arbetstidsberäkning för byggnation och rivning
@@ -4426,6 +4506,58 @@ export default function App() {
               {storageUploadedImage && (
                 <div style={{ fontSize: 12, color: '#666' }}>✓ Förrådsbild uppladdad</div>
               )}
+            </div>
+          </div>
+        )}
+        
+        {/* VEPA/Forex Designer för individuella förråd */}
+        {storages.length > 0 && (
+          <div style={{marginTop:16}}>
+            <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>🎨 Design förråd med VEPA/Forex:</label>
+            <InstructionCard
+              icon="📐"
+              title="Professionell förrådsgrafik"
+              description="Designa VEPA eller Forex-tryck för varje förråds fria väggar (väggar som inte är mot monterväggen). Varje förråd kan ha individuell design."
+              type="info"
+            />
+            <div style={{marginTop:8, display:'flex', flexDirection:'column', gap:'8px'}}>
+              {storages.map(storage => {
+                const storageConfig = STORAGE_TYPES[storage.type];
+                const freeWalls = calculateFreeStorageWalls(storage);
+                const freeWallCount = Object.values(freeWalls).filter(Boolean).length;
+                const hasDesign = storageDesigns.has(storage.id);
+                
+                return (
+                  <button
+                    key={storage.id}
+                    onClick={() => {
+                      setSelectedStorageForDesign(storage.id);
+                      setShowStoragePDFGenerator(true);
+                    }}
+                    style={{
+                      padding:'10px 16px', 
+                      fontWeight:600, 
+                      background: hasDesign ? '#10b981' : '#3b82f6',
+                      color:'#fff', 
+                      border:'none', 
+                      borderRadius:6, 
+                      cursor:'pointer', 
+                      fontSize:14,
+                      textAlign:'left',
+                      display:'flex',
+                      justifyContent:'space-between',
+                      alignItems:'center'
+                    }}
+                  >
+                    <span>
+                      {hasDesign ? '✅' : '🎨'} Förråd #{storage.id} ({storageConfig.label}) - {freeWallCount} fria väggar
+                    </span>
+                    <span style={{fontSize:12, opacity:0.9}}>
+                      {hasDesign ? 'Redigera design' : 'Skapa design'}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -10952,6 +11084,39 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
             onApplyDesigns={(designs) => {
               setForexWallDesigns(designs);
               console.log('🖼️ Forex designs applicerade:', designs);
+            }}
+          />
+        );
+      })()}
+
+      {/* Storage PDF Generator */}
+      {showStoragePDFGenerator && selectedStorageForDesign !== null && (() => {
+        const storage = storages.find(s => s.id === selectedStorageForDesign);
+        if (!storage) return null;
+        
+        const storageConfig = STORAGE_TYPES[storage.type];
+        const freeWalls = calculateFreeStorageWalls(storage);
+        const existingDesign = storageDesigns.get(storage.id);
+        
+        return (
+          <StoragePDFGenerator
+            storageWidth={storageConfig.width}
+            storageDepth={storageConfig.depth}
+            storageHeight={wallHeight}
+            freeWalls={freeWalls}
+            existingDesigns={existingDesign?.designs}
+            existingPrintType={existingDesign?.printType}
+            onClose={() => {
+              setShowStoragePDFGenerator(false);
+              setSelectedStorageForDesign(null);
+            }}
+            onApplyDesigns={(designs, printType) => {
+              setStorageDesigns(prev => {
+                const newMap = new Map(prev);
+                newMap.set(storage.id, { designs, printType });
+                return newMap;
+              });
+              console.log('🖼️ Storage designs applicerade för förråd #' + storage.id + ':', designs);
             }}
           />
         );
