@@ -19,6 +19,9 @@ import VepaPDFGenerator from './VepaPDFGenerator';
 import ForexPDFGenerator from './ForexPDFGenerator';
 import StoragePDFGenerator from './StoragePDFGenerator';
 import type { StorageWallDesign } from './StoragePDFGenerator';
+import { OrderManager } from './OrderManager';
+import type { CustomerInfo, OrderData } from './OrderManager';
+import AdminPortal from './AdminPortal';
 
 // Custom Dropdown Component for visual elements
 const CustomDropdown = ({ 
@@ -2544,6 +2547,9 @@ export default function App() {
   const [vepaWallDesigns, setVepaWallDesigns] = useState<any[]>([]);
   const [forexWallDesigns, setForexWallDesigns] = useState<any[]>([]);
   const [storageDesigns, setStorageDesigns] = useState<Map<number, { designs: StorageWallDesign[], printType: 'vepa' | 'forex' }>>(new Map());
+  
+  // Admin Portal state
+  const [showAdminPortal, setShowAdminPortal] = useState(false);
   
   // Collapsed state for live packlists - standardmässigt minimerade
   const [floatingPacklistCollapsed, setFloatingPacklistCollapsed] = useState(true);
@@ -6661,46 +6667,7 @@ export default function App() {
                           const templateId = 'template_70rgvmm'; 
                           const publicKey = 'dovkvDHK77DZp1OUz';
                           
-                          // Skapa data URL för PDF:en
-                          // const pdfDataUrl = `data:application/pdf;base64,${pdfBase64Only}`; // Unused variable
-                          
-                          // Ladda upp PDF:en till en fildelningsservice för kort länk
-                          console.log('Laddar upp PDF till fildelningsservice...');
-                          let pdfUrl = 'Uppladdning misslyckades';
-                          
-                          try {
-                            // Konvertera PDF till blob
-                            const pdfBlob = pdf.output('blob');
-                            
-                            // Skapa FormData för uppladdning
-                            const formData = new FormData();
-                            formData.append('file', pdfBlob, `${filename}`);
-                            
-                            // Ladda upp till tmpfiles.org (gratis, 24h lagring)
-                            const uploadResponse = await fetch('https://tmpfiles.org/api/v1/upload', {
-                              method: 'POST',
-                              body: formData
-                            });
-                            
-                            if (uploadResponse.ok) {
-                              const uploadResult = await uploadResponse.json();
-                              if (uploadResult.status === 'success') {
-                                pdfUrl = uploadResult.data.url;
-                                console.log('PDF uppladdad framgångsrikt:', pdfUrl);
-                              } else {
-                                console.warn('Uppladdning misslyckades:', uploadResult);
-                                pdfUrl = 'Uppladdning misslyckades - kontakta kunden för PDF:en';
-                              }
-                            } else {
-                              console.warn('HTTP-fel vid uppladdning:', uploadResponse.status);
-                              pdfUrl = 'Uppladdning misslyckades - kontakta kunden för PDF:en';
-                            }
-                          } catch (uploadError) {
-                            console.error('Fel vid PDF-uppladdning:', uploadError);
-                            pdfUrl = 'Uppladdning misslyckades - kontakta kunden för PDF:en';
-                          }
-                          
-                          // Detaljerat meddelande med kort PDF-länk
+                          // Skapa textmeddelande UTAN PDF (för stor för mail)
                           const orderDetails = `
 MONTERBESTÄLLNING - ${new Date().toLocaleDateString('sv-SE')}
 
@@ -6709,26 +6676,30 @@ KONTAKTUPPGIFTER:
 • Företag: ${registrationData.company || 'Ej angivet'}
 • E-post: ${registrationData.email || 'Ej angivet'}
 • Telefon: ${registrationData.phone || 'Ej angivet'}
+• Org.nummer: ${registrationData.orgNumber || 'Ej angivet'}
+
+EVENTDETALJER:
+• Eventnamn: ${registrationData.eventName || 'Ej angivet'}
+• Eventstad: ${registrationData.eventCity || 'Ej angivet'}
+• Eventdatum: ${registrationData.eventDate || 'Ej angivet'}
+• Byggdatum: ${registrationData.buildDate || 'Ej angivet'}
+• Nedmonteringsdatum: ${registrationData.teardownDate || 'Ej angivet'}
 
 MONTERDETALJER:
 • Beställning gjord: ${new Date().toLocaleString('sv-SE')}
-• PDF-filnamn: ${filename}
+• Totalpris: ${totalCost.toLocaleString('sv-SE')} kr
 
-KOMPLETT PDF-OFFERT:
-${pdfUrl}
-
-PDF:en innehåller:
-- 3D-vyer av montern från olika vinklar
-- Komplett prissammanställning med monterspecifikation  
-- Detaljerad packlista med alla komponenter
-- Allmänna villkor och leveransbestämmelser
+📁 FILER OCH TRYCKUNDERLAG:
+Alla PDF-filer, tryckfiler och komplett offert finns tillgängliga i admin-portalen.
+Logga in på admin-portalen för att ladda ner ZIP-fil med alla filer.
 
 NÄSTA STEG:
-1. Klicka på PDF-länken ovan för att se komplett offert
+1. Logga in på admin-portalen och ladda ner filer
 2. Kontakta kunden på ${registrationData.phone || registrationData.email}
 3. Bekräfta beställning och planera leverans/montering
 
-OBS: PDF-länken är giltig i 24 timmar.
+Med vänliga hälsningar,
+Monterhyra Beställningssystem
                           `;
                           
                           // Skicka e-post med EmailJS
@@ -6747,85 +6718,198 @@ OBS: PDF-länken är giltig i 24 timmar.
                           console.log('EmailJS initierat, skickar avancerad PDF...');
                           const result = await emailjs.send(serviceId, templateId, templateParams, publicKey);
                           console.log('EmailJS framgångsrikt:', result);
-                          alert(`✅ Beställning skickad!\n\n📄 PDF-offert uppladdad och skickad som klickbar länk\n\n💾 PDF även sparad lokalt: ${filename}\n\n📧 Monterhyra kan nu klicka på länken i e-posten för att se komplett offert`);
+                          
+                          // Spara beställning till admin-portal med alla PDFer
+                          try {
+                            console.log('💾 Sparar beställning till admin-portal...');
+                            
+                            // Förbered kundinfo
+                            const customerInfo: CustomerInfo = {
+                              name: registrationData.name || '',
+                              email: registrationData.email || '',
+                              phone: registrationData.phone || '',
+                              company: registrationData.company || '',
+                              deliveryAddress: registrationData.eventCity || '',
+                              eventDate: registrationData.eventDate || '',
+                              eventTime: '', 
+                              setupTime: registrationData.buildDate || '',
+                              pickupTime: registrationData.teardownDate || '',
+                              message: registrationData.eventName || ''
+                            };
+                            
+                            // Förbered beställningsdata
+                            const orderData: OrderData = {
+                              floorSize: floorIndex !== null ? FLOOR_SIZES[floorIndex] : null,
+                              wallConfig: {
+                                shape: wallShape,
+                                height: wallHeight,
+                                width: floorIndex !== null ? FLOOR_SIZES[floorIndex].width : 0,
+                                depth: floorIndex !== null ? FLOOR_SIZES[floorIndex].depth : 0
+                              },
+                              furniture: [],
+                              plants: [],
+                              decorations: [],
+                              storages: [],
+                              totalPrice: totalCost
+                            };
+                            
+                            // Samla alla PDF-filer
+                            const pdfBlob = pdf.output('blob');
+                            const wallPDFs: { name: string; blob: Blob }[] = [];
+                            const storagePDFs: { name: string; blob: Blob }[] = [];
+                            
+                            // Generera vägg-PDFer från VEPA designs
+                            if (vepaWallDesigns.length > 0) {
+                              console.log('📄 Genererar VEPA tryckfiler...');
+                              for (const design of vepaWallDesigns) {
+                                try {
+                                  const designPDF = new jsPDF('portrait', 'mm', [design.widthMM, design.heightMM]);
+                                  
+                                  // Bakgrundsfärg
+                                  if (design.backgroundColor && design.backgroundColorRGB) {
+                                    designPDF.setFillColor(design.backgroundColorRGB);
+                                    designPDF.rect(0, 0, design.widthMM, design.heightMM, 'F');
+                                  }
+                                  
+                                  // Bakgrundsbild
+                                  if (design.backgroundImage) {
+                                    designPDF.addImage(design.backgroundImage, 'JPEG', 0, 0, design.widthMM, design.heightMM);
+                                  }
+                                  
+                                  // Logo
+                                  if (design.logo) {
+                                    designPDF.addImage(
+                                      design.logo.imageData,
+                                      'PNG',
+                                      design.logo.x,
+                                      design.logo.y,
+                                      design.logo.width,
+                                      design.logo.height
+                                    );
+                                  }
+                                  
+                                  const designBlob = designPDF.output('blob');
+                                  wallPDFs.push({
+                                    name: `VEPA_${design.wallLabel}_${design.widthMM}x${design.heightMM}mm`,
+                                    blob: designBlob
+                                  });
+                                } catch (err) {
+                                  console.error('Fel vid generering av VEPA PDF:', err);
+                                }
+                              }
+                            }
+                            
+                            // Generera vägg-PDFer från FOREX designs
+                            if (forexWallDesigns.length > 0) {
+                              console.log('📄 Genererar FOREX tryckfiler...');
+                              for (const design of forexWallDesigns) {
+                                try {
+                                  const designPDF = new jsPDF('portrait', 'mm', [design.widthMM, design.heightMM]);
+                                  
+                                  if (design.backgroundColor && design.backgroundColorRGB) {
+                                    designPDF.setFillColor(design.backgroundColorRGB);
+                                    designPDF.rect(0, 0, design.widthMM, design.heightMM, 'F');
+                                  }
+                                  
+                                  if (design.backgroundImage) {
+                                    designPDF.addImage(design.backgroundImage, 'JPEG', 0, 0, design.widthMM, design.heightMM);
+                                  }
+                                  
+                                  if (design.logo) {
+                                    designPDF.addImage(
+                                      design.logo.imageData,
+                                      'PNG',
+                                      design.logo.x,
+                                      design.logo.y,
+                                      design.logo.width,
+                                      design.logo.height
+                                    );
+                                  }
+                                  
+                                  const designBlob = designPDF.output('blob');
+                                  wallPDFs.push({
+                                    name: `FOREX_${design.wallLabel}_${design.widthMM}x${design.heightMM}mm`,
+                                    blob: designBlob
+                                  });
+                                } catch (err) {
+                                  console.error('Fel vid generering av FOREX PDF:', err);
+                                }
+                              }
+                            }
+                            
+                            // Generera förråds-PDFer
+                            if (storageDesigns.size > 0) {
+                              console.log('📄 Genererar förråds tryckfiler...');
+                              storageDesigns.forEach((storageData, storageId) => {
+                                storageData.designs.forEach((design) => {
+                                  try {
+                                    const designPDF = new jsPDF('portrait', 'mm', [design.widthMM, design.heightMM]);
+                                    
+                                    if (design.backgroundColor && design.backgroundColorRGB) {
+                                      designPDF.setFillColor(design.backgroundColorRGB);
+                                      designPDF.rect(0, 0, design.widthMM, design.heightMM, 'F');
+                                    }
+                                    
+                                    if (design.backgroundImage) {
+                                      designPDF.addImage(design.backgroundImage, 'JPEG', 0, 0, design.widthMM, design.heightMM);
+                                    }
+                                    
+                                    if (design.logo) {
+                                      designPDF.addImage(
+                                        design.logo.imageData,
+                                        'PNG',
+                                        design.logo.x,
+                                        design.logo.y,
+                                        design.logo.width,
+                                        design.logo.height
+                                      );
+                                    }
+                                    
+                                    const designBlob = designPDF.output('blob');
+                                    storagePDFs.push({
+                                      name: `Förråd${storageId}_${design.wallLabel}_${design.widthMM}x${design.heightMM}mm`,
+                                      blob: designBlob
+                                    });
+                                  } catch (err) {
+                                    console.error('Fel vid generering av förråds PDF:', err);
+                                  }
+                                });
+                              });
+                            }
+                            
+                            console.log(`✅ Genererade ${wallPDFs.length} vägg-PDFer och ${storagePDFs.length} förråds-PDFer`);
+                            
+                            const pdfFiles = {
+                              mainPDF: pdfBlob,
+                              wallPDFs: wallPDFs,
+                              storagePDFs: storagePDFs
+                            };
+                            
+                            // Spara beställningen med alla PDFer
+                            const orderId = await OrderManager.saveOrder(customerInfo, orderData, pdfFiles);
+                            console.log('✅ Beställning sparad med ID:', orderId);
+                            console.log('📦 Beställningsdata:', { customerInfo, orderData, fileCount: wallPDFs.length + storagePDFs.length + 1 });
+                          } catch (adminError) {
+                            console.error('⚠️ Kunde inte spara till admin-portal:', adminError);
+                            console.error('Detaljerat fel:', {
+                              message: (adminError as any).message,
+                              stack: (adminError as any).stack
+                            });
+                            alert('⚠️ Varning: Beställningen kunde inte sparas i admin-portalen. Mailet skickades ändå.');
+                            // Fortsätt ändå, mailet är viktigast
+                          }
+                          
+                          alert(`✅ Beställning skickad!\n\n� Mail skickat\n\n💾 PDF och alla tryckfiler sparade i admin-portalen\n\n� Logga in på admin-portalen för att ladda ner ZIP-fil`);
                           
                         } catch (error) {
-                          console.error('Fel vid PDF-generering:', error);
+                          console.error('Fel vid beställning:', error);
                           const err = error as any;
-                          console.error('Detaljerat fel:', {
+                          console.error('Error details:', {
                             message: err.message,
                             stack: err.stack,
-                            name: err.name,
-                            toString: err.toString()
+                            name: err.name
                           });
-                          
-                          // Försök enklare PDF-generering som fallback
-                          console.log('Försöker enklare PDF som fallback...');
-                          try {
-                            const simplePdf = new jsPDF('p', 'mm', 'a4');
-                            const canvasEl = document.querySelector('canvas') as HTMLCanvasElement | null;
-                            
-                            if (canvasEl) {
-                              // Enkel canvas-fångst med html2canvas
-                              const canvas = await html2canvas(canvasEl, {
-                                backgroundColor: '#f8f9fa',
-                                scale: 0.5
-                              });
-                              
-                              const imgData = canvas.toDataURL('image/jpeg', 0.4);
-                              
-                              simplePdf.setFontSize(18);
-                              simplePdf.text('MONTERBESTÄLLNING', 15, 25);
-                              simplePdf.addImage(imgData, 'JPEG', 15, 35, 180, 135);
-                              
-                              // Kontaktinfo
-                              simplePdf.setFontSize(10);
-                              if (registrationData.name) simplePdf.text(`Kontakt: ${registrationData.name}`, 15, 185);
-                              if (registrationData.company) simplePdf.text(`Företag: ${registrationData.company}`, 15, 190);
-                              if (registrationData.email) simplePdf.text(`E-post: ${registrationData.email}`, 15, 195);
-                              if (registrationData.phone) simplePdf.text(`Telefon: ${registrationData.phone}`, 15, 200);
-                              
-                              const timestamp = Date.now();
-                              const filename = `monteroffert-${timestamp}.pdf`;
-                              simplePdf.save(filename);
-                              
-                              const pdfBase64 = simplePdf.output('datauristring').split(',')[1];
-                              const pdfDataUrl = `data:application/pdf;base64,${pdfBase64}`;
-                              
-                              // Skicka enkel PDF via e-post
-                              const serviceId = 'service_rd6m6ys';
-                              const templateId = 'template_70rgvmm';
-                              const publicKey = 'dovkvDHK77DZp1OUz';
-                              
-                              const templateParams = {
-                                to_name: 'Monterhyra',
-                                to_email: 'monterhyra@gmail.com',
-                                from_name: registrationData.name || 'Kund',
-                                reply_to: registrationData.email || 'ej-angivet@email.com',
-                                company: registrationData.company || 'Ej angivet',
-                                phone: registrationData.phone || 'Ej angivet',
-                                message: `MONTERBESTÄLLNING (ENKEL VERSION)
-
-Kontakt: ${registrationData.name || 'Ej angivet'}
-Företag: ${registrationData.company || 'Ej angivet'} 
-E-post: ${registrationData.email || 'Ej angivet'}
-Telefon: ${registrationData.phone || 'Ej angivet'}
-
-PDF-DATA: ${pdfDataUrl}
-
-OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
-                              };
-                              
-                              emailjs.init(publicKey);
-                              await emailjs.send(serviceId, templateId, templateParams, publicKey);
-                              alert(`✅ Beställning skickad!\n\n⚠️ Avancerad PDF misslyckades men enkel version skickades\n\n💾 PDF sparad lokalt: ${filename}`);
-                            } else {
-                              throw new Error('Kunde inte hitta canvas-element');
-                            }
-                          } catch (fallbackError) {
-                            console.error('Även fallback PDF misslyckades:', fallbackError);
-                            alert(`❌ PDF-skapande misslyckades helt.\n\nFel: ${err.message || 'Okänt fel'}\nFallback-fel: ${(fallbackError as any).message || 'Okänt fallback-fel'}\n\nKontrollera konsolen för mer detaljer.`);
-                          }
+                          alert(`❌ Ett fel uppstod vid sändning av beställningen: ${err.message || 'Okänt fel'}\n\nKontrollera konsolen för mer detaljer.`);
                         }
                       } catch (error) {
                         console.error('Fel vid beställning:', error);
@@ -11281,6 +11365,66 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
           />
         );
       })()}
+
+      {/* Admin Portal */}
+      {showAdminPortal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 10000,
+          backgroundColor: 'white'
+        }}>
+          <AdminPortal />
+          <button
+            onClick={() => setShowAdminPortal(false)}
+            style={{
+              position: 'fixed',
+              top: 20,
+              right: 20,
+              padding: '10px 20px',
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              zIndex: 10001
+            }}
+          >
+            ✕ Stäng Admin
+          </button>
+        </div>
+      )}
+
+      {/* Admin-knapp längst ner */}
+      <button
+        onClick={() => setShowAdminPortal(true)}
+        style={{
+          position: 'fixed',
+          bottom: 20,
+          right: 20,
+          padding: '12px 24px',
+          backgroundColor: '#2c3e50',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}
+        title="Öppna admin-portal för beställningar"
+      >
+        🔐 Admin
+      </button>
 
     </div>
   );
