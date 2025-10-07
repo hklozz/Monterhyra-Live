@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import JSZip from 'jszip';
 
@@ -149,6 +149,14 @@ export default function StoragePDFGenerator({
   
   const currentDesign = designs[currentWallIndex];
   
+  // Auto-applicera design vid ändringar
+  useEffect(() => {
+    if (onApplyDesigns && designs.length > 0) {
+      onApplyDesigns(designs, printType);
+      console.log('🎨 Auto-applicerar design på 3D-modellen');
+    }
+  }, [designs, printType, onApplyDesigns]);
+  
   // Ladda upp logo
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -238,14 +246,6 @@ export default function StoragePDFGenerator({
         ? { ...d, backgroundColorRGB: rgb, backgroundColor: cmyk }
         : d
     ));
-  };
-  
-  // Applicera design på 3D-modellen
-  const applyToModel = () => {
-    if (onApplyDesigns) {
-      onApplyDesigns(designs, printType);
-      alert('✅ Design applicerad på 3D-modellen!');
-    }
   };
   
   // Generera PDF för alla fria väggar
@@ -532,18 +532,21 @@ export default function StoragePDFGenerator({
             {/* Actionknappar */}
             <div className="space-y-2 pt-4">
               <button
-                onClick={applyToModel}
-                className="w-full bg-purple-600 text-white py-3 px-4 rounded hover:bg-purple-700 font-bold"
-              >
-                📺 Applicera design på 3D-modell
-              </button>
-              <button
                 onClick={generateAllPDFs}
                 disabled={isGenerating}
                 className="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700 font-bold disabled:bg-gray-400"
               >
                 {isGenerating ? '⏳ Genererar PDFs...' : '📄 Ladda ner alla PDF-filer (.zip)'}
               </button>
+              <button
+                onClick={onClose}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded hover:bg-blue-700 font-bold"
+              >
+                ✅ Spara och stäng
+              </button>
+              <div className="bg-blue-50 border-2 border-blue-200 rounded p-3 text-center text-sm text-blue-800">
+                💡 Designen appliceras automatiskt på 3D-modellen
+              </div>
             </div>
           </div>
           
