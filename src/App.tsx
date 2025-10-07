@@ -9850,12 +9850,15 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                           const adjustedShelfRight = adjustedX + shelfWidth/2;
                           
                           if (adjustedShelfLeft >= wallLeft && adjustedShelfRight <= wallRight) {
+                            console.log('✅ Placing shelf on back wall at:', { adjustedX, y, wall: 'back' });
                             setWallShelves(prev => [...prev, {
                               id: nextShelfId,
                               wall: 'back',
                               position: { x: adjustedX, y }
                             }]);
                             setNextShelfId(prev => prev + 1);
+                          } else {
+                            console.warn('❌ Shelf would be outside wall bounds');
                           }
                         }}
                       >
@@ -9901,12 +9904,15 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                           const adjustedShelfBack = adjustedZ + shelfWidth/2;
                           
                           if (adjustedShelfFront >= wallFront && adjustedShelfBack <= wallBack) {
+                            console.log('✅ Placing shelf on left wall at:', { adjustedZ, y, wall: 'left' });
                             setWallShelves(prev => [...prev, {
                               id: nextShelfId,
                               wall: 'left',
                               position: { x: adjustedZ, y }
                             }]);
                             setNextShelfId(prev => prev + 1);
+                          } else {
+                            console.warn('❌ Shelf would be outside wall bounds');
                           }
                         }}
                       >
@@ -9952,12 +9958,15 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                           const adjustedShelfBack = adjustedZ + shelfWidth/2;
                           
                           if (adjustedShelfFront >= wallFront && adjustedShelfBack <= wallBack) {
+                            console.log('✅ Placing shelf on right wall at:', { adjustedZ, y, wall: 'right' });
                             setWallShelves(prev => [...prev, {
                               id: nextShelfId,
                               wall: 'right',
                               position: { x: adjustedZ, y }
                             }]);
                             setNextShelfId(prev => prev + 1);
+                          } else {
+                            console.warn('❌ Shelf would be outside wall bounds');
                           }
                         }}
                       >
@@ -10136,17 +10145,25 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
 
             {/* Placerade hyllor */}
             {wallShelves.map(shelf => {
+              if (!floorIndex) {
+                console.warn('❌ Cannot render shelf: floorIndex is null');
+                return null;
+              }
+              
               const floor = FLOOR_SIZES[floorIndex];
+              const actualWidth = floor.custom ? customFloorWidth : floor.width;
+              const actualDepth = floor.custom ? customFloorDepth : floor.depth;
+              
               let shelfPosition: [number, number, number] = [0, 0, 0];
               let shelfRotation: [number, number, number] = [0, 0, 0];
               
               if (shelf.wall === 'back') {
-                shelfPosition = [shelf.position.x, shelf.position.y, -floor.depth/2];
+                shelfPosition = [shelf.position.x, shelf.position.y, -actualDepth/2];
               } else if (shelf.wall === 'left') {
-                shelfPosition = [-floor.width/2, shelf.position.y, shelf.position.x];
+                shelfPosition = [-actualWidth/2, shelf.position.y, shelf.position.x];
                 shelfRotation = [0, Math.PI/2, 0];
               } else if (shelf.wall === 'right') {
-                shelfPosition = [floor.width/2, shelf.position.y, shelf.position.x];
+                shelfPosition = [actualWidth/2, shelf.position.y, shelf.position.x];
                 shelfRotation = [0, -Math.PI/2, 0];
               } else if (shelf.wall.startsWith('storage-')) {
                 // Hantera förrådsväggar
