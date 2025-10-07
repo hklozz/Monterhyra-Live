@@ -1445,6 +1445,68 @@ function ForexWallOverlay({ design, wallLength, wallHeight, position, rotation }
   );
 }
 
+// Storage Wall Overlay Component - högupplöst canvas-baserad textur för förråd
+function StorageWallOverlay({ imageUrl, wallWidth, wallHeight, position, rotation }: {
+  imageUrl: string,
+  wallWidth: number,
+  wallHeight: number,
+  position: [number, number, number],
+  rotation?: [number, number, number]
+}) {
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  
+  useEffect(() => {
+    // FAST STORLEK 512x512 för optimal prestanda och kvalitet
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      console.error('❌ StorageWallOverlay: Could not get canvas context');
+      return;
+    }
+    
+    const updateTexture = () => {
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.flipY = true;
+      tex.needsUpdate = true;
+      setTexture(tex);
+    };
+    
+    // Ladda och rita bilden
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, 512, 512);
+      updateTexture();
+    };
+    img.onerror = () => {
+      console.error('❌ StorageWallOverlay: Failed to load image');
+      // Rita en fallback-färg
+      ctx.fillStyle = '#CCCCCC';
+      ctx.fillRect(0, 0, 512, 512);
+      updateTexture();
+    };
+    img.src = imageUrl;
+  }, [imageUrl]);
+  
+  if (!texture) return null;
+  
+  return (
+    <mesh position={position} rotation={rotation || [0, 0, 0]}>
+      <planeGeometry args={[wallWidth, wallHeight]} />
+      <meshBasicMaterial 
+        map={texture}
+        transparent={true}
+        opacity={1}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+
 function ImageOverlay({ imageUrl, wallLength, wallHeight, position, rotation }: { 
   imageUrl: string, 
   wallLength: number, 
@@ -1906,36 +1968,52 @@ function Plant({ plantConfig, position, rotation }: {
   );
 }
 
-function StorageWall({ position, args, color, image, wallType, selectedWalls, storageTexture, textureKey }: { 
+function StorageWall({ position, args, color, image, wallType, selectedWalls, wallHeight }: { 
   position: [number, number, number], 
   args: [number, number, number],
   color: string,
   image: string | null,
   wallType: 'back' | 'left' | 'right' | 'front',
   selectedWalls: { back: boolean; left: boolean; right: boolean; front: boolean; },
-  storageTexture: THREE.Texture | null,
-  textureKey: number
+  wallHeight: number
 }) {
   const shouldShowImage = image && selectedWalls[wallType];
+  const [width, , depth] = args;
+  
+  // Bestäm vilken dimension som är väggytans bredd
+  const wallWidth = width > depth ? width : depth;
 
   return (
-    <mesh position={position}>
-      <boxGeometry args={args} />
-      <meshStandardMaterial 
-        key={textureKey}
-        color={shouldShowImage ? "#ffffff" : color}
-        map={shouldShowImage ? storageTexture : null}
-        // Match wall material properties so reflections/highlights behave the same
-        roughness={0.7}
-        metalness={0.0}
-        // Keep image-related flags when an image is shown
-        transparent={shouldShowImage ? true : false}
-        depthWrite={shouldShowImage ? false : true}
-        polygonOffset={shouldShowImage ? true : false}
-        polygonOffsetFactor={shouldShowImage ? -1 : 0}
-        polygonOffsetUnits={shouldShowImage ? -1 : 0}
-      />
-    </mesh>
+    <>
+      {/* Basvägg med färg */}
+      <mesh position={position}>
+        <boxGeometry args={args} />
+        <meshStandardMaterial 
+          color={color}
+          roughness={0.7}
+          metalness={0.0}
+        />
+      </mesh>
+      
+      {/* Högupplöst bildoverlay om bild är vald */}
+      {shouldShowImage && (
+        <StorageWallOverlay
+          imageUrl={image}
+          wallWidth={wallWidth}
+          wallHeight={wallHeight}
+          position={[
+            position[0],
+            position[1],
+            position[2] + (wallType === 'back' ? 0.055 : wallType === 'front' ? -0.055 : 0)
+          ]}
+          rotation={
+            wallType === 'left' ? [0, Math.PI / 2, 0] : 
+            wallType === 'right' ? [0, -Math.PI / 2, 0] : 
+            [0, 0, 0]
+          }
+        />
+      )}
+    </>
   );
 }
 
@@ -2427,7 +2505,6 @@ export default function App() {
   
   // State för att tvinga re-render av texturer
   const [textureKey, setTextureKey] = useState(0);
-  const [storageTextureKey, setStorageTextureKey] = useState(0);
 
   // Optimerad textur-cache för att undvika fladdring
   const counterTexture = useMemo(() => {
@@ -2454,30 +2531,6 @@ export default function App() {
     }
   }, [counterFrontImage, counterTexture]);
 
-  const storageTexture = useMemo(() => {
-    if (!storageUploadedImage) return null;
-    const loader = new THREE.TextureLoader();
-    const texture = loader.load(storageUploadedImage, () => {
-      // Callback när texturen är laddad
-      texture.needsUpdate = true;
-      // Tvinga re-render genom att uppdatera key
-      setStorageTextureKey(prev => prev + 1);
-    });
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.flipY = false; // Fixa orienteringen så bilden visas rätt håll
-    texture.needsUpdate = true; // Säkerställ att texturen uppdateras
-    return texture;
-  }, [storageUploadedImage]);
-
-  // Säkerställ att alla förråd re-renderas när texturen ändras
-  useEffect(() => {
-    if (storageUploadedImage && storageTexture) {
-      // Tvinga re-render genom att uppdatera storageTextureKey
-      setStorageTextureKey(prev => prev + 1);
-    }
-  }, [storageUploadedImage, storageTexture]);
-  
   // Förberedd för framtida individuella väggbilder
   // const [storageImages, setStorageImages] = useState({
   //   back: null as string | null,
@@ -9497,8 +9550,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         image={storageGraphic === 'upload' ? storageUploadedImage : null}
                         wallType="back"
                         selectedWalls={storageWallSelections}
-                        storageTexture={storageTexture}
-                        textureKey={storageTextureKey}
+                        wallHeight={storageHeight}
                       />
                       
                       <StorageWall
@@ -9508,8 +9560,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         image={storageGraphic === 'upload' ? storageUploadedImage : null}
                         wallType="left"
                         selectedWalls={storageWallSelections}
-                        storageTexture={storageTexture}
-                        textureKey={storageTextureKey}
+                        wallHeight={storageHeight}
                       />
                       
                       <StorageWall
@@ -9519,8 +9570,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         image={storageGraphic === 'upload' ? storageUploadedImage : null}
                         wallType="right"
                         selectedWalls={storageWallSelections}
-                        storageTexture={storageTexture}
-                        textureKey={storageTextureKey}
+                        wallHeight={storageHeight}
                       />
                       
                       <StorageWall
@@ -9530,8 +9580,7 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
                         image={storageGraphic === 'upload' ? storageUploadedImage : null}
                         wallType="front"
                         selectedWalls={storageWallSelections}
-                        storageTexture={storageTexture}
-                        textureKey={storageTextureKey}
+                        wallHeight={storageHeight}
                       />
                       
                     </group>
@@ -9749,24 +9798,39 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
 
             {/* Väggmarkörer för hyllor */}
             {shelfMarkersVisible && wallShape && wallShape !== '' && (() => {
+              if (!floorIndex) {
+                console.warn('❌ Cannot show shelf markers: floorIndex is null');
+                return null;
+              }
+              
               const floor = FLOOR_SIZES[floorIndex];
+              const actualWidth = floor.custom ? customFloorWidth : floor.width;
+              const actualDepth = floor.custom ? customFloorDepth : floor.depth;
+              
+              console.log('📏 Rendering shelf markers with dimensions:', { 
+                actualWidth, 
+                actualDepth, 
+                custom: floor.custom 
+              });
+              
               const wallMarkers = [];
               const markerSize = 0.5; // 4 per kvm = 0.5m avstånd
               
               // Bakvägg markörer - placera på väggen (inte framkanten)
               if (wallShape === 'straight' || wallShape === 'l' || wallShape === 'u') {
-                for (let x = -floor.width/2 + markerSize/2; x < floor.width/2; x += markerSize) {
+                for (let x = -actualWidth/2 + markerSize/2; x < actualWidth/2; x += markerSize) {
                   for (let y = markerSize; y < wallHeight; y += markerSize) {
                     wallMarkers.push(
                       <mesh 
                         key={`wall-marker-back-${x}-${y}`}
-                        position={[x, y, -floor.depth/2 + 0.1]}
+                        position={[x, y, -actualDepth/2 + 0.1]}
                         onClick={(e) => {
                           e.stopPropagation();
+                          console.log('📏 Shelf marker clicked on back wall!', { x, y });
                           // Kontrollera att hyllan (0.6m bred) inte går utanför väggen
                           const shelfWidth = 0.6;
-                          const wallLeft = -floor.width/2;
-                          const wallRight = floor.width/2;
+                          const wallLeft = -actualWidth/2;
+                          const wallRight = actualWidth/2;
                           
                           // Justera position så hyllan hamnar kant-i-kant med väggen
                           let adjustedX = x;
@@ -9805,18 +9869,19 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
               
               // Vänster vägg markörer - placera på väggen
               if (wallShape === 'l' || wallShape === 'u') {
-                for (let z = -floor.depth/2 + markerSize/2; z < floor.depth/2; z += markerSize) {
+                for (let z = -actualDepth/2 + markerSize/2; z < actualDepth/2; z += markerSize) {
                   for (let y = markerSize; y < wallHeight; y += markerSize) {
                     wallMarkers.push(
                       <mesh 
                         key={`wall-marker-left-${z}-${y}`}
-                        position={[-floor.width/2 + 0.1, y, z]}
+                        position={[-actualWidth/2 + 0.1, y, z]}
                         onClick={(e) => {
                           e.stopPropagation();
+                          console.log('📏 Shelf marker clicked on left wall!', { z, y });
                           // Kontrollera att hyllan (0.6m bred) inte går utanför väggen
                           const shelfWidth = 0.6;
-                          const wallFront = -floor.depth/2;
-                          const wallBack = floor.depth/2;
+                          const wallFront = -actualDepth/2;
+                          const wallBack = actualDepth/2;
                           
                           // Justera position så hyllan hamnar kant-i-kant med väggen
                           let adjustedZ = z;
@@ -9855,18 +9920,19 @@ OBS: Avancerad PDF misslyckades, detta är en förenklad version.`
               
               // Höger vägg markörer (för U-form) - placera på väggen
               if (wallShape === 'u') {
-                for (let z = -floor.depth/2 + markerSize/2; z < floor.depth/2; z += markerSize) {
+                for (let z = -actualDepth/2 + markerSize/2; z < actualDepth/2; z += markerSize) {
                   for (let y = markerSize; y < wallHeight; y += markerSize) {
                     wallMarkers.push(
                       <mesh 
                         key={`wall-marker-right-${z}-${y}`}
-                        position={[floor.width/2 - 0.1, y, z]}
+                        position={[actualWidth/2 - 0.1, y, z]}
                         onClick={(e) => {
                           e.stopPropagation();
+                          console.log('📏 Shelf marker clicked on right wall!', { z, y });
                           // Kontrollera att hyllan (0.6m bred) inte går utanför väggen
                           const shelfWidth = 0.6;
-                          const wallFront = -floor.depth/2;
-                          const wallBack = floor.depth/2;
+                          const wallFront = -actualDepth/2;
+                          const wallBack = actualDepth/2;
                           
                           // Justera position så hyllan hamnar kant-i-kant med väggen
                           let adjustedZ = z;
