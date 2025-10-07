@@ -2987,10 +2987,10 @@ export default function App() {
           }}>Monterstorlek:</label>
           
           <CustomDropdown
-            options={[{ label: 'Välj storlek...', value: '', image: null }, ...FLOOR_SIZES.map((floor, index) => ({ ...floor, value: index }))]}
+            options={FLOOR_SIZES.filter(floor => floor.custom).map((floor, index) => ({ ...floor, value: FLOOR_SIZES.length - 1 }))}
             value={floorIndex ?? ''}
             onChange={(value) => setFloorIndex(value === '' ? null : Number(value))}
-            placeholder="Välj storlek..."
+            placeholder="Anpassad storlek"
             renderOption={(option) => (
               <>
                 {option.image ? (
