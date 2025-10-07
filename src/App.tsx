@@ -2103,9 +2103,9 @@ function StorageWall({ position, args, color, image, wallType, selectedWalls, wa
           wallWidth={wallWidth}
           wallHeight={wallHeight}
           position={[
-            position[0],
+            position[0] + (wallType === 'left' ? -0.06 : wallType === 'right' ? 0.06 : 0),
             position[1],
-            position[2] + (wallType === 'back' ? 0.055 : wallType === 'front' ? -0.055 : 0)
+            position[2] + (wallType === 'back' ? -0.06 : wallType === 'front' ? 0.06 : 0)
           ]}
           rotation={
             wallType === 'left' ? [0, Math.PI / 2, 0] : 
@@ -2122,9 +2122,9 @@ function StorageWall({ position, args, color, image, wallType, selectedWalls, wa
           wallWidth={wallWidth}
           wallHeight={wallHeight}
           position={[
-            position[0],
+            position[0] + (wallType === 'left' ? -0.06 : wallType === 'right' ? 0.06 : 0),
             position[1],
-            position[2] + (wallType === 'back' ? 0.055 : wallType === 'front' ? -0.055 : 0)
+            position[2] + (wallType === 'back' ? -0.06 : wallType === 'front' ? 0.06 : 0)
           ]}
           rotation={
             wallType === 'left' ? [0, Math.PI / 2, 0] : 
