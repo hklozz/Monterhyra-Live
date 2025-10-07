@@ -4631,14 +4631,15 @@ export default function App() {
         {/* VEPA/Forex Designer för individuella förråd */}
         {storages.length > 0 && (
           <div style={{marginTop:16}}>
-            <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>🎨 Design förråd med VEPA/Forex:</label>
-            <InstructionCard
-              icon="📐"
-              title="Professionell förrådsgrafik"
-              description="Designa VEPA eller Forex-tryck för varje förråds fria väggar (väggar som inte är mot monterväggen). Varje förråd kan ha individuell design."
-              type="info"
-            />
-            <div style={{marginTop:8, display:'flex', flexDirection:'column', gap:'8px'}}>
+            <label style={{ 
+              fontWeight: 600, 
+              fontSize: '14px',
+              color: '#2c3e50',
+              marginBottom: '8px',
+              display: 'block'
+            }}>Design förråd:</label>
+            
+            <div style={{marginTop:8, display:'flex', flexDirection:'column', gap:'12px'}}>
               {storages.map(storage => {
                 const storageConfig = STORAGE_TYPES[storage.type];
                 const freeWalls = calculateFreeStorageWalls(storage);
@@ -4646,34 +4647,65 @@ export default function App() {
                 const hasDesign = storageDesigns.has(storage.id);
                 
                 return (
-                  <button
-                    key={storage.id}
-                    onClick={() => {
-                      setSelectedStorageForDesign(storage.id);
-                      setShowStoragePDFGenerator(true);
-                    }}
-                    style={{
-                      padding:'10px 16px', 
-                      fontWeight:600, 
-                      background: hasDesign ? '#10b981' : '#3b82f6',
-                      color:'#fff', 
-                      border:'none', 
-                      borderRadius:6, 
-                      cursor:'pointer', 
-                      fontSize:14,
-                      textAlign:'left',
-                      display:'flex',
-                      justifyContent:'space-between',
-                      alignItems:'center'
-                    }}
-                  >
-                    <span>
-                      {hasDesign ? '✅' : '🎨'} Förråd #{storage.id} ({storageConfig.label}) - {freeWallCount} fria väggar
-                    </span>
-                    <span style={{fontSize:12, opacity:0.9}}>
-                      {hasDesign ? 'Redigera design' : 'Skapa design'}
-                    </span>
-                  </button>
+                  <div key={storage.id} style={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    backgroundColor: '#f9f9f9'
+                  }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#2c3e50',
+                      marginBottom: '8px'
+                    }}>
+                      Förråd #{storage.id} ({storageConfig.label}) - {freeWallCount} fria väggar
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        setSelectedStorageForDesign(storage.id);
+                        setShowStoragePDFGenerator(true);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        backgroundColor: hasDesign ? '#10b981' : '#3b82f6',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = hasDesign ? '#059669' : '#2563eb';
+                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = hasDesign ? '#10b981' : '#3b82f6';
+                        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                      }}
+                    >
+                      <span>{hasDesign ? '✅' : '🎨'}</span>
+                      <span>{hasDesign ? 'Redigera design' : 'Skapa design'}</span>
+                    </button>
+                    
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#666',
+                      marginTop: '8px',
+                      textAlign: 'center'
+                    }}>
+                      {hasDesign ? 'Klicka för att redigera befintlig design' : 'Designa och ladda ner print-ready PDF:er'}
+                    </div>
+                  </div>
                 );
               })}
             </div>

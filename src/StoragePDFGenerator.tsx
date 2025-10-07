@@ -385,32 +385,84 @@ export default function StoragePDFGenerator({
   }
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto" style={{zIndex: 10000}}>
-      <div className="bg-white rounded-lg p-6 max-w-7xl w-full my-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">🎨 Förråd {printType.toUpperCase()} Designer</h2>
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 10000
+    }}>
+      <div style={{
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 24,
+        maxWidth: 900,
+        maxHeight: '90vh',
+        overflow: 'auto',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+        width: '90%'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 24,
+          borderBottom: '2px solid #e0e0e0',
+          paddingBottom: 16
+        }}>
+          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>
+            🎨 Förråd {printType.toUpperCase()} Designer
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: 28,
+              cursor: 'pointer',
+              color: '#666',
+              padding: 4,
+              borderRadius: 4
+            }}
           >
             ×
           </button>
         </div>
         
+        
         {/* Trycktyp väljare */}
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-          <label className="block text-sm font-bold mb-2">Välj trycktyp:</label>
-          <div className="flex gap-4">
+        <div style={{
+          marginBottom: 24,
+          padding: 16,
+          backgroundColor: '#eff6ff',
+          borderRadius: 8
+        }}>
+          <label style={{ 
+            display: 'block',
+            fontSize: 14,
+            fontWeight: 700,
+            marginBottom: 8
+          }}>Välj trycktyp:</label>
+          <div style={{ display: 'flex', gap: 16 }}>
             <button
               onClick={() => {
                 setPrintType('vepa');
                 setDesigns(prev => prev.map(d => ({ ...d, printType: 'vepa' })));
               }}
-              className={`px-6 py-3 rounded-lg font-bold ${
-                printType === 'vepa'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              style={{
+                padding: '12px 24px',
+                borderRadius: 8,
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: printType === 'vepa' ? '#2563eb' : '#e5e7eb',
+                color: printType === 'vepa' ? 'white' : '#374151'
+              }}
             >
               VEPA (Fabric - 30mm bleed)
             </button>
@@ -419,30 +471,41 @@ export default function StoragePDFGenerator({
                 setPrintType('forex');
                 setDesigns(prev => prev.map(d => ({ ...d, printType: 'forex' })));
               }}
-              className={`px-6 py-3 rounded-lg font-bold ${
-                printType === 'forex'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
+              style={{
+                padding: '12px 24px',
+                borderRadius: 8,
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: printType === 'forex' ? '#ea580c' : '#e5e7eb',
+                color: printType === 'forex' ? 'white' : '#374151'
+              }}>
               FOREX (Rigid - 3mm bleed)
             </button>
           </div>
-        </div>
-        
+        </div>        
         {/* Väggväljare */}
-        <div className="mb-6">
-          <label className="block text-sm font-bold mb-2">Välj vägg att designa ({designs.length} fria väggar):</label>
-          <div className="flex gap-2 flex-wrap">
+        <div style={{ marginBottom: 24 }}>
+          <label style={{
+            display: 'block',
+            fontSize: 14,
+            fontWeight: 700,
+            marginBottom: 8
+          }}>Välj vägg att designa ({designs.length} fria väggar):</label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {designs.map((design, index) => (
               <button
                 key={design.wallId}
                 onClick={() => setCurrentWallIndex(index)}
-                className={`px-4 py-2 rounded ${
-                  index === currentWallIndex
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 hover:bg-gray-300'
-                }`}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 6,
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: index === currentWallIndex ? '#2563eb' : '#e5e7eb',
+                  color: index === currentWallIndex ? 'white' : '#374151',
+                  fontWeight: 600
+                }}
               >
                 {design.wallLabel} ({design.widthMeters}m × {design.heightMeters}m)
               </button>
@@ -450,18 +513,23 @@ export default function StoragePDFGenerator({
           </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
           {/* Vänster panel: Redigeringsverktyg */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold">{currentDesign.wallLabel}</h3>
-            <p className="text-sm text-gray-600">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h3 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{currentDesign.wallLabel}</h3>
+            <p style={{ fontSize: 14, color: '#6b7280', margin: 0 }}>
               Storlek: {currentDesign.widthMM}mm × {currentDesign.heightMM}mm 
               ({currentDesign.widthMeters}m × {currentDesign.heightMeters}m)
             </p>
             
             {/* Bakgrundsfärg */}
             <div>
-              <label className="block text-sm font-bold mb-2">Bakgrundsfärg:</label>
+              <label style={{
+                display: 'block',
+                fontSize: 14,
+                fontWeight: 700,
+                marginBottom: 8
+              }}>Bakgrundsfärg:</label>
               <input
                 type="color"
                 value={currentDesign.backgroundColorRGB}
@@ -480,24 +548,42 @@ export default function StoragePDFGenerator({
                   const cmyk = `C:${Math.round(c * 100)} M:${Math.round(m * 100)} Y:${Math.round(y * 100)} K:${Math.round(k * 100)}`;
                   updateBackgroundColor(rgb, cmyk);
                 }}
-                className="w-full h-12 rounded cursor-pointer"
+                style={{
+                  width: '100%',
+                  height: 48,
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  border: '1px solid #d1d5db'
+                }}
               />
-              <p className="text-xs text-gray-500 mt-1">CMYK: {currentDesign.backgroundColor}</p>
+              <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>CMYK: {currentDesign.backgroundColor}</p>
             </div>
             
             {/* Bakgrundsbild */}
             <div>
-              <label className="block text-sm font-bold mb-2">Bakgrundsbild (heltäckande):</label>
+              <label style={{
+                display: 'block',
+                fontSize: 14,
+                fontWeight: 700,
+                marginBottom: 8
+              }}>Bakgrundsbild (heltäckande):</label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleBackgroundUpload}
-                className="w-full text-sm"
+                style={{ width: '100%', fontSize: 14 }}
               />
               {currentDesign.backgroundImage && (
                 <button
                   onClick={removeBackground}
-                  className="mt-2 text-red-600 hover:text-red-800 text-sm"
+                  style={{
+                    marginTop: 8,
+                    color: '#dc2626',
+                    fontSize: 14,
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
                 >
                   ❌ Ta bort bakgrundsbild
                 </button>
@@ -506,22 +592,34 @@ export default function StoragePDFGenerator({
             
             {/* Logo */}
             <div>
-              <label className="block text-sm font-bold mb-2">Logo / Bild:</label>
+              <label style={{
+                display: 'block',
+                fontSize: 14,
+                fontWeight: 700,
+                marginBottom: 8
+              }}>Logo / Bild:</label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleLogoUpload}
-                className="w-full text-sm"
+                style={{ width: '100%', fontSize: 14 }}
               />
               {currentDesign.logo && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600">
+                <div style={{ marginTop: 8 }}>
+                  <p style={{ fontSize: 14, color: '#6b7280' }}>
                     Position: {Math.round(currentDesign.logo.x)}mm, {Math.round(currentDesign.logo.y)}mm<br />
                     Storlek: {Math.round(currentDesign.logo.width)}mm × {Math.round(currentDesign.logo.height)}mm
                   </p>
                   <button
                     onClick={removeLogo}
-                    className="mt-2 text-red-600 hover:text-red-800 text-sm"
+                    style={{
+                      marginTop: 8,
+                      color: '#dc2626',
+                      fontSize: 14,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
                   >
                     ❌ Ta bort logo
                   </button>
@@ -530,21 +628,49 @@ export default function StoragePDFGenerator({
             </div>
             
             {/* Actionknappar */}
-            <div className="space-y-2 pt-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 16 }}>
               <button
                 onClick={generateAllPDFs}
                 disabled={isGenerating}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700 font-bold disabled:bg-gray-400"
+                style={{
+                  width: '100%',
+                  backgroundColor: isGenerating ? '#9ca3af' : '#10b981',
+                  color: 'white',
+                  padding: '12px 16px',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  fontWeight: 700,
+                  fontSize: 16
+                }}
               >
                 {isGenerating ? '⏳ Genererar PDFs...' : '📄 Ladda ner alla PDF-filer (.zip)'}
               </button>
               <button
                 onClick={onClose}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded hover:bg-blue-700 font-bold"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#2563eb',
+                  color: 'white',
+                  padding: '12px 16px',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: 16
+                }}
               >
                 ✅ Spara och stäng
               </button>
-              <div className="bg-blue-50 border-2 border-blue-200 rounded p-3 text-center text-sm text-blue-800">
+              <div style={{
+                backgroundColor: '#eff6ff',
+                border: '2px solid #bfdbfe',
+                borderRadius: 8,
+                padding: 12,
+                textAlign: 'center',
+                fontSize: 14,
+                color: '#1e40af'
+              }}>
                 💡 Designen appliceras automatiskt på 3D-modellen
               </div>
             </div>
@@ -552,10 +678,13 @@ export default function StoragePDFGenerator({
           
           {/* Höger panel: Preview */}
           <div>
-            <h3 className="text-xl font-bold mb-2">Preview (förhandsvisning):</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Preview (förhandsvisning):</h3>
             <div 
-              className="border-4 border-gray-300 rounded relative overflow-hidden"
               style={{
+                border: '4px solid #d1d5db',
+                borderRadius: 8,
+                position: 'relative',
+                overflow: 'hidden',
                 aspectRatio: `${currentDesign.widthMM} / ${currentDesign.heightMM}`,
                 backgroundColor: currentDesign.backgroundColorRGB,
                 backgroundImage: currentDesign.backgroundImage ? `url(${currentDesign.backgroundImage})` : 'none',
@@ -577,7 +706,7 @@ export default function StoragePDFGenerator({
                 />
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 8, textAlign: 'center' }}>
               {printType === 'vepa' ? '30mm' : '3mm'} bleed kommer läggas till runt om i PDF:en
             </p>
           </div>
