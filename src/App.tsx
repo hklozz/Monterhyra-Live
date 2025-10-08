@@ -395,6 +395,15 @@ const ExhibitionBoothRenderer: React.FC<{
 
   const floorSize = floorSizeMap[booth.floor] || { width: 3, length: 3 };
 
+  const floorDimensions = (() => {
+    if (floorIndex === null) return { width: 3, depth: 3 };
+    const floorConfig = FLOOR_SIZES[floorIndex];
+    if (floorConfig?.custom) {
+      return { width: customFloorWidth, depth: customFloorDepth };
+    }
+    return { width: floorConfig.width, depth: floorConfig.depth };
+  })();
+
   return (
     <group position={[position.x, 0, position.z]}>
       {/* ENKEL BOOTH SPOTLIGHT - Lagom intensitet */}
@@ -2218,6 +2227,58 @@ function Furniture({ furnitureConfig, position, rotation }: {
           <mesh position={[0, baseHeight + furnitureConfig.height/2 - 0.1, 0]}>
             <cylinderGeometry args={[furnitureConfig.width/3, furnitureConfig.width/3.2, furnitureConfig.height - 0.25, 12]} />
             <meshStandardMaterial color={furnitureConfig.color} roughness={0.6} />
+          </mesh>
+        </>
+      )}
+
+      {/* Pall (stool) */}
+      {furnitureConfig.type === 'stool' && (
+        <>
+          {/* Ben */}
+          {[-1, 1].map(x => (
+            [-1, 1].map(z => (
+              <mesh 
+                key={`${x}-${z}`}
+                position={[
+                  x * (furnitureConfig.width/2 - 0.02),
+                  baseHeight + furnitureConfig.height/2 - 0.02,
+                  z * (furnitureConfig.depth/2 - 0.02)
+                ]}
+              >
+                <boxGeometry args={[0.04, furnitureConfig.height - 0.04, 0.04]} />
+                <meshStandardMaterial color="#8B4513" roughness={0.8} />
+              </mesh>
+            ))
+          ))}
+          {/* Sits */}
+          <mesh position={[0, baseHeight + furnitureConfig.height - 0.02, 0]}>
+            <cylinderGeometry args={[furnitureConfig.width/2, furnitureConfig.width/2, 0.04, 16]} />
+            <meshStandardMaterial color={furnitureConfig.color} roughness={0.7} />
+          </mesh>
+        </>
+      )}
+
+      {/* Fåtölj (armchair) */}
+      {furnitureConfig.type === 'armchair' && (
+        <>
+          {/* Sits */}
+          <mesh position={[0, baseHeight + 0.15, 0]}>
+            <boxGeometry args={[furnitureConfig.width, 0.15, furnitureConfig.depth - 0.15]} />
+            <meshStandardMaterial color={furnitureConfig.color} roughness={0.8} />
+          </mesh>
+          {/* Ryggstöd */}
+          <mesh position={[0, baseHeight + 0.35, furnitureConfig.depth/2 - 0.08]}>
+            <boxGeometry args={[furnitureConfig.width, 0.4, 0.15]} />
+            <meshStandardMaterial color={furnitureConfig.color} roughness={0.8} />
+          </mesh>
+          {/* Armstöd */}
+          <mesh position={[furnitureConfig.width/2 - 0.08, baseHeight + 0.25, 0]}>
+            <boxGeometry args={[0.15, 0.2, furnitureConfig.depth - 0.15]} />
+            <meshStandardMaterial color={furnitureConfig.color} roughness={0.8} />
+          </mesh>
+          <mesh position={[-furnitureConfig.width/2 + 0.08, baseHeight + 0.25, 0]}>
+            <boxGeometry args={[0.15, 0.2, furnitureConfig.depth - 0.15]} />
+            <meshStandardMaterial color={furnitureConfig.color} roughness={0.8} />
           </mesh>
         </>
       )}
