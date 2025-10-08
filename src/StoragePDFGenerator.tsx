@@ -2,6 +2,27 @@ import { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import JSZip from 'jszip';
 
+// Hjälpare: konvertera hex-färg (#rrggbb eller #rgb) till [r,g,b]
+function parseHexToRgb(hex?: string): [number, number, number] | null {
+  if (!hex || typeof hex !== 'string') return null;
+  const h = hex.replace('#', '').trim();
+  if (!/^[0-9a-fA-F]+$/.test(h)) return null;
+  if (h.length === 3) {
+    const r = parseInt(h[0] + h[0], 16);
+    const g = parseInt(h[1] + h[1], 16);
+    const b = parseInt(h[2] + h[2], 16);
+    return [r, g, b];
+  }
+  if (h.length === 6) {
+    const int = parseInt(h, 16);
+    const r = (int >> 16) & 255;
+    const g = (int >> 8) & 255;
+    const b = int & 255;
+    return [r, g, b];
+  }
+  return null;
+}
+
 // beMatrix dimensioner: 62mm x 62mm moduler
 const BEMATRIX_MODULE_SIZE = 62; // mm
 
@@ -300,12 +321,18 @@ export default function StoragePDFGenerator({
       compress: true
     });
     
-    // Parse CMYK background color
-    const cmykMatch = design.backgroundColor.match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
+    // Parse CMYK background color, annars fallback till backgroundColorRGB (hex)
+    const cmykMatch = (design.backgroundColor || '').match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
     if (cmykMatch) {
       const [, c, m, y, k] = cmykMatch.map(Number);
       pdf.setFillColor(c, m, y, k);
       pdf.rect(0, 0, totalWidth, totalHeight, 'F');
+    } else if (design.backgroundColorRGB) {
+      const rgb = parseHexToRgb(design.backgroundColorRGB);
+      if (rgb) {
+        pdf.setFillColor(...rgb);
+        pdf.rect(0, 0, totalWidth, totalHeight, 'F');
+      }
     }
     
     // Rita bakgrundsbild om den finns

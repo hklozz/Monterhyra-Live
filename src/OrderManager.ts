@@ -33,6 +33,7 @@ export interface Order {
   orderData: OrderData;
   files: {
     zipFile: string; // base64 data URL
+    storedInIDB?: boolean; // if true, actual blob stored in IndexedDB under order id
   };
 }
 
@@ -57,7 +58,12 @@ export class OrderManager {
     try {
       // Skapa ZIP-fil med alla PDFer
       const zipBlob = await this.createZipFile(pdfFiles);
-      const zipBase64 = await this.blobToBase64(zipBlob);
+  const zipBase64 = await this.blobToBase64(zipBlob);
+
+  // Kontrollera ungefärlig storlek av base64-strängen (bytes). base64 ökar storlek ~33%.
+  const approxBytes = Math.ceil((zipBase64.length * 3) / 4);
+  const MAX_LOCALSTORAGE_BYTES = 3.5 * 1024 * 1024; // 3.5 MB - konservativ gräns
+
       
       const order: Order = {
         id: orderId,
@@ -69,13 +75,57 @@ export class OrderManager {
         }
       };
 
-      // Spara i localStorage för admin portal
-      const existingOrders = this.getOrders();
-      existingOrders.push(order);
-      localStorage.setItem('adminOrders', JSON.stringify(existingOrders));
+      // Om ZIP:en är för stor för reliable localStorage-spara, fallback: trigga nedladdning av ZIP
+      // och spara endast metadata i localStorage så admin ser beställningen.
+      try {
+        if (approxBytes > MAX_LOCALSTORAGE_BYTES) {
+          console.warn('OrderManager: ZIP verkar stor (≈' + Math.round(approxBytes / 1024) + 'KB). Storer i IndexedDB och sparar metadata i admin.');
+          try {
+            await this.saveBlobToIDB(orderId, zipBlob);
+            // markera ordern så admin vet att filen finns i IDB
+            order.files.zipFile = '';
+            order.files.storedInIDB = true;
+            const existing = this.getOrders();
+            existing.push(order);
+            localStorage.setItem('adminOrders', JSON.stringify(existing));
+            console.log('OrderManager: ZIP lagrad i IndexedDB under nyckel', orderId);
+            return orderId;
+          } catch (idbErr) {
+            console.error('OrderManager: Failed to store ZIP in IndexedDB, falling back to direct download', idbErr);
+            // Fallback: trigger download so user still gets file
+            try {
+              const url = URL.createObjectURL(zipBlob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `Beställning_${orderId}.zip`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+              console.log('OrderManager: Fallback ZIP download triggered');
+            } catch (dlErr) {
+              console.error('OrderManager: Failed to trigger fallback download', dlErr);
+            }
 
-      console.log('✅ Beställning sparad:', orderId);
-      return orderId;
+            // Save metadata-only so the order appears in admin
+            const metaOnly: Order = { ...order, files: { zipFile: '', storedInIDB: false } };
+            const existing = this.getOrders();
+            existing.push(metaOnly);
+            localStorage.setItem('adminOrders', JSON.stringify(existing));
+            return orderId;
+          }
+        }
+
+        // Normal save path
+        const existingOrders = this.getOrders();
+        existingOrders.push(order);
+        localStorage.setItem('adminOrders', JSON.stringify(existingOrders));
+        console.log('✅ Beställning sparad:', orderId);
+        return orderId;
+      } catch (storageErr) {
+        console.error('OrderManager: Failed to save order:', storageErr);
+        throw storageErr;
+      }
 
     } catch (error) {
       console.error('❌ Fel vid sparning av beställning:', error);
@@ -152,16 +202,21 @@ export class OrderManager {
 
   static async downloadZip(orderId: string): Promise<void> {
     const order = this.getOrder(orderId);
-    if (!order || !order.files.zipFile) {
-      throw new Error('ZIP-fil hittades inte');
-    }
+    if (!order) throw new Error('ZIP-fil hittades inte');
 
     try {
-      // Konvertera base64 tillbaka till blob
-      const response = await fetch(order.files.zipFile);
-      const blob = await response.blob();
+      let blob: Blob | null = null;
+      if (order.files.storedInIDB) {
+        // Hämta från IndexedDB
+        blob = await this.getBlobFromIDB(orderId);
+        if (!blob) throw new Error('Filen finns inte i IndexedDB');
+      } else if (order.files.zipFile) {
+        const response = await fetch(order.files.zipFile);
+        blob = await response.blob();
+      } else {
+        throw new Error('ZIP-fil hittades inte');
+      }
 
-      // Ladda ner filen
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -173,6 +228,64 @@ export class OrderManager {
     } catch (error) {
       console.error('Fel vid nedladdning av ZIP-fil:', error);
       throw error;
+    }
+  }
+
+  // ---------- IndexedDB helpers ----------
+  private static openIDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('MonterhyraOrders', 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('zips')) {
+          db.createObjectStore('zips');
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  private static async saveBlobToIDB(key: string, blob: Blob): Promise<void> {
+    const db = await this.openIDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('zips', 'readwrite');
+      const store = tx.objectStore('zips');
+      const req = store.put(blob, key);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  private static async getBlobFromIDB(key: string): Promise<Blob | null> {
+    const db = await this.openIDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('zips', 'readonly');
+      const store = tx.objectStore('zips');
+      const req = store.get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // Fäst en ZIP-blob som användaren laddat upp manuellt till en order
+  static async attachZipBlob(orderId: string, blob: Blob): Promise<void> {
+    const order = this.getOrder(orderId);
+    if (!order) throw new Error('Order inte hittad');
+    try {
+      await this.saveBlobToIDB(orderId, blob);
+      // markera metadata
+      const orders = this.getOrders();
+      const idx = orders.findIndex(o => o.id === orderId);
+      if (idx >= 0) {
+        orders[idx].files.zipFile = '';
+        orders[idx].files.storedInIDB = true;
+        localStorage.setItem('adminOrders', JSON.stringify(orders));
+      }
+      console.log('OrderManager: Manually attached ZIP saved in IDB for', orderId);
+    } catch (err) {
+      console.error('OrderManager: Failed to attach ZIP to order', err);
+      throw err;
     }
   }
 
