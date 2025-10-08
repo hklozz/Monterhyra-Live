@@ -8654,19 +8654,19 @@ Monterhyra Beställningssystem
                       <group key="truss-hanging-square">
                         {/* Huvudram - fyra sidor */}
                         <mesh position={[0, trussHeight, -adjustedDepth/2]} rotation={[0, 0, 0]}>
-                          <boxGeometry args={[adjustedWidth, trussConfig.height, 0.15]} />
+                          <boxGeometry args={[adjustedWidth, trussConfig.height, 0.3]} />
                           <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
                         </mesh>
                         <mesh position={[0, trussHeight, adjustedDepth/2]} rotation={[0, 0, 0]}>
-                          <boxGeometry args={[adjustedWidth, trussConfig.height, 0.15]} />
+                          <boxGeometry args={[adjustedWidth, trussConfig.height, 0.3]} />
                           <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
                         </mesh>
                         <mesh position={[-adjustedWidth/2, trussHeight, 0]} rotation={[0, 0, 0]}>
-                          <boxGeometry args={[0.15, trussConfig.height, adjustedDepth]} />
+                          <boxGeometry args={[0.3, trussConfig.height, adjustedDepth]} />
                           <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
                         </mesh>
                         <mesh position={[adjustedWidth/2, trussHeight, 0]} rotation={[0, 0, 0]}>
-                          <boxGeometry args={[0.15, trussConfig.height, adjustedDepth]} />
+                          <boxGeometry args={[0.3, trussConfig.height, adjustedDepth]} />
                           <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
                         </mesh>
                         
@@ -8695,12 +8695,12 @@ Monterhyra Beställningssystem
                           {x: -adjustedWidth/2 * 0.8, z: 0, angle: -Math.PI/2},
                         ].map(({x, z, angle}, i) => (
                           <group key={`light-${i}`}>
-                            <mesh position={[x, trussHeight - trussConfig.height/2 - 0.1, z]} rotation={[0, angle, 0]}>
-                              <cylinderGeometry args={[0.08, 0.12, 0.2, 12]} />
-                              <meshStandardMaterial color="#333333" roughness={0.4} metalness={0.6} />
+                            <mesh position={[x, trussHeight + trussConfig.height/2 + 0.1, z]} rotation={[0, angle, 0]}>
+                              <cylinderGeometry args={[0.15, 0.2, 0.3, 12]} />
+                              <meshStandardMaterial color="#ffff88" roughness={0.4} metalness={0.6} emissive="#444400" />
                             </mesh>
                             <spotLight
-                              position={[x, trussHeight - trussConfig.height/2 - 0.2, z]}
+                              position={[x, trussHeight + trussConfig.height/2 + 0.2, z]}
                               target-position={[x * 0.3, 0, z * 0.3]}
                               intensity={0.7}
                               angle={Math.PI / 3.2}
@@ -8710,7 +8710,7 @@ Monterhyra Beställningssystem
                               decay={0.8}
                             />
                             <pointLight
-                              position={[x, trussHeight - trussConfig.height/2 - 0.2, z]}
+                              position={[x, trussHeight + trussConfig.height/2 + 0.2, z]}
                               intensity={0.3}
                               color="#ffffff"
                               distance={5}
