@@ -11368,25 +11368,49 @@ Monterhyra Beställningssystem
           backgroundColor: 'white'
         }}>
           <AdminPortal />
-          <button
-            onClick={() => setShowAdminPortal(false)}
-            style={{
-              position: 'fixed',
-              top: 20,
-              right: 20,
-              padding: '10px 20px',
-              backgroundColor: '#e74c3c',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              zIndex: 10001
-            }}
-          >
-            ✕ Stäng Admin
-          </button>
+          <div style={{
+            position: 'fixed',
+            top: 20,
+            right: 20,
+            zIndex: 10001,
+            display: 'flex',
+            gap: '10px'
+          }}>
+            <button
+              onClick={() => {
+                // Handle logout - this would need to be passed from AdminPortal or handled differently
+                // For now, we'll just close the admin portal
+                setShowAdminPortal(false);
+              }}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#e74c3c',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              Logga ut
+            </button>
+            <button
+              onClick={() => setShowAdminPortal(false)}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#95a5a6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              ✕ Stäng Admin
+            </button>
+          </div>
         </div>
       )}
 

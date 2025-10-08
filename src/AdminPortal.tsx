@@ -684,20 +684,6 @@ const AdminPortal: React.FC = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#e74c3c',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Logga ut
-          </button>
         </div>
 
         {/* Overview List eller Detail View */}
