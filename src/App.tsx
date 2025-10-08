@@ -188,9 +188,9 @@ const TV_SIZES = [
 
 const TRUSS_TYPES = [
   { label: 'Ingen truss', type: 'none', image: null },
-  { label: 'Framkant truss (rak)', type: 'front-straight', width: 0.3, height: 0.3, image: null },
-  { label: 'Rund hängande truss', type: 'hanging-round', diameter: 2.0, height: 0.25, image: null },
-  { label: 'Fyrkantig hängande truss', type: 'hanging-square', width: 2.0, depth: 2.0, height: 0.25, image: null }
+  { label: 'Framkant truss (rak)', type: 'front-straight', width: 0.3, height: 0.3, image: '/Models/truss/front-straight.svg' },
+  { label: 'Rund hängande truss', type: 'hanging-round', diameter: 2.0, height: 0.25, image: '/Models/truss/hanging-round.svg' },
+  { label: 'Fyrkantig hängande truss', type: 'hanging-square', width: 2.0, depth: 2.0, height: 0.3, image: '/Models/truss/hanging-square.svg' }
 ] as const;
 
 const STORAGE_TYPES = [
@@ -379,8 +379,12 @@ interface ExhibitionBoothTemplate {
 // Exhibition booth renderer function
 const ExhibitionBoothRenderer: React.FC<{ 
   booth: ExhibitionBoothTemplate, 
-  position: { x: number, z: number } 
-}> = ({ booth, position }) => {
+  position: { x: number, z: number },
+  selectedTrussType: number,
+  floorIndex: number | null,
+  customFloorWidth: number,
+  customFloorDepth: number
+}> = ({ booth, position, selectedTrussType, floorIndex, customFloorWidth, customFloorDepth }) => {
   if (!booth) return null;
 
   const floorSizeMap: { [key: string]: { width: number, length: number } } = {
@@ -4432,22 +4436,38 @@ export default function App() {
                 <CustomDropdown
                   options={TRUSS_TYPES.map((truss, index) => ({ ...truss, value: index }))}
                   value={selectedTrussType}
-                  onChange={setSelectedTrussType}
+                  onChange={(value) => {
+                    console.log('Truss type changed to:', value, 'type:', TRUSS_TYPES[value]?.type);
+                    setSelectedTrussType(value);
+                  }}
                   placeholder="Välj truss-typ"
                   // iconBefore="🔩"  // Property removed - not supported
                   renderOption={(option) => (
                     <>
-                      <span style={{ 
-                        fontSize: '16px', 
-                        marginRight: '8px',
-                        display: 'inline-block',
-                        width: '24px',
-                        textAlign: 'center'
-                      }}>
-                        {option.type === 'none' ? '❌' : 
-                         option.type === 'front-straight' ? '📐' :
-                         option.type === 'hanging-round' ? '⭕' : '⬜'}
-                      </span>
+                      {option.image ? (
+                        <img
+                          src={option.image}
+                          alt={option.label}
+                          style={{
+                            width: '24px',
+                            height: '24px',
+                            objectFit: 'contain',
+                            marginRight: '8px'
+                          }}
+                        />
+                      ) : (
+                        <span style={{
+                          fontSize: '16px',
+                          marginRight: '8px',
+                          display: 'inline-block',
+                          width: '24px',
+                          textAlign: 'center'
+                        }}>
+                          {option.type === 'none' ? '❌' :
+                           option.type === 'front-straight' ? '📐' :
+                           option.type === 'hanging-round' ? '⭕' : '⬜'}
+                        </span>
+                      )}
                       {option.label}
                     </>
                   )}
@@ -7297,6 +7317,10 @@ Monterhyra Beställningssystem
                       key={boothId}
                       booth={template}
                       position={position}
+                      selectedTrussType={selectedTrussType}
+                      floorIndex={floorIndex}
+                      customFloorWidth={customFloorWidth}
+                      customFloorDepth={customFloorDepth}
                     />
                   );
                 })}
@@ -8502,83 +8526,76 @@ Monterhyra Beställningssystem
                 {renderLights('right')}
                 
                 {/* Truss-strukturer */}
-                {selectedTrussType > 0 && floorIndex !== null && (() => {
+                {selectedTrussType > 0 && (() => {
                   const trussConfig = TRUSS_TYPES[selectedTrussType];
-                  const floor = FLOOR_SIZES[floorIndex];
+                  // Använd rätt golvdimensioner baserat på floorIndex och customFloorWidth/customFloorDepth
+                  const floorConfig = floorIndex !== null ? FLOOR_SIZES[floorIndex] : null;
+                  const currentFloorSize = {
+                    width: floorConfig?.custom ? customFloorWidth : (floorConfig ? floorConfig.width : 3),
+                    length: floorConfig?.custom ? customFloorDepth : (floorConfig ? floorConfig.depth : 3)
+                  };
+                  
+                  console.log('Rendering truss:', trussConfig.type, 'floorIndex:', floorIndex, 'floorSize:', currentFloorSize);
                   
                   if (trussConfig.type === 'front-straight' && 'width' in trussConfig && 'height' in trussConfig) {
-                    // Framkant truss - rak truss längs framkanten av montern
-                    const trussLength = floor.width;
-                    const numSegments = Math.ceil(trussLength);
+                    console.log('Rendering front-straight truss');
+                    // Hängande framkant-truss - 30x30cm x golvytabredden ovanför framkanten
                     const trussHeight = wallHeight + 1.0; // Häng på vägghöjd + 1 meter
                     const wireLength = 2.0; // 2 meter vajrar upp till tak
                     
-                    return Array.from({length: numSegments}).map((_, i) => {
-                      const segLength = i === numSegments - 1 ? trussLength - (numSegments - 1) : 1;
-                      const posX = -trussLength/2 + i + segLength/2;
-                      const posZ = floor.depth/2; // På framkanten av montern
-                      
-                      return (
-                        <group key={`truss-front-${i}`}>
-                          {/* Huvudbalk */}
-                          <mesh position={[posX, trussHeight, posZ]}>
-                            <boxGeometry args={[segLength, trussConfig.height, trussConfig.width]} />
-                            <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
-                          </mesh>
-                          
-                          {/* Vajrar upp till tak */}
-                          {Array.from({length: Math.ceil(segLength * 2)}).map((_, wireIndex) => {
-                            const wireX = posX + (-segLength/2 + wireIndex * 0.5 + 0.25);
-                            if (wireX < posX - segLength/2 || wireX > posX + segLength/2) return null;
-                            
-                            return (
-                              <mesh 
-                                key={`wire-${wireIndex}`}
-                                position={[wireX, trussHeight + wireLength/2, posZ]} 
-                                rotation={[0, 0, 0]}
-                              >
-                                <cylinderGeometry args={[0.005, 0.005, wireLength, 8]} />
-                                <meshStandardMaterial color="#333333" roughness={0.3} metalness={0.8} />
-                              </mesh>
-                            );
-                          })}
-                          
-                          {/* Spotlights på truss */}
-                          {Array.from({length: Math.floor(segLength)}).map((_, lightIndex) => {
-                            const lightPosX = posX + (-segLength/2 + lightIndex + 0.5);
-                            return (
-                              <group key={`light-${lightIndex}`}>
-                                <mesh position={[lightPosX, trussHeight - trussConfig.height/2 - 0.15, posZ - trussConfig.width/2]}>
-                                  <cylinderGeometry args={[0.08, 0.12, 0.2, 12]} />
-                                  <meshStandardMaterial color="#333333" roughness={0.4} metalness={0.6} />
-                                </mesh>
-                                <spotLight
-                                  position={[lightPosX, trussHeight - trussConfig.height/2 - 0.25, posZ - trussConfig.width/2]}
-                                  target-position={[lightPosX, 0, posZ - 1]}
-                                  intensity={0.8}
-                                  angle={Math.PI / 2.5}
-                                  penumbra={0.7}
-                                  color="#ffffff"
-                                  distance={12}
-                                  decay={0.8}
-                                />
-                                <pointLight
-                                  position={[lightPosX, trussHeight - trussConfig.height/2 - 0.25, posZ - trussConfig.width/2]}
-                                  intensity={0.4}
-                                  color="#ffffff"
-                                  distance={6}
-                                  decay={0.5}
-                                />
-                              </group>
-                            );
-                          })}
-                        </group>
-                      );
-                    });
+                    return (
+                      <group key="truss-front-straight">
+                        {/* Huvudram - 30x30cm x golvytabredden ovanför framkanten */}
+                        <mesh position={[0, trussHeight, currentFloorSize.length/2]} rotation={[0, 0, 0]}>
+                          <boxGeometry args={[currentFloorSize.width, 0.3, 0.3]} />
+                          <meshStandardMaterial color="#666666" roughness={0.8} metalness={0.3} />
+                        </mesh>
+                        
+                        {/* Vajrar upp till tak */}
+                        <mesh 
+                          position={[0, trussHeight + wireLength/2, currentFloorSize.length/2]} 
+                          rotation={[0, 0, 0]}
+                        >
+                          <cylinderGeometry args={[0.005, 0.005, wireLength, 8]} />
+                          <meshStandardMaterial color="#333333" roughness={0.3} metalness={0.8} />
+                        </mesh>
+                        
+                        {/* Lampor under trussen - 3 lampor jämnt fördelade */}
+                        {[
+                          {x: -currentFloorSize.width/2 * 0.8, label: 'left'},
+                          {x: 0, label: 'center'},
+                          {x: currentFloorSize.width/2 * 0.8, label: 'right'}
+                        ].map(({x, label}) => (
+                          <group key={`light-${label}`}>
+                            <mesh position={[x, trussHeight - 0.3 - 0.1, currentFloorSize.length/2]} rotation={[0, 0, 0]}>
+                              <cylinderGeometry args={[0.08, 0.12, 0.2, 12]} />
+                              <meshStandardMaterial color="#333333" roughness={0.4} metalness={0.6} />
+                            </mesh>
+                            <spotLight
+                              position={[x, trussHeight - 0.3 - 0.2, currentFloorSize.length/2]}
+                              target-position={[x, 0, currentFloorSize.length/2 + 2]}
+                              intensity={0.7}
+                              angle={Math.PI / 3}
+                              penumbra={0.8}
+                              color="#ffffff"
+                              distance={10}
+                              decay={0.8}
+                            />
+                            <pointLight
+                              position={[x, trussHeight - 0.3 - 0.2, currentFloorSize.length/2]}
+                              intensity={0.3}
+                              color="#ffffff"
+                              distance={5}
+                              decay={0.6}
+                            />
+                          </group>
+                        ))}
+                      </group>
+                    );
                     
                   } else if (trussConfig.type === 'hanging-round' && 'diameter' in trussConfig && 'height' in trussConfig) {
+                    console.log('Rendering hanging-round truss');
                     // Rund hängande truss i mitten av montern
-                    // Häng på vägghöjd + 1 meter, med vajrar upp till tak
                     const trussHeight = wallHeight + 1.0;
                     const wireLength = 2.0; // 2 meter vajrar upp till tak
                     
@@ -8587,7 +8604,7 @@ Monterhyra Beställningssystem
                         {/* Huvudring */}
                         <mesh position={[0, trussHeight, 0]} rotation={[Math.PI/2, 0, 0]}>
                           <torusGeometry args={[trussConfig.diameter/2, 0.15, 8, 16]} />
-                          <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
+                          <meshStandardMaterial color="#666666" roughness={0.8} metalness={0.3} />
                         </mesh>
                         
                         {/* Vajrar upp till tak */}
@@ -8644,30 +8661,31 @@ Monterhyra Beställningssystem
                     );
                     
                   } else if (trussConfig.type === 'hanging-square' && 'width' in trussConfig && 'depth' in trussConfig && 'height' in trussConfig) {
+                    console.log('Rendering hanging-square truss');
                     // Fyrkantig hängande truss i mitten av montern - justerad storlek för att inte gå in i väggar
                     const trussHeight = wallHeight + 1.0; // Häng på vägghöjd + 1 meter
                     const wireLength = 2.0; // 2 meter vajrar upp till tak
-                    const adjustedWidth = Math.min(trussConfig.width, floor.width * 0.6); // Max 60% av monterbredd
-                    const adjustedDepth = Math.min(trussConfig.depth, floor.depth * 0.6); // Max 60% av monterdjup
+                    const adjustedWidth = Math.max(trussConfig.width, floor.width * 0.8); // Min 80% av monterbredd för synlighet
+                    const adjustedDepth = Math.max(trussConfig.depth, floor.depth * 0.8); // Min 80% av monterdjup för synlighet
                     
                     return (
                       <group key="truss-hanging-square">
                         {/* Huvudram - fyra sidor */}
                         <mesh position={[0, trussHeight, -adjustedDepth/2]} rotation={[0, 0, 0]}>
                           <boxGeometry args={[adjustedWidth, trussConfig.height, 0.3]} />
-                          <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
+                          <meshStandardMaterial color="#666666" roughness={0.8} metalness={0.3} />
                         </mesh>
                         <mesh position={[0, trussHeight, adjustedDepth/2]} rotation={[0, 0, 0]}>
                           <boxGeometry args={[adjustedWidth, trussConfig.height, 0.3]} />
-                          <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
+                          <meshStandardMaterial color="#666666" roughness={0.8} metalness={0.3} />
                         </mesh>
                         <mesh position={[-adjustedWidth/2, trussHeight, 0]} rotation={[0, 0, 0]}>
                           <boxGeometry args={[0.3, trussConfig.height, adjustedDepth]} />
-                          <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
+                          <meshStandardMaterial color="#666666" roughness={0.8} metalness={0.3} />
                         </mesh>
                         <mesh position={[adjustedWidth/2, trussHeight, 0]} rotation={[0, 0, 0]}>
                           <boxGeometry args={[0.3, trussConfig.height, adjustedDepth]} />
-                          <meshStandardMaterial color="#888888" roughness={0.8} metalness={0.3} />
+                          <meshStandardMaterial color="#666666" roughness={0.8} metalness={0.3} />
                         </mesh>
                         
                         {/* Vajrar upp till tak */}
@@ -8695,12 +8713,12 @@ Monterhyra Beställningssystem
                           {x: -adjustedWidth/2 * 0.8, z: 0, angle: -Math.PI/2},
                         ].map(({x, z, angle}, i) => (
                           <group key={`light-${i}`}>
-                            <mesh position={[x, trussHeight + trussConfig.height/2 + 0.1, z]} rotation={[0, angle, 0]}>
-                              <cylinderGeometry args={[0.15, 0.2, 0.3, 12]} />
-                              <meshStandardMaterial color="#ffff88" roughness={0.4} metalness={0.6} emissive="#444400" />
+                            <mesh position={[x, trussHeight - trussConfig.height/2 - 0.1, z]} rotation={[0, angle, 0]}>
+                              <cylinderGeometry args={[0.08, 0.12, 0.2, 12]} />
+                              <meshStandardMaterial color="#333333" roughness={0.4} metalness={0.6} />
                             </mesh>
                             <spotLight
-                              position={[x, trussHeight + trussConfig.height/2 + 0.2, z]}
+                              position={[x, trussHeight - trussConfig.height/2 - 0.2, z]}
                               target-position={[x * 0.3, 0, z * 0.3]}
                               intensity={0.7}
                               angle={Math.PI / 3.2}
@@ -8710,7 +8728,7 @@ Monterhyra Beställningssystem
                               decay={0.8}
                             />
                             <pointLight
-                              position={[x, trussHeight + trussConfig.height/2 + 0.2, z]}
+                              position={[x, trussHeight - trussConfig.height/2 - 0.2, z]}
                               intensity={0.3}
                               color="#ffffff"
                               distance={5}
@@ -8720,6 +8738,8 @@ Monterhyra Beställningssystem
                         ))}
                       </group>
                     );
+                  } else {
+                    console.log('No truss condition met for type:', trussConfig.type, 'properties:', Object.keys(trussConfig));
                   }
                   
                   return null;
