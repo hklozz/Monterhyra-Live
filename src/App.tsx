@@ -3179,7 +3179,12 @@ export default function App() {
       <div className="canvas-container" style={{
         flex: window.innerWidth <= 768 ? '0.6' : '1',
         position: 'relative',
-        background: '#f0f0f0'
+        background: '#f0f0f0',
+        overflowY: 'auto', // Ensure vertical scrolling is enabled
+        overflowX: 'hidden', // Prevent horizontal scrolling
+        WebkitOverflowScrolling: 'touch', // Enable smooth scrolling on iOS
+        height: '100%', // Ensure the container takes full height
+        maxHeight: '100vh', // Prevent overflow beyond the viewport
       }}>
       {/* Floating live packlista (always visible) - DOLD */}
       <div id="packlista-floating" style={{ position: 'fixed', left: 340, top: 12, width: 200, padding: 8, background: '#fff', border: '1px solid #ddd', borderRadius: 6, boxShadow: '0 6px 20px rgba(0,0,0,0.12)', zIndex: 1201, display: 'none' }}>
@@ -11365,7 +11370,10 @@ Monterhyra Beställningssystem
           right: 0,
           bottom: 0,
           zIndex: 10000,
-          backgroundColor: 'white'
+          backgroundColor: 'white',
+          overflowY: 'auto', // allow scrolling when AdminPortal content is taller than viewport
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch'
         }}>
           <AdminPortal />
           <div style={{

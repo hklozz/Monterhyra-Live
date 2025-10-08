@@ -45,6 +45,7 @@ interface Order {
     referens: string;
     betalningsvillkor: string;
   };
+  checklist?: Array<{ text: string; completed: boolean }>;
 }
 
 const AdminPortal: React.FC = () => {
@@ -55,6 +56,110 @@ const AdminPortal: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedOrder, setEditedOrder] = useState<Order | null>(null);
+
+  // Checklist state and functions
+  const DEFAULT_CHECKLIST_ITEMS = [
+    'Offert OK?',
+    '3D ritning',
+    'Ritning OK?',
+    'Monternummer?',
+    'Datum BYGG & RIV?',
+    'Original deadline',
+    'Order grafik',
+    'Order matta',
+    'Order teknik',
+    'Personal BYGG & RIV?',
+    'Boka lastning / lossning mässan',
+    'Frakter & Bokning b-bil i kalender',
+    'Följesedel',
+    'Adresslappar - Frakt & Retur',
+    'Packa',
+    'Kunds material - Vad göra?',
+    'Fotografering jobb',
+    'Tillbaka på lager'
+  ];
+
+  const getChecklistForOrder = (order: Order) => {
+    if (!order.checklist) {
+      order.checklist = DEFAULT_CHECKLIST_ITEMS.map(item => ({ text: item, completed: false }));
+    }
+    return order.checklist;
+  };
+
+  const toggleChecklistItem = (order: Order, index: number) => {
+    const checklist = getChecklistForOrder(order);
+    checklist[index].completed = !checklist[index].completed;
+    setSelectedOrder({ ...selectedOrder! });
+  };
+
+  const addChecklistItem = (order: Order, text: string) => {
+    if (!text.trim()) return;
+    const checklist = getChecklistForOrder(order);
+    checklist.push({ text: text.trim(), completed: false });
+    setSelectedOrder({ ...selectedOrder! });
+  };
+
+  // Inline edit state for checklist items
+  const [editingChecklistIndex, setEditingChecklistIndex] = useState<number | null>(null);
+  const [editingChecklistValue, setEditingChecklistValue] = useState('');
+
+  const startEditChecklistItem = (index: number, currentText: string) => {
+    setEditingChecklistIndex(index);
+    setEditingChecklistValue(currentText);
+  };
+
+  const commitEditChecklistItem = (order: Order) => {
+    if (editingChecklistIndex === null) return;
+    const checklist = getChecklistForOrder(order);
+    checklist[editingChecklistIndex].text = editingChecklistValue.trim() || checklist[editingChecklistIndex].text;
+    setEditingChecklistIndex(null);
+    setEditingChecklistValue('');
+    setSelectedOrder({ ...selectedOrder! });
+  };
+
+  const cancelEditChecklistItem = () => {
+    setEditingChecklistIndex(null);
+    setEditingChecklistValue('');
+  };
+
+  const renderChecklist = (order: Order) => {
+    const checklist = getChecklistForOrder(order);
+    return (
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {checklist.map((item, index) => (
+          <li key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            {editingChecklistIndex === index ? (
+              <>
+                <input
+                  type="text"
+                  value={editingChecklistValue}
+                  onChange={(e) => setEditingChecklistValue(e.target.value)}
+                  style={{ flex: 1, marginRight: '8px' }}
+                />
+                <button onClick={() => commitEditChecklistItem(order)}>✔</button>
+                <button onClick={cancelEditChecklistItem}>✖</button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="checkbox"
+                  checked={item.completed}
+                  onChange={() => toggleChecklistItem(order, index)}
+                  style={{ marginRight: '8px' }}
+                />
+                <span
+                  onDoubleClick={() => startEditChecklistItem(index, item.text)}
+                  style={{ textDecoration: item.completed ? 'line-through' : 'none', cursor: 'pointer', flex: 1 }}
+                >
+                  {item.text}
+                </span>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
   useEffect(() => {
     // Kolla om admin redan är inloggad
@@ -783,7 +888,7 @@ const AdminPortal: React.FC = () => {
           )
         ) : (
           /* Detail View */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', maxHeight: '200vh', overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', paddingRight: '12px' }}>
             {/* Action Buttons */}
             <div style={{
               backgroundColor: 'white',
@@ -1406,6 +1511,119 @@ const AdminPortal: React.FC = () => {
                 </div>
               </div>
               )}
+            </div>
+
+            {/* Checklist Section */}
+            <div style={{
+              backgroundColor: '#f8f9fa',
+              padding: '20px',
+              borderRadius: '6px'
+            }}>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#2c3e50',
+                margin: '0 0 16px 0',
+                paddingBottom: '12px',
+                borderBottom: '2px solid #3498db'
+              }}>
+                ✅ Projektchecklista
+              </h3>
+              {selectedOrder && (() => {
+                const checklist = getChecklistForOrder(selectedOrder);
+                const completedCount = checklist.filter(item => item.completed).length;
+                return (
+                  <div>
+                    <div style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
+                      {completedCount} / {checklist.length} uppgifter klara
+                    </div>
+                    <div style={{ marginBottom: '16px', overflowY: 'scroll', maxHeight: '100vh', padding: '10px' }}>
+                      {checklist.map((item, index) => (
+                        <label key={index} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '8px 0',
+                          borderBottom: '1px solid #ecf0f1'
+                        }}>
+                          <input
+                            type="checkbox"
+                            checked={item.completed}
+                            onChange={() => toggleChecklistItem(selectedOrder, index)}
+                            style={{ margin: 0 }}
+                          />
+
+                          {editingChecklistIndex === index ? (
+                            <input
+                              autoFocus
+                              value={editingChecklistValue}
+                              onChange={(e) => setEditingChecklistValue(e.target.value)}
+                              onBlur={() => commitEditChecklistItem(selectedOrder)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') commitEditChecklistItem(selectedOrder);
+                                if (e.key === 'Escape') cancelEditChecklistItem();
+                              }}
+                              style={{
+                                flex: 1,
+                                padding: '6px 8px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                fontSize: '14px'
+                              }}
+                            />
+                          ) : (
+                            <span
+                              onDoubleClick={() => startEditChecklistItem(index, item.text)}
+                              style={{
+                                textDecoration: item.completed ? 'line-through' : 'none',
+                                color: item.completed ? '#95a5a6' : '#2c3e50',
+                                flex: 1,
+                                cursor: 'text'
+                              }}
+                            >
+                              {item.text}
+                            </span>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        id="new-checklist-item"
+                        type="text"
+                        placeholder="Lägg till en uppgift..."
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          fontSize: '14px'
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const input = document.getElementById('new-checklist-item') as HTMLInputElement;
+                          if (input && input.value.trim()) {
+                            addChecklistItem(selectedOrder, input.value);
+                            input.value = '';
+                          }
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#3498db',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Lägg till
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
