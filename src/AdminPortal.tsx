@@ -236,8 +236,11 @@ const AdminPortal: React.FC = () => {
         if (key.startsWith('TV ')) {
           categorized.tv.push([key, displayValue]);
         }
-        // Disk - format: "disk innehylla", "Disk 1m", "Disk 1.5m", etc.
-        else if (key.toLowerCase().includes('disk') || key.startsWith('Disk ')) {
+        // Disk - format: "disk innehylla", "Disk 1m", "Disk 1.5m", etc. OCH alla delar som hör till diskar
+        else if (key.toLowerCase().includes('disk') || key.startsWith('Disk ') ||
+                 key.startsWith('Bematrix ram') || key.startsWith('Barskiva') ||
+                 key === 'Lister forex' || key === 'Corners' || key === 'M8pin' ||
+                 key === 'Special connector' || key.startsWith('Grafik ')) {
           categorized.disk.push([key, displayValue]);
         }
         // Möbler & Växter - alla möbel- och växttyper från FURNITURE_TYPES och PLANT_TYPES
@@ -274,21 +277,25 @@ const AdminPortal: React.FC = () => {
         ) {
           categorized.tryck.push([key, displayValue]);
         }
-        // BeMatrix - ramar och strukturdelar
+        // BeMatrix - ramar och strukturdelar (men inte disk-delar eller counter-specifika delar)
         else if (
-          key.match(/^\d+\.\d+x\d+\.\d+$/) ||  // Format: 2.5x1.0, 3.0x1.0
-          key.match(/^\d+x\d+$/) ||             // Format: 2x1, 3x3
-          key.match(/^\d+\.\d+x\d+$/) ||        // Format: 2.5x1
-          key.includes('corner') ||
-          key.includes('_pin') ||
-          key === 'connectors' ||
-          key === 'baseplate'
+          (key.match(/^\d+\.\d+x\d+\.\d+$/) ||  // Format: 2.5x1.0, 3.0x1.0
+           key.match(/^\d+x\d+$/) ||             // Format: 2x1, 3x3
+           key.match(/^\d+\.\d+x\d+$/) ||        // Format: 2.5x1
+           key.includes('corner') ||
+           key.includes('_pin') ||
+           key === 'connectors' ||
+           key === 'baseplate') &&
+          // Exkludera counter-specifika delar
+          !key.startsWith('Bematrix ram') && !key.startsWith('Barskiva') &&
+          key !== 'Lister forex' && key !== 'Corners' && key !== 'M8pin' &&
+          key !== 'Special connector' && !key.startsWith('Grafik ')
         ) {
-          categorized.bematrix.push([key, quantity]);
+          categorized.bematrix.push([key, displayValue]);
         }
         // Övrigt - allt annat
         else {
-          categorized.ovrigt.push([key, quantity]);
+          categorized.ovrigt.push([key, displayValue]);
         }
       });
       
@@ -717,7 +724,11 @@ const AdminPortal: React.FC = () => {
               backgroundColor: 'white',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#cbd5e0 #f7fafc'
             }}>
               {/* Table Header */}
               <div style={{
@@ -728,7 +739,10 @@ const AdminPortal: React.FC = () => {
                 backgroundColor: '#34495e',
                 color: 'white',
                 fontWeight: '600',
-                fontSize: '14px'
+                fontSize: '14px',
+                position: 'sticky',
+                top: 0,
+                zIndex: 1
               }}>
                 <div>Order #</div>
                 <div>Kund</div>
@@ -1217,7 +1231,7 @@ const AdminPortal: React.FC = () => {
                 )}
               </div>
 
-              {/* Beställningsinfo */}
+              {/* Packlista */}
               <div style={{
                 backgroundColor: '#f8f9fa',
                 padding: '20px',
@@ -1229,17 +1243,179 @@ const AdminPortal: React.FC = () => {
                   color: '#2c3e50',
                   margin: '0 0 16px 0',
                   paddingBottom: '12px',
-                  borderBottom: '2px solid #e67e22'
+                  borderBottom: '2px solid #9b59b6'
                 }}>
-                  📦 Beställningsdetaljer
+                  � Komplett Packlista
                 </h3>
-                <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#34495e' }}>
-                  <p style={{ margin: '0 0 8px 0' }}><strong>Totalpris:</strong> <span style={{ color: '#27ae60', fontWeight: '600', fontSize: '16px' }}>{formatPrice(selectedOrder.orderData?.totalPrice || 0)}</span></p>
-                  <p style={{ margin: '0 0 8px 0' }}><strong>Möbler:</strong> {selectedOrder.orderData?.furniture?.length || 0} st</p>
-                  <p style={{ margin: '0 0 8px 0' }}><strong>Växter:</strong> {selectedOrder.orderData?.plants?.length || 0} st</p>
-                  <p style={{ margin: '0 0 8px 0' }}><strong>Förråd:</strong> {selectedOrder.orderData?.storages?.length || 0} st</p>
-                  <p style={{ margin: '0 0 8px 0' }}><strong>TV-apparater:</strong> {selectedOrder.orderData?.tvs?.length || 0} st</p>
-                  <p style={{ margin: '0 0 8px 0' }}><strong>Diskar:</strong> {selectedOrder.orderData?.counters?.length || 0} st</p>
+                <div style={{ fontSize: '14px', color: '#34495e' }}>
+                  {(() => {
+                    const packlista = selectedOrder.orderData?.packlista?.totals || selectedOrder.orderData?.packlista || {};
+
+                    // Kategorisera alla items (samma som i PDF)
+                    const categorized: {
+                      tv: Array<[string, any]>;
+                      disk: Array<[string, any]>;
+                      moblerVaxter: Array<[string, any]>;
+                      teknik: Array<[string, any]>;
+                      tryck: Array<[string, any]>;
+                      bematrix: Array<[string, any]>;
+                      ovrigt: Array<[string, any]>;
+                    } = {
+                      tv: [],
+                      disk: [],
+                      moblerVaxter: [],
+                      teknik: [],
+                      tryck: [],
+                      bematrix: [],
+                      ovrigt: []
+                    };
+
+                    // Gå igenom alla items i packlistan och kategorisera
+                    Object.entries(packlista).forEach(([key, value]: [string, any]) => {
+                      // Hantera olika typer av värden (nummer, sträng, objekt)
+                      let quantity: number | string = 0;
+                      let displayValue: string | number = 0;
+
+                      if (typeof value === 'number') {
+                        quantity = value;
+                        displayValue = value;
+                      } else if (typeof value === 'string') {
+                        // För items som "Matta" som har strängvärden
+                        quantity = 1;
+                        displayValue = value;
+                      } else if (value && typeof value === 'object' && value.quantity) {
+                        quantity = value.quantity;
+                        displayValue = value.quantity;
+                      } else {
+                        return; // Hoppa över om inget giltigt värde
+                      }
+
+                      // Hoppa över om quantity är 0 eller negativt (men bara för numeriska värden)
+                      if (typeof quantity === 'number' && quantity <= 0) return;
+
+                      // TV & Skärmar - format: "TV 43"", "TV 55"" etc
+                      if (key.startsWith('TV ')) {
+                        categorized.tv.push([key, displayValue]);
+                      }
+                      // Disk - format: "disk innehylla", "Disk 1m", "Disk 1.5m", etc. OCH alla delar som hör till diskar
+                      else if (key.toLowerCase().includes('disk') || key.startsWith('Disk ') ||
+                               key.startsWith('Bematrix ram') || key.startsWith('Barskiva') ||
+                               key === 'Lister forex' || key === 'Corners' || key === 'M8pin' ||
+                               key === 'Special connector' || key.startsWith('Grafik ')) {
+                        categorized.disk.push([key, displayValue]);
+                      }
+                      // Möbler & Växter - alla möbel- och växttyper från FURNITURE_TYPES och PLANT_TYPES
+                      else if (
+                        // Möbler
+                        key === 'Soffa' || key === 'Fåtölj' || key === 'Barbord' || key === 'Barstol' ||
+                        key === 'Pall' || key === 'Sidobord' || key === 'Klädhängare' ||
+                        key === 'Hyllplan' || key === 'Hyllbracket' ||
+                        // Växter
+                        key === 'Monstera' || key === 'Ficus' || key === 'Bambu' || key === 'Kaktus' ||
+                        key === 'Lavendel' || key === 'Palmlilja' || key === 'Rosmarin' ||
+                        key === 'Sansevieria' || key === 'Olivträd' || key === 'Dracaena' ||
+                        // Småsaker som också kan vara möbler/växter
+                        key === 'Blomma' || key === 'Espressomaskin' || key === 'Godiskål'
+                      ) {
+                        categorized.moblerVaxter.push([key, displayValue]);
+                      }
+                      // Teknik & Belysning
+                      else if (
+                        key === 'SAM-led' || key === 'Högtalare' || key === 'Högtalarstativ' ||
+                        key.includes('Högtalar')
+                      ) {
+                        categorized.teknik.push([key, displayValue]);
+                      }
+                      // Tryck & Grafik - Vepa, Forex, Hyrgrafik, Matta, Grafik
+                      else if (
+                        key.includes('Vepa') ||
+                        key.includes('Forex') ||
+                        key.includes('Hyrgrafik') ||
+                        key === 'Grafik' ||
+                        key.includes('grafik') ||
+                        key === 'Matta' ||
+                        key.startsWith('Grafik ')
+                      ) {
+                        categorized.tryck.push([key, displayValue]);
+                      }
+                      // BeMatrix - ramar och strukturdelar (men inte disk-delar eller counter-specifika delar)
+                      else if (
+                        (key.match(/^\d+\.\d+x\d+\.\d+$/) ||  // Format: 2.5x1.0, 3.0x1.0
+                         key.match(/^\d+x\d+$/) ||             // Format: 2x1, 3x3
+                         key.match(/^\d+\.\d+x\d+$/) ||        // Format: 2.5x1
+                         key.includes('corner') ||
+                         key.includes('_pin') ||
+                         key === 'connectors' ||
+                         key === 'baseplate') &&
+                        // Exkludera counter-specifika delar
+                        !key.startsWith('Bematrix ram') && !key.startsWith('Barskiva') &&
+                        key !== 'Lister forex' && key !== 'Corners' && key !== 'M8pin' &&
+                        key !== 'Special connector' && !key.startsWith('Grafik ')
+                      ) {
+                        categorized.bematrix.push([key, displayValue]);
+                      }
+                      // Övrigt - allt annat
+                      else {
+                        categorized.ovrigt.push([key, displayValue]);
+                      }
+                    });
+
+                    // Rendera kategorierna
+                    const renderCategory = (title: string, items: Array<[string, any]>, color: string) => {
+                      if (items.length === 0) return null;
+
+                      return (
+                        <div style={{ marginBottom: '20px' }}>
+                          <h4 style={{
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            color: color,
+                            margin: '0 0 8px 0',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}>
+                            {title}
+                          </h4>
+                          <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '4px', border: `1px solid ${color}20` }}>
+                            {items.map(([key, value]) => (
+                              <div key={key} style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '4px 0',
+                                borderBottom: '1px solid #f0f0f0'
+                              }}>
+                                <span style={{ fontWeight: '500' }}>{key}</span>
+                                <span style={{
+                                  backgroundColor: color,
+                                  color: 'white',
+                                  padding: '2px 8px',
+                                  borderRadius: '12px',
+                                  fontSize: '12px',
+                                  fontWeight: '600'
+                                }}>
+                                  {typeof value === 'number' ? value : value}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    };
+
+                    return (
+                      <>
+                        {renderCategory('🏠 Matta & Golvläggning', categorized.tryck.filter(([key]) => key === 'Matta'), '#8e44ad')}
+                        {renderCategory('🏢 Väggar & Föråd', categorized.tryck.filter(([key]) => key.includes('Vepa') || key.includes('Forex') || key.includes('Hyrgrafik') || key.includes('Förråd')), '#e67e22')}
+                        {renderCategory('📺 TV & Skärmar', categorized.tv, '#2ecc71')}
+                        {renderCategory('🍽️ Disk & Tillbehör', categorized.disk, '#3498db')}
+                        {renderCategory('🪑 Möbler & Växter', categorized.moblerVaxter, '#9b59b6')}
+                        {renderCategory('🔌 Teknik & Belysning', categorized.teknik, '#e74c3c')}
+                        {renderCategory('🔧 BeMatrix Ramar', categorized.bematrix, '#f39c12')}
+                        {renderCategory('📦 Övrigt', categorized.ovrigt, '#95a5a6')}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

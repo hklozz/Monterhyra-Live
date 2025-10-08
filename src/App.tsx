@@ -6493,6 +6493,103 @@ Monterhyra Beställningssystem
                                 packlistaData.totals = packlistaData.totals || {};
                                 (packlistaData.totals as any)['Klädhängare'] = ((packlistaData.totals as any)['Klädhängare'] || 0) + 1;
                               }
+                              
+                              // Disk-delar (lägg till alla delar från placerade diskar)
+                              if ((counters || []).length > 0) {
+                                packlistaData.totals = packlistaData.totals || {};
+                                // Lägg till grundläggande disk-enheter
+                                (packlistaData.totals as any)['disk innehylla'] = ((packlistaData.totals as any)['disk innehylla'] || 0) + (counters || []).length * 2;
+                                
+                                // Lägg till alla delar från varje disk
+                                (counters || []).forEach((counter) => {
+                                  const cfg = COUNTER_TYPES[counter.type];
+                                  if (!cfg) return;
+                                  
+                                  const add = (key: string, n = 1) => { 
+                                    (packlistaData.totals as any)[key] = ((packlistaData.totals as any)[key] || 0) + n; 
+                                  };
+
+                                  // Helper: increment matching grafik entries for a frame size
+                                  const addGrafik = (frameKey: string, n = 1) => {
+                                    // frameKey expected like 'Bematrix ram 1x1' -> Grafik 1x1
+                                    const m = frameKey.match(/(\d+,?\d*)x(\d+,?\d*)/);
+                                    if (m) {
+                                      const gx = `${m[1].replace('.', ',')}x${m[2].replace('.', ',')}`;
+                                      add(`Grafik ${gx}`, n);
+                                    }
+                                  };
+
+                                  if (cfg.type === 'L' || cfg.type === 'L-mirrored') {
+                                    add('Bematrix ram 0,5x2', 4);
+                                    add('Bematrix ram 1,5x1', 1);
+                                    add('Bematrix ram 1x1', 1);
+                                    add('Barskiva 1,5x0,5', 1);
+                                    add('Barskiva 1x0,5', 1);
+                                    add('Lister forex', 4);
+                                    add('Corners', 3);
+                                    add('M8pin', 10);
+                                    add('Special connector', 4);
+                                    addGrafik('Bematrix ram 0,5x2', 4);
+                                    addGrafik('Bematrix ram 1,5x1', 1);
+                                    addGrafik('Bematrix ram 1x1', 1);
+                                  } else {
+                                    switch (cfg.width) {
+                                      case 1:
+                                        add('Bematrix ram 0,5x2', 2);
+                                        add('Bematrix ram 1x1', 1);
+                                        add('Barskiva 1x0,5', 1);
+                                        add('Lister forex', 4);
+                                        addGrafik('Bematrix ram 0,5x2', 2);
+                                        addGrafik('Bematrix ram 1x1', 1);
+                                        break;
+                                      case 1.5:
+                                        add('Bematrix ram 0,5x2', 2);
+                                        add('Bematrix ram 1,5x1', 1);
+                                        add('Barskiva 1,5x0,5', 1);
+                                        add('Lister forex', 4);
+                                        add('Corners', 2);
+                                        add('M8pin', 6);
+                                        add('Special connector', 2);
+                                        addGrafik('Bematrix ram 0,5x2', 2);
+                                        addGrafik('Bematrix ram 1,5x1', 1);
+                                        break;
+                                      case 2:
+                                        add('Bematrix ram 0,5x2', 2);
+                                        add('Bematrix ram 2x1', 1);
+                                        add('Barskiva 2x0,5', 1);
+                                        add('Lister forex', 4);
+                                        add('Corners', 2);
+                                        add('M8pin', 6);
+                                        add('Special connector', 2);
+                                        addGrafik('Bematrix ram 0,5x2', 2);
+                                        addGrafik('Bematrix ram 2x1', 1);
+                                        break;
+                                      case 2.5:
+                                        add('Bematrix ram 0,5x2', 2);
+                                        add('Bematrix ram 2,5x1', 1);
+                                        add('Barskiva 2,5x0,5', 1);
+                                        add('Lister forex', 4);
+                                        add('Corners', 2);
+                                        add('M8pin', 6);
+                                        add('Special connector', 2);
+                                        addGrafik('Bematrix ram 0,5x2', 2);
+                                        addGrafik('Bematrix ram 2,5x1', 1);
+                                        break;
+                                      case 3:
+                                        add('Bematrix ram 0,5x2', 2);
+                                        add('Bematrix ram 3x1', 1);
+                                        add('Barskiva 3x0,5', 1);
+                                        add('Lister forex', 4);
+                                        add('Corners', 2);
+                                        add('M8pin', 6);
+                                        add('Special connector', 2);
+                                        addGrafik('Bematrix ram 0,5x2', 2);
+                                        addGrafik('Bematrix ram 3x1', 1);
+                                        break;
+                                    }
+                                  }
+                                });
+                              }
                               if (graphic && graphic !== 'none') {
                                 const g = GRAPHICS.find(gr => gr.value === graphic);
                                 if (g) (packlistaData.totals as any)['Grafik'] = g.label;
