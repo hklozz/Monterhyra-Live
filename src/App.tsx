@@ -830,13 +830,13 @@ const CaptureHelper = React.forwardRef<any, {onHideGrid?: (hide: boolean) => voi
   const originalCamera = camera as any;
 
   useImperativeHandle(ref, () => ({
-    captureViews: (width = 1200, height = 800) => {
+    captureViews: (width = 800, height = 533) => { // Minskad från 1200x800 till 800x533 (33% mindre)
       // Dölja grid temporärt
       if (props.onHideGrid) props.onHideGrid(true);
       
       // create a temporary render target with antialiasing
       const target = new THREE.WebGLRenderTarget(width, height, {
-        samples: 4, // antialiasing
+        samples: 2, // Minskad antialiasing från 4 till 2
         colorSpace: THREE.SRGBColorSpace
       });
       const prevRenderTarget = gl.getRenderTarget();
@@ -888,7 +888,8 @@ const CaptureHelper = React.forwardRef<any, {onHideGrid?: (hide: boolean) => voi
         flippedCtx.scale(1, -1);
         flippedCtx.drawImage(canvas, 0, -height);
         
-        results.push(flippedCanvas.toDataURL('image/png'));
+        // Använd JPEG med 70% kvalitet istället för PNG för mycket mindre filstorlek
+        results.push(flippedCanvas.toDataURL('image/jpeg', 0.7));
       }
 
       // restore original settings
@@ -5287,8 +5288,8 @@ export default function App() {
                         // Försök att fånga tre olika vyer av montern
                         if (captureRef.current && captureRef.current.captureViews) {
                           try {
-                            // Få tre olika kameravyer från CaptureHelper
-                            const views = captureRef.current.captureViews(1200, 800);
+                            // Få tre olika kameravyer från CaptureHelper (lägre upplösning för mindre filstorlek)
+                            const views = captureRef.current.captureViews(800, 533);
                             
                             // Sida 1: Ovanifrån-vy
                             if (views[0]) {
@@ -5330,7 +5331,7 @@ export default function App() {
                               // Montervy - flyttad ner för att ge plats för kontaktinfo
                               const imageYPos = yPos + 10;
                               const imageHeight = 100; // Mindre höjd för att få plats
-                              pdf.addImage(views[0], 'PNG', 15, imageYPos, 180, imageHeight);
+                              pdf.addImage(views[0], 'JPEG', 15, imageYPos, 180, imageHeight);
                               addWatermark(pdf);
                               // Lägg till text som beskriver vyn
                               pdf.setFontSize(10);
@@ -5340,7 +5341,7 @@ export default function App() {
                             // Sida 2: Perspektivvy 
                             if (views[1]) {
                               pdf.addPage();
-                              pdf.addImage(views[1], 'PNG', 15, 15, 180, 120);
+                              pdf.addImage(views[1], 'JPEG', 15, 15, 180, 120);
                               addWatermark(pdf);
                               pdf.setFontSize(10);
                               pdf.text('Perspektivvy', 15, 140);
@@ -5349,7 +5350,7 @@ export default function App() {
                             // Sida 3: Helvy från andra sidan
                             if (views[2]) {
                               pdf.addPage();
-                              pdf.addImage(views[2], 'PNG', 15, 15, 180, 120);
+                              pdf.addImage(views[2], 'JPEG', 15, 15, 180, 120);
                               addWatermark(pdf);
                               pdf.setFontSize(10);
                               pdf.text('Helvy', 15, 140);
@@ -5359,7 +5360,7 @@ export default function App() {
                             console.warn('Kunde inte fånga olika vyer, använder fallback', e);
                             // Fallback: använd canvas direkt om CaptureHelper misslyckas
                             if (canvasEl) {
-                              const imgData = canvasEl.toDataURL('image/png');
+                              const imgData = canvasEl.toDataURL('image/jpeg', 0.7); // JPEG med 70% kvalitet
                               
                               // Lägg till kontaktinformation överst på första sidan
                               pdf.setFontSize(16);
@@ -5399,22 +5400,22 @@ export default function App() {
                               // 3D-vy - flyttad ner för att ge plats för kontaktinfo
                               const imageYPos = yPos + 10;
                               const imageHeight = 100;
-                              pdf.addImage(imgData, 'PNG', 15, imageYPos, 180, imageHeight);
+                              pdf.addImage(imgData, 'JPEG', 15, imageYPos, 180, imageHeight);
                               pdf.setFontSize(10);
                               pdf.text('3D-vy av montern', 15, imageYPos + imageHeight + 5);
                               
                               pdf.addPage();
-                              pdf.addImage(imgData, 'PNG', 15, 15, 180, 120);
+                              pdf.addImage(imgData, 'JPEG', 15, 15, 180, 120);
                               pdf.text('3D-vy av montern', 15, 140);
                               pdf.addPage();
-                              pdf.addImage(imgData, 'PNG', 15, 15, 180, 120);
+                              pdf.addImage(imgData, 'JPEG', 15, 15, 180, 120);
                               pdf.text('3D-vy av montern', 15, 140);
                             }
                           }
                         } else if (canvasEl) {
                           // Fallback: använd vanlig canvas-bild om CaptureHelper inte finns
                           try {
-                            const imgData = canvasEl.toDataURL('image/png');
+                            const imgData = canvasEl.toDataURL('image/jpeg', 0.7); // JPEG med 70% kvalitet
                             
                             // Lägg till kontaktinformation överst på första sidan
                             pdf.setFontSize(16);
@@ -5454,20 +5455,20 @@ export default function App() {
                             // Lägg till samma vy med olika beskrivningar - första sidan med kontaktinfo
                             const imageYPos = yPos + 10;
                             const imageHeight = 100;
-                            pdf.addImage(imgData, 'PNG', 15, imageYPos, 180, imageHeight);
+                            pdf.addImage(imgData, 'JPEG', 15, imageYPos, 180, imageHeight);
                             pdf.setFontSize(10);
                             pdf.text('3D-vy av montern', 15, imageYPos + imageHeight + 5);
                             
                             pdf.addPage();
-                            pdf.addImage(imgData, 'PNG', 15, 15, 180, 120);
+                            pdf.addImage(imgData, 'JPEG', 15, 15, 180, 120);
                             pdf.text('3D-vy av montern', 15, 140);
                             pdf.addPage();
-                            pdf.addImage(imgData, 'PNG', 15, 15, 180, 120);
+                            pdf.addImage(imgData, 'JPEG', 15, 15, 180, 120);
                             pdf.text('3D-vy av montern', 15, 140);
                           } catch (e) {
                             // If canvas is tainted or toDataURL fails, fallback to html2canvas
                             const cFallback = await html2canvas(canvasEl as HTMLElement, { backgroundColor: null, scale: 1 });
-                            const imgFb = cFallback.toDataURL('image/png');
+                            const imgFb = cFallback.toDataURL('image/jpeg', 0.7); // JPEG med 70% kvalitet
                             
                             // Lägg till kontaktinformation överst på första sidan
                             pdf.setFontSize(16);
@@ -5506,15 +5507,15 @@ export default function App() {
                             
                             const imageYPos = yPos + 10;
                             const imageHeight = 100;
-                            pdf.addImage(imgFb, 'PNG', 15, imageYPos, 180, imageHeight);
+                            pdf.addImage(imgFb, 'JPEG', 15, imageYPos, 180, imageHeight);
                             pdf.setFontSize(10);
                             pdf.text('3D-vy av montern', 15, imageYPos + imageHeight + 5);
                             
                             pdf.addPage();
-                            pdf.addImage(imgFb, 'PNG', 15, 15, 180, 120);
+                            pdf.addImage(imgFb, 'JPEG', 15, 15, 180, 120);
                             pdf.text('3D-vy av montern', 15, 140);
                             pdf.addPage();
-                            pdf.addImage(imgFb, 'PNG', 15, 15, 180, 120);
+                            pdf.addImage(imgFb, 'JPEG', 15, 15, 180, 120);
                             pdf.text('3D-vy av montern', 15, 140);
                           }
                         }
@@ -5662,376 +5663,15 @@ export default function App() {
                           pdf.addImage(imgData, 'PNG', 15, 15, pdfUsableW, imgHeightMm);
                         }
 
-                        // Sida 5: Packlista - Compute packlista and render hidden DOM block to canvas
+                        // Sida 5: Packlista - BORTTAGEN (finns i admin-portalen istället)
+                        /* 
                         pdf.addPage();
                         try {
-                          const floorConfig = floorIndex !== null ? FLOOR_SIZES[floorIndex] : null;
-                          const floorW = floorConfig?.custom ? customFloorWidth : (floorConfig ? floorConfig.width : 0);
-                          const floorD = floorConfig?.custom ? customFloorDepth : (floorConfig ? floorConfig.depth : 0);
-                          const pack = computePacklista(wallShape, floorW, floorD, wallHeight, storages);
-                          // Compute visible shelf brackets (same logic as in live UI) and merge into totals
-                          try {
-                            // For PDF, compute SAM-led as wall length (same as live UI)
-                            const computeSamLedForPdf = () => {
-                              let sum = 0;
-                              if (wallShape === 'straight') sum = floorW;
-                              else if (wallShape === 'l') sum = floorW + floorD;
-                              else if (wallShape === 'u') sum = floorW + (floorD * 2);
-                              return Math.round(sum);
-                            };
-                            const visibleBracketsForPdf = computeSamLedForPdf();
-                            if (visibleBracketsForPdf > 0) {
-                              pack.totals = pack.totals || {};
-                              (pack.totals as any)['SAM-led'] = visibleBracketsForPdf;
-                            }
-                              // Vepa wall areas for PDF
-                              if (graphic === 'vepa') {
-                                pack.totals = pack.totals || {};
-                                if (uploadedImage && floorW > 0) (pack.totals as any)['Vepa bakvägg'] = `${Math.round((floorW * wallHeight) * 10)/10} kvm (${floorW}m × ${wallHeight}m)`;
-                                if ((wallShape === 'l' || wallShape === 'u') && uploadedImageLeft && floorD > 0) (pack.totals as any)['Vepa vänster vägg'] = `${Math.round((floorD * wallHeight) * 10)/10} kvm (${floorD}m × ${wallHeight}m)`;
-                                if (wallShape === 'u' && uploadedImageRight && floorD > 0) (pack.totals as any)['Vepa höger vägg'] = `${Math.round((floorD * wallHeight) * 10)/10} kvm (${floorD}m × ${wallHeight}m)`;
-                              }
-                            // Small items for PDF
-                            if (showEspressoMachine) (pack.totals as any)['Espressomaskin'] = ((pack.totals as any)['Espressomaskin'] || 0) + 1;
-                            if (showFlowerVase) (pack.totals as any)['Blomma'] = ((pack.totals as any)['Blomma'] || 0) + 1;
-                            if (showCandyBowl) (pack.totals as any)['Godiskål'] = ((pack.totals as any)['Godiskål'] || 0) + 1;
-                              // Add TV counts to PDF packlista
-                              if ((tvs || []).length > 0) {
-                                const tvCounts: Record<string, number> = {};
-                                (tvs || []).forEach(tv => {
-                                  const label = TV_SIZES[tv.size]?.label || 'Okänd';
-                                  tvCounts[label] = (tvCounts[label] || 0) + 1;
-                                });
-                                Object.keys(tvCounts).forEach(lbl => {
-                                  pack.totals = pack.totals || {};
-                                  (pack.totals as any)[`TV ${lbl}`] = ((pack.totals as any)[`TV ${lbl}`] || 0) + tvCounts[lbl];
-                                });
-                              }
-                            // Add Matta to pack.totals when a carpet is selected
-                            if (carpetIndex !== 0) {
-                              const selectedCarpet = CARPET_COLORS[carpetIndex];
-                              (pack.totals as any)['Matta'] = `${floorW}×${floorD} ${selectedCarpet.name}`;
-                            }
-                            // Add wall shelf counts to PDF packlista
-                            if ((wallShelves || []).length > 0) {
-                              const shelfCount = (wallShelves || []).length;
-                              pack.totals = pack.totals || {};
-                              (pack.totals as any)['Hyllplan'] = ((pack.totals as any)['Hyllplan'] || 0) + shelfCount;
-                              (pack.totals as any)['Hyllbracket'] = ((pack.totals as any)['Hyllbracket'] || 0) + (shelfCount * 2);
-                            }
-                            // Add speaker counts to PDF packlista
-                            if ((speakers || []).length > 0) {
-                              const sCount = (speakers || []).length;
-                              pack.totals = pack.totals || {};
-                              (pack.totals as any)['Högtalare'] = ((pack.totals as any)['Högtalare'] || 0) + sCount;
-                              (pack.totals as any)['Högtalarstativ'] = ((pack.totals as any)['Högtalarstativ'] || 0) + sCount;
-                            }
-                            // Add clothing rack to PDF packlista when enabled
-                            if (showClothingRacks) {
-                              pack.totals = pack.totals || {};
-                              (pack.totals as any)['Klädhängare'] = ((pack.totals as any)['Klädhängare'] || 0) + 1;
-                            }
-                            // Add Grafik label when chosen
-                            if (graphic && graphic !== 'none') {
-                              const g = GRAPHICS.find(gr => gr.value === graphic);
-                              if (g) (pack.totals as any)['Grafik'] = g.label;
-                            }
-                            // Counters: add disk-related packlista entries for each placed counter
-                            try {
-                              (counters || []).forEach((counter) => {
-                                const cfg = COUNTER_TYPES[counter.type];
-                                if (!cfg) return;
-                                const add = (key: string, n = 1) => { pack.totals = pack.totals || {}; (pack.totals as any)[key] = ((pack.totals as any)[key] || 0) + n; };
-                                const addGrafik = (frameKey: string, n = 1) => {
-                                  const m = frameKey.match(/(\d+,?\d*)x(\d+,?\d*)/);
-                                  if (m) {
-                                    const gx = `${m[1].replace('.', ',')}x${m[2].replace('.', ',')}`;
-                                    add(`Grafik ${gx}`, n);
-                                  }
-                                };
-
-                                if (cfg.type === 'L' || cfg.type === 'L-mirrored') {
-                                  add('Bematrix ram 0,5x2', 4);
-                                  add('Bematrix ram 1,5x1', 1);
-                                  add('Bematrix ram 1x1', 1);
-                                  add('Barskiva 1,5x0,5', 1);
-                                  add('Barskiva 1x0,5', 1);
-                                  add('Lister forex', 4);
-                                  add('Corners', 3);
-                                  add('M8pin', 10);
-                                  add('Special connector', 4);
-                                  addGrafik('Bematrix ram 0,5x2', 4);
-                                  addGrafik('Bematrix ram 1,5x1', 1);
-                                  addGrafik('Bematrix ram 1x1', 1);
-                                } else {
-                                  switch (cfg.width) {
-                                    case 1:
-                                      add('Bematrix ram 0,5x2', 2);
-                                      add('Bematrix ram 1x1', 1);
-                                      add('Barskiva 1x0,5', 1);
-                                      add('Lister forex', 4);
-                                      addGrafik('Bematrix ram 0,5x2', 2);
-                                      addGrafik('Bematrix ram 1x1', 1);
-                                      break;
-                                    case 1.5:
-                                      add('Bematrix ram 0,5x2', 2);
-                                      add('Bematrix ram 1,5x1', 1);
-                                      add('Barskiva 1,5x0,5', 1);
-                                      add('Lister forex', 4);
-                                      add('Corners', 2);
-                                      add('M8pin', 6);
-                                      add('Special connector', 2);
-                                      addGrafik('Bematrix ram 0,5x2', 2);
-                                      addGrafik('Bematrix ram 1,5x1', 1);
-                                      break;
-                                    case 2:
-                                      add('Bematrix ram 0,5x2', 2);
-                                      add('Bematrix ram 2x1', 1);
-                                      add('Barskiva 2x0,5', 1);
-                                      add('Lister forex', 4);
-                                      add('Corners', 2);
-                                      add('M8pin', 6);
-                                      add('Special connector', 2);
-                                      addGrafik('Bematrix ram 0,5x2', 2);
-                                      addGrafik('Bematrix ram 2x1', 1);
-                                      break;
-                                    case 2.5:
-                                      add('Bematrix ram 0,5x2', 2);
-                                      add('Bematrix ram 2,5x1', 1);
-                                      add('Barskiva 2,5x0,5', 1);
-                                      add('Lister forex', 4);
-                                      add('Corners', 2);
-                                      add('M8pin', 6);
-                                      add('Special connector', 2);
-                                      addGrafik('Bematrix ram 0,5x2', 2);
-                                      addGrafik('Bematrix ram 2,5x1', 1);
-                                      break;
-                                    case 3:
-                                      add('Bematrix ram 0,5x2', 2);
-                                      add('Bematrix ram 3x1', 1);
-                                      add('Barskiva 3x0,5', 1);
-                                      add('Lister forex', 4);
-                                      add('Corners', 2);
-                                      add('M8pin', 6);
-                                      add('Special connector', 2);
-                                      addGrafik('Bematrix ram 0,5x2', 2);
-                                      addGrafik('Bematrix ram 3x1', 1);
-                                      break;
-                                    case 3.5:
-                                      add('Bematrix ram 0,5x2', 2);
-                                      add('Bematrix ram 2x1', 1);
-                                      add('Bematrix ram 1,5x1', 1);
-                                      add('Connectors', 2);
-                                      add('Barskiva 3,5x0,5', 1);
-                                      add('Lister forex', 4);
-                                      add('Corners', 2);
-                                      add('M8pin', 6);
-                                      add('Special connector', 2);
-                                      addGrafik('Bematrix ram 0,5x2', 2);
-                                      addGrafik('Bematrix ram 2x1', 1);
-                                      addGrafik('Bematrix ram 1,5x1', 1);
-                                      break;
-                                    case 4:
-                                      add('Bematrix ram 0,5x2', 2);
-                                      add('Bematrix ram 2x1', 2);
-                                      add('Connectors', 2);
-                                      add('Barskiva 4x0,5', 1);
-                                      add('Lister forex', 4);
-                                      add('Corners', 2);
-                                      add('M8pin', 6);
-                                      add('Special connector', 2);
-                                      addGrafik('Bematrix ram 0,5x2', 2);
-                                      addGrafik('Bematrix ram 2x1', 2);
-                                      break;
-                                    default:
-                                      break;
-                                  }
-                                }
-                                // Add two disk innehylla per placed disk (PDF totals)
-                                add('disk innehylla', 2);
-                              });
-                            } catch (e) {
-                              // ignore PDF packlista augmentation errors
-                            }
-                          } catch (e) {
-                            // ignore PDF compute errors
-                          }
-                          // populate hidden element
-                          const packEl = document.getElementById('packlista-hidden');
-                          if (packEl) {
-                            // Minimal Packlista summary: heading + per-frame counts, styled for legibility
-                            packEl.innerHTML = '';
-                            // A4 sizing and base font: Optima 20px (fallback to Arial)
-                            // A4 width in CSS pixels at 96dpi ≈ 794px
-                            packEl.style.width = '794px';
-                            packEl.style.padding = '18px';
-                            packEl.style.boxSizing = 'border-box';
-                            packEl.style.fontFamily = 'Optima, Arial, Helvetica, sans-serif';
-                            packEl.style.fontSize = '12pt';
-                            packEl.style.color = '#000';
-                            packEl.style.background = '#fff';
-
-                            const h1 = document.createElement('h2');
-                            h1.textContent = 'Packlista';
-                            h1.style.margin = '0 0 12px 0';
-                            h1.style.fontSize = '1.6em'; // scales from base 20px -> ~32px
-                            h1.style.fontWeight = '700';
-                            h1.style.fontFamily = 'inherit';
-                            packEl.appendChild(h1);
-
-                            // Subheading for BeMatrix inside a green bordered box
-                            const box = document.createElement('div');
-                            box.style.border = '3px solid #2e8b2e';
-                            box.style.padding = '8px';
-                            // keep box slightly narrower than A4 width to allow margins
-                            box.style.width = '740px';
-                            box.style.margin = '10px auto';
-                            box.style.boxShadow = 'none';
-                            box.style.boxSizing = 'border-box';
-                            box.style.background = '#fff';
-
-                            const sub = document.createElement('div');
-                            sub.textContent = 'BeMatrix';
-                            // Use a readable serif similar to the screenshot
-                            sub.style.fontFamily = 'Optima, Arial, Helvetica, sans-serif';
-                            sub.style.fontSize = '1.2em'; // ~24px
-                            sub.style.fontWeight = '600';
-                            sub.style.margin = '0 0 12px 0';
-                            box.appendChild(sub);
-
-                            // Combined table: frames + misc with a checkbox column (copy of live packlista + boxes)
-                            const totals = (pack && pack.totals) ? pack.totals : {};
-                            const frameKeys = Object.keys(totals).filter(k => k.includes('x')).sort();
-                            const miscKeys = Object.keys(totals).filter(k => !k.includes('x')).sort();
-
-                            // Compact two-column DOM split for predictable PDF layout
-                            const listContainer = document.createElement('div');
-                            listContainer.style.display = 'flex';
-                            listContainer.style.gap = '20px';
-                            listContainer.style.width = '100%';
-                            listContainer.style.boxSizing = 'border-box';
-                            listContainer.style.fontFamily = 'Optima, Arial, Helvetica, sans-serif';
-                            listContainer.style.fontSize = '10pt';
-
-                            const colLeft = document.createElement('div');
-                            const colRight = document.createElement('div');
-                            colLeft.style.width = '50%';
-                            colRight.style.width = '50%';
-                            colLeft.style.verticalAlign = 'top';
-                            colRight.style.verticalAlign = 'top';
-                            colLeft.style.boxSizing = 'border-box';
-                            colRight.style.boxSizing = 'border-box';
-
-                            const makeRowElement = (labelText: string, countText: string) => {
-                              const item = document.createElement('div');
-                              item.style.display = 'flex';
-                              item.style.justifyContent = 'space-between';
-                              item.style.alignItems = 'center';
-                              item.style.padding = '4px 2px';
-                              item.style.breakInside = 'avoid';
-
-                              const left = document.createElement('div');
-                              left.textContent = labelText;
-                              left.style.color = '#222';
-                              left.style.fontSize = '10pt';
-
-                              const rightWrap = document.createElement('div');
-                              rightWrap.style.display = 'flex';
-                              rightWrap.style.alignItems = 'center';
-                              rightWrap.style.gap = '8px';
-
-                              const count = document.createElement('div');
-                              count.textContent = countText;
-                              count.style.fontWeight = '700';
-                              count.style.color = '#007acc';
-                              count.style.fontSize = '10pt';
-
-                              const cb = document.createElement('input');
-                              cb.type = 'checkbox';
-                              cb.style.width = '14px';
-                              cb.style.height = '14px';
-
-                              rightWrap.appendChild(count);
-                              rightWrap.appendChild(cb);
-
-                              item.appendChild(left);
-                              item.appendChild(rightWrap);
-                              return item;
-                            };
-
-                            // Build flat list of items in same order as live packlista
-                            const allItems: Array<{label: string, count: string}> = [];
-                            for (const k of frameKeys) {
-                              const v = (totals as any)[k];
-                              if (!v || v <= 0) continue;
-                              allItems.push({ label: k.replace(/\./g, ','), count: `${v}st` });
-                            }
-                            for (const mk of miscKeys) {
-                              const val = (totals as any)[mk];
-                              if (val === undefined || val === null) continue;
-                              let labelText = mk.replace(/_/g, ' ');
-                              if (mk === 'Grafik') labelText = 'Grafik';
-                              if (mk === 'Matta') labelText = 'Matta';
-                              if (mk === 'SAM-led') labelText = 'SAM-led';
-                              allItems.push({ label: labelText, count: (typeof val === 'number') ? `${val}st` : `${val}` });
-                            }
-
-                            // Split evenly into two columns
-                            const mid = Math.ceil(allItems.length / 2);
-                            const leftItems = allItems.slice(0, mid);
-                            const rightItems = allItems.slice(mid);
-
-                            if (leftItems.length === 0 && rightItems.length === 0) {
-                              const empty = document.createElement('div');
-                              empty.textContent = 'Inga poster';
-                              empty.style.padding = '6px 0';
-                              colLeft.appendChild(empty);
-                            } else {
-                              leftItems.forEach(it => colLeft.appendChild(makeRowElement(it.label, it.count)));
-                              rightItems.forEach(it => colRight.appendChild(makeRowElement(it.label, it.count)));
-                            }
-
-                            listContainer.appendChild(colLeft);
-                            listContainer.appendChild(colRight);
-                            box.appendChild(listContainer);
-                            packEl.appendChild(box);
-                            const cPack = await html2canvas(packEl as HTMLElement, { backgroundColor: '#ffffff', scale: 2 });
-                            // Slice canvas into page-sized chunks and add each as a PDF page
-                            try {
-                              const canvas = cPack as HTMLCanvasElement;
-                              const imgW = canvas.width; // px
-                              const imgH = canvas.height; // px
-                              // PDF settings: A4 portrait with 15mm margins => usable width 180mm, height 297-30=267mm
-                              const pdfUsableW = 180; // mm
-                              const pdfUsableH = 267; // mm
-                              // Calculate slice height in pixels that corresponds to pdfUsableH when scaled to pdfUsableW
-                              const sliceHpx = Math.floor(imgW * (pdfUsableH / pdfUsableW));
-                              let sy = 0;
-                              let first = true;
-                              while (sy < imgH) {
-                                const h = Math.min(sliceHpx, imgH - sy);
-                                const sliceCanvas = document.createElement('canvas');
-                                sliceCanvas.width = imgW;
-                                sliceCanvas.height = h;
-                                const ctx = sliceCanvas.getContext('2d');
-                                if (ctx) ctx.drawImage(canvas, 0, sy, imgW, h, 0, 0, imgW, h);
-                                const imgData = sliceCanvas.toDataURL('image/png');
-                                // height in mm given width pdfUsableW
-                                const imgHeightMm = (h / imgW) * pdfUsableW;
-                                if (!first) pdf.addPage();
-                                pdf.addImage(imgData, 'PNG', 15, 15, pdfUsableW, imgHeightMm);
-                                first = false;
-                                sy += h;
-                              }
-                            } catch (e) {
-                              // fallback to single image
-                              const imgPack = cPack.toDataURL('image/png');
-                              pdf.addImage(imgPack, 'PNG', 15, 15, 180, 250 * 0.6);
-                            }
-                          }
+                          ... packlista kod borttagen ...
                         } catch (e) {
                           console.warn('Could not render packlista', e);
                         }
+                        */
 
                         // Lägg till juridisk sida med villkor
                         pdf.addPage();
@@ -6198,7 +5838,7 @@ export default function App() {
                                 // Montervy
                                 const imageYPos = yPos + 10;
                                 const imageHeight = 100;
-                                pdf.addImage(views[0], 'PNG', 15, imageYPos, 180, imageHeight);
+                                pdf.addImage(views[0], 'JPEG', 15, imageYPos, 180, imageHeight);
                                 addWatermark(pdf);
                                 pdf.setFontSize(10);
                                 pdf.text('Planvy - ovanifrån', 15, imageYPos + imageHeight + 5);
@@ -6207,7 +5847,7 @@ export default function App() {
                               // Sida 2: Perspektivvy 
                               if (views[1]) {
                                 pdf.addPage();
-                                pdf.addImage(views[1], 'PNG', 15, 15, 180, 120);
+                                pdf.addImage(views[1], 'JPEG', 15, 15, 180, 120);
                                 addWatermark(pdf);
                                 pdf.setFontSize(10);
                                 pdf.text('Perspektivvy', 15, 140);
@@ -6216,7 +5856,7 @@ export default function App() {
                               // Sida 3: Helvy från andra sidan
                               if (views[2]) {
                                 pdf.addPage();
-                                pdf.addImage(views[2], 'PNG', 15, 15, 180, 120);
+                                pdf.addImage(views[2], 'JPEG', 15, 15, 180, 120);
                                 addWatermark(pdf);
                                 pdf.setFontSize(10);
                                 pdf.text('Helvy', 15, 140);
@@ -6226,7 +5866,7 @@ export default function App() {
                               console.warn('Kunde inte fånga olika vyer, använder fallback', e);
                               // Fallback: använd canvas direkt
                               if (canvasEl) {
-                                const imgData = canvasEl.toDataURL('image/png');
+                                const imgData = canvasEl.toDataURL('image/jpeg', 0.7); // JPEG med 70% kvalitet
                                 
                                 pdf.setFontSize(16);
                                 pdf.setTextColor(40, 62, 80);
@@ -6263,7 +5903,7 @@ export default function App() {
                                 
                                 const imageYPos = yPos + 10;
                                 const imageHeight = 100;
-                                pdf.addImage(imgData, 'PNG', 15, imageYPos, 180, imageHeight);
+                                pdf.addImage(imgData, 'JPEG', 15, imageYPos, 180, imageHeight);
                                 pdf.setFontSize(10);
                                 pdf.text('3D-vy av montern', 15, imageYPos + imageHeight + 5);
                               }
@@ -6441,6 +6081,28 @@ export default function App() {
                                 if ((wallShape === 'l' || wallShape === 'u') && uploadedImageLeft && floorD > 0) (pack.totals as any)['Vepa vänster vägg'] = `${Math.round((floorD * wallHeight) * 10)/10} kvm (${floorD}m × ${wallHeight}m)`;
                                 if (wallShape === 'u' && uploadedImageRight && floorD > 0) (pack.totals as any)['Vepa höger vägg'] = `${Math.round((floorD * wallHeight) * 10)/10} kvm (${floorD}m × ${wallHeight}m)`;
                               }
+                              
+                              // Forex väggområden (main walls)
+                              if (graphic === 'forex') {
+                                pack.totals = pack.totals || {};
+                                if (vepaWallDesigns.length > 0) {
+                                  vepaWallDesigns.forEach((design) => {
+                                    const area = Math.round((design.widthMM / 1000) * (design.heightMM / 1000) * 10) / 10;
+                                    (pack.totals as any)[`Forex ${design.wallLabel}`] = `${area} kvm (${Math.round(design.widthMM/100)/10}m × ${Math.round(design.heightMM/100)/10}m)`;
+                                  });
+                                }
+                              }
+                              
+                              // Förråd med Vepa/Forex tryck
+                              storageDesigns.forEach((storageData, storageId) => {
+                                const printType = storageData.printType;
+                                const printLabel = printType === 'vepa' ? 'Vepa' : 'Forex';
+                                storageData.designs.forEach((design) => {
+                                  const area = Math.round((design.widthMM / 1000) * (design.heightMM / 1000) * 10) / 10;
+                                  const label = `${printLabel} Förråd${storageId} ${design.wallLabel}`;
+                                  (pack.totals as any)[label] = `${area} kvm (${Math.round(design.widthMM/100)/10}m × ${Math.round(design.heightMM/100)/10}m)`;
+                                });
+                              });
                               
                               // Småsaker
                               if (showEspressoMachine) (pack.totals as any)['Espressomaskin'] = ((pack.totals as any)['Espressomaskin'] || 0) + 1;
@@ -6738,6 +6400,107 @@ Monterhyra Beställningssystem
                             };
                             
                             // Förbered beställningsdata
+                            // Beräkna detaljerad packlista
+                            const floorConfig = floorIndex !== null ? FLOOR_SIZES[floorIndex] : null;
+                            const floorW = floorConfig?.custom ? customFloorWidth : (floorConfig ? floorConfig.width : 0);
+                            const floorD = floorConfig?.custom ? customFloorDepth : (floorConfig ? floorConfig.depth : 0);
+                            const packlistaData = computePacklista(wallShape, floorW, floorD, wallHeight, storages);
+                            
+                            // FÖRBÄTTRA packlistaData med alla saknade artiklar (samma som email PDF)
+                            try {
+                              // SAM-led
+                              const computeSamLed = () => {
+                                let sum = 0;
+                                if (wallShape === 'straight') sum = floorW;
+                                else if (wallShape === 'l') sum = floorW + floorD;
+                                else if (wallShape === 'u') sum = floorW + (floorD * 2);
+                                return Math.round(sum);
+                              };
+                              const samLedCount = computeSamLed();
+                              if (samLedCount > 0) {
+                                packlistaData.totals = packlistaData.totals || {};
+                                (packlistaData.totals as any)['SAM-led'] = samLedCount;
+                              }
+                              
+                              // Vepa väggområden (main walls)
+                              if (graphic === 'vepa') {
+                                packlistaData.totals = packlistaData.totals || {};
+                                if (uploadedImage && floorW > 0) (packlistaData.totals as any)['Vepa bakvägg'] = `${Math.round((floorW * wallHeight) * 10)/10} kvm (${floorW}m × ${wallHeight}m)`;
+                                if ((wallShape === 'l' || wallShape === 'u') && uploadedImageLeft && floorD > 0) (packlistaData.totals as any)['Vepa vänster vägg'] = `${Math.round((floorD * wallHeight) * 10)/10} kvm (${floorD}m × ${wallHeight}m)`;
+                                if (wallShape === 'u' && uploadedImageRight && floorD > 0) (packlistaData.totals as any)['Vepa höger vägg'] = `${Math.round((floorD * wallHeight) * 10)/10} kvm (${floorD}m × ${wallHeight}m)`;
+                              }
+                              
+                              // Forex väggområden (main walls)
+                              if (graphic === 'forex') {
+                                packlistaData.totals = packlistaData.totals || {};
+                                if (vepaWallDesigns.length > 0) {
+                                  vepaWallDesigns.forEach((design) => {
+                                    const area = Math.round((design.widthMM / 1000) * (design.heightMM / 1000) * 10) / 10;
+                                    (packlistaData.totals as any)[`Forex ${design.wallLabel}`] = `${area} kvm (${Math.round(design.widthMM/100)/10}m × ${Math.round(design.heightMM/100)/10}m)`;
+                                  });
+                                }
+                              }
+                              
+                              // Förråd med Vepa/Forex tryck
+                              storageDesigns.forEach((storageData, storageId) => {
+                                const printType = storageData.printType;
+                                const printLabel = printType === 'vepa' ? 'Vepa' : 'Forex';
+                                storageData.designs.forEach((design) => {
+                                  const area = Math.round((design.widthMM / 1000) * (design.heightMM / 1000) * 10) / 10;
+                                  const label = `${printLabel} Förråd${storageId} ${design.wallLabel}`;
+                                  (packlistaData.totals as any)[label] = `${area} kvm (${Math.round(design.widthMM/100)/10}m × ${Math.round(design.heightMM/100)/10}m)`;
+                                });
+                              });
+                              
+                              // Småsaker
+                              if (showEspressoMachine) (packlistaData.totals as any)['Espressomaskin'] = ((packlistaData.totals as any)['Espressomaskin'] || 0) + 1;
+                              if (showFlowerVase) (packlistaData.totals as any)['Blomma'] = ((packlistaData.totals as any)['Blomma'] || 0) + 1;
+                              if (showCandyBowl) (packlistaData.totals as any)['Godiskål'] = ((packlistaData.totals as any)['Godiskål'] || 0) + 1;
+                              
+                              // TV-räkningar
+                              if ((tvs || []).length > 0) {
+                                const tvCounts: Record<string, number> = {};
+                                (tvs || []).forEach(tv => {
+                                  const label = TV_SIZES[tv.size]?.label || 'Okänd';
+                                  tvCounts[label] = (tvCounts[label] || 0) + 1;
+                                });
+                                Object.keys(tvCounts).forEach(lbl => {
+                                  packlistaData.totals = packlistaData.totals || {};
+                                  (packlistaData.totals as any)[`TV ${lbl}`] = ((packlistaData.totals as any)[`TV ${lbl}`] || 0) + tvCounts[lbl];
+                                });
+                              }
+                              
+                              // Matta
+                              if (carpetIndex !== 0) {
+                                const selectedCarpet = CARPET_COLORS[carpetIndex];
+                                (packlistaData.totals as any)['Matta'] = `${floorW}×${floorD} ${selectedCarpet.name}`;
+                              }
+                              
+                              // Väggyhyllor och högtalare
+                              if ((wallShelves || []).length > 0) {
+                                const shelfCount = (wallShelves || []).length;
+                                packlistaData.totals = packlistaData.totals || {};
+                                (packlistaData.totals as any)['Hyllplan'] = ((packlistaData.totals as any)['Hyllplan'] || 0) + shelfCount;
+                                (packlistaData.totals as any)['Hyllbracket'] = ((packlistaData.totals as any)['Hyllbracket'] || 0) + (shelfCount * 2);
+                              }
+                              if ((speakers || []).length > 0) {
+                                const sCount = (speakers || []).length;
+                                packlistaData.totals = packlistaData.totals || {};
+                                (packlistaData.totals as any)['Högtalare'] = ((packlistaData.totals as any)['Högtalare'] || 0) + sCount;
+                                (packlistaData.totals as any)['Högtalarstativ'] = ((packlistaData.totals as any)['Högtalarstativ'] || 0) + sCount;
+                              }
+                              if (showClothingRacks) {
+                                packlistaData.totals = packlistaData.totals || {};
+                                (packlistaData.totals as any)['Klädhängare'] = ((packlistaData.totals as any)['Klädhängare'] || 0) + 1;
+                              }
+                              if (graphic && graphic !== 'none') {
+                                const g = GRAPHICS.find(gr => gr.value === graphic);
+                                if (g) (packlistaData.totals as any)['Grafik'] = g.label;
+                              }
+                            } catch (e) {
+                              console.error('Fel vid förbättring av packlista:', e);
+                            }
+                            
                             const orderData: OrderData = {
                               floorSize: floorIndex !== null ? FLOOR_SIZES[floorIndex] : null,
                               wallConfig: {
@@ -6750,7 +6513,8 @@ Monterhyra Beställningssystem
                               plants: [],
                               decorations: [],
                               storages: [],
-                              totalPrice: totalCost
+                              totalPrice: totalCost,
+                              packlista: packlistaData // Spara hela den förbättrade packlistan
                             };
                             
                             // Samla alla PDF-filer

@@ -23,6 +23,7 @@ export interface OrderData {
   decorations: any[];
   storages: any[];
   totalPrice: number;
+  packlista?: any; // Detaljerad BeMatrix packlista med alla ramar, diskar, corners osv.
 }
 
 export interface Order {

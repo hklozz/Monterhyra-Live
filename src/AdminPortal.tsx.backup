@@ -87,204 +87,6 @@ const AdminPortal: React.FC = () => {
     }
   };
 
-  const showPackingList = (order: Order) => {
-    // Generera en komplett följesedel/packlista PDF med ALL information
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = 210;
-    const margin = 12;
-    const contentWidth = pageWidth - margin * 2;
-    
-    let yPos = 15;
-    
-    // Rubrik
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('FÖLJESEDEL / PACKLISTA', margin, yPos);
-    
-    yPos += 10;
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`Order: ${order.id}`, margin, yPos);
-    yPos += 5;
-    pdf.text(`Kund: ${order.customerInfo.name}`, margin, yPos);
-    yPos += 5;
-    pdf.text(`Företag: ${order.customerInfo.company}`, margin, yPos);
-    yPos += 5;
-    pdf.text(`Event: ${order.customerInfo.eventDate}`, margin, yPos);
-    yPos += 5;
-    pdf.text(`Leveransadress: ${order.customerInfo.deliveryAddress}`, margin, yPos);
-    
-    yPos += 10;
-    
-    if (!order.orderData.packlista || !order.orderData.packlista.totals) {
-      pdf.text('Ingen packlistdata tillgänglig', margin, yPos);
-      pdf.save(`Följesedel_${order.id}.pdf`);
-      return;
-    }
-    
-    const totals = order.orderData.packlista.totals;
-    
-    // Hjälpfunktion för att lägga till en sektion
-    const addSection = (title: string, items: Array<{name: string, value: any}>, color: [number, number, number] = [255, 165, 0]) => {
-      if (items.length === 0) return;
-      
-      // Kolla om vi behöver ny sida
-      if (yPos > 250) {
-        pdf.addPage();
-        yPos = 15;
-      }
-      
-      // Sektion header
-      pdf.setFillColor(...color);
-      pdf.rect(margin, yPos, contentWidth, 8, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(12);
-      pdf.text(title, margin + 3, yPos + 6);
-      pdf.setTextColor(0, 0, 0);
-      
-      yPos += 12;
-      
-      // Kolumnrubriker
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(9);
-      pdf.text('Beskrivning', margin + 3, yPos);
-      pdf.text('Antal/Storlek', margin + contentWidth - 60, yPos);
-      pdf.text('Best.', margin + contentWidth - 30, yPos);
-      pdf.text('Lev.', margin + contentWidth - 18, yPos);
-      pdf.text('Åter', margin + contentWidth - 8, yPos);
-      
-      yPos += 3;
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 6;
-      
-      // Lista items
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(8);
-      
-      items.forEach(item => {
-        if (yPos > 270) {
-          pdf.addPage();
-          yPos = 15;
-        }
-        
-        pdf.text(item.name, margin + 3, yPos);
-        pdf.text(String(item.value), margin + contentWidth - 60, yPos);
-        
-        // Rita checkbox-rutor för Best., Lev., Åter (lite större och bättre placerade)
-        pdf.rect(margin + contentWidth - 32, yPos - 2.5, 4, 4);
-        pdf.rect(margin + contentWidth - 20, yPos - 2.5, 4, 4);
-        pdf.rect(margin + contentWidth - 10, yPos - 2.5, 4, 4);
-        
-        yPos += 7.5;
-      });
-      
-      yPos += 3;
-      pdf.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 8;
-    };
-    
-    // Kategorisera alla items från totals
-    const beMatrixRamar: Array<{name: string, value: any}> = [];
-    const beMatrixTillbehor: Array<{name: string, value: any}> = [];
-    const countersItems: Array<{name: string, value: any}> = [];
-    const storageItems: Array<{name: string, value: any}> = [];
-    const vepaForexItems: Array<{name: string, value: any}> = [];
-    const furnitureItems: Array<{name: string, value: any}> = [];
-    const plantItems: Array<{name: string, value: any}> = [];
-    const techItems: Array<{name: string, value: any}> = [];
-    const miscItems: Array<{name: string, value: any}> = [];
-    
-    Object.keys(totals).forEach(key => {
-      const value = totals[key];
-      if (value === undefined || value === null || value === 0 || value === '') return;
-      
-      const displayKey = key.replace(/\./g, ',').replace('Bematrix ram ', 'BeMatrix ');
-      
-      // Kategorisera
-      if (key.includes('Bematrix ram') || key.includes('BeMatrix')) {
-        beMatrixRamar.push({ name: displayKey, value });
-      } else if (key.includes('Corners') || key.includes('Connectors') || key.includes('M8pin') || key.includes('Special connector')) {
-        beMatrixTillbehor.push({ name: key, value });
-      } else if (key.includes('Counter') || key.includes('Barskiva') || key.includes('M8 pin (disk)') || key.includes('Counter grafik')) {
-        countersItems.push({ name: key, value });
-      } else if (key.includes('Förråd') && !key.includes('Vepa') && !key.includes('Forex')) {
-        storageItems.push({ name: key, value });
-      } else if (key.includes('Vepa') || key.includes('Forex') || key.includes('Hyrgrafik')) {
-        vepaForexItems.push({ name: key, value });
-      } else if (key.includes('TV ') || key.includes('SAM-led') || key.includes('Högtalare') || key.includes('Högtalarstativ') || key.includes('Klädhängare')) {
-        techItems.push({ name: key, value });
-      } else if (key.includes('Fåtölj') || key.includes('Soffa') || key.includes('Barbord') || key.includes('Barstol') || key.includes('Sidobord') || key.includes('Pall')) {
-        furnitureItems.push({ name: key, value });
-      } else if (key.includes('Växt') || key.includes('Bambu') || key.includes('Lavendel') || key.includes('Kaktus') || key.includes('Monstera') || key.includes('Sansevieria') || key.includes('Palmlilja') || key.includes('Rosmarin') || key.includes('Olivträd') || key.includes('Dracaena') || key.includes('Ficus')) {
-        plantItems.push({ name: key, value });
-      } else if (key.includes('Hyllplan') || key.includes('Hyllbracket') || key.includes('Matta') || key.includes('Espressomaskin') || key.includes('Blomma') || key.includes('Godiskål') || key.includes('Grafik')) {
-        miscItems.push({ name: key, value });
-      } else {
-        miscItems.push({ name: key, value });
-      }
-    });
-    
-    // Material och verktyg - alltid med
-    const materialVerktyg: Array<{name: string, value: any}> = [
-      { name: 'bM Acc väska', value: 1 },
-      { name: 'Montagehandskar', value: 2 },
-      { name: 'Vita handskar', value: 2 },
-      { name: 'Spännremmar', value: 10 },
-      { name: 'Gaffatejp Svart + vit', value: '1+1' },
-      { name: 'Issotejp Svart + grå', value: '1+1' },
-      { name: 'Rengöringsspray', value: 1 },
-      { name: 'Trasa', value: 1 },
-      { name: 'Buntband vita/svarta', value: '10/10' },
-      { name: 'Stege', value: 2 },
-      { name: 'Skruvlåda', value: 1 },
-      { name: 'Bult & mutterlåda', value: 1 },
-      { name: 'Kardborre Ho + Ha', value: '1+1' },
-      { name: 'Dubbelhäft smal', value: 1 },
-      { name: 'Dubbelhäft bred', value: 1 },
-      { name: 'Högtalare', value: 1 },
-      { name: 'Sopborste', value: 1 },
-      { name: 'Packtejp', value: 2 },
-      { name: 'Vitt spännband m.m', value: 1 },
-      { name: 'Sträckfilm', value: 1 },
-      { name: 'Dammsugare', value: 1 },
-      { name: 'Verktygsväska', value: 1 },
-      { name: 'Skruvdragare', value: 1 },
-      { name: 'Bitssats', value: 1 }
-    ];
-    
-    // Lägg till alla sektioner
-    addSection('BeMatrix Ramar', beMatrixRamar, [255, 165, 0]);
-    addSection('BeMatrix Tillbehör (Connectors, Corners, etc.)', beMatrixTillbehor, [255, 165, 0]);
-    addSection('Diskar & Counters', countersItems, [70, 130, 180]);
-    addSection('Förråd', storageItems, [100, 149, 237]);
-    addSection('Tryck (Vepa/Forex/Hyrgrafik)', vepaForexItems, [255, 99, 71]);
-    addSection('Teknik & Belysning', techItems, [148, 0, 211]);
-    addSection('Möbler', furnitureItems, [218, 165, 32]);
-    addSection('Växter', plantItems, [46, 139, 87]);
-    addSection('Övrigt', miscItems, [169, 169, 169]);
-    addSection('Material och verktyg', materialVerktyg, [220, 20, 60]);
-    
-    // Anteckningar sektion
-    if (yPos > 260) {
-      pdf.addPage();
-      yPos = 15;
-    }
-    yPos += 10;
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(11);
-    pdf.text('Anteckningar:', margin, yPos);
-    yPos += 5;
-    pdf.setDrawColor(150, 150, 150);
-    for (let i = 0; i < 4; i++) {
-      pdf.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 7;
-    }
-    
-    pdf.save(`Följesedel_${order.id}.pdf`);
-  };
-
   const deleteOrder = (orderId: string) => {
     if (window.confirm('Är du säker på att du vill ta bort denna beställning?')) {
       const updatedOrders = orders.filter(order => order.id !== orderId);
@@ -503,7 +305,7 @@ const AdminPortal: React.FC = () => {
                       {formatDate(order.timestamp)}
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       onClick={() => downloadZip(order.id)}
                       style={{
@@ -516,21 +318,7 @@ const AdminPortal: React.FC = () => {
                         fontSize: '14px'
                       }}
                     >
-                      📦 Ladda ner tryckfiler
-                    </button>
-                    <button
-                      onClick={() => showPackingList(order)}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#3498db',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                      }}
-                    >
-                      📋 Följesedel
+                      Ladda ner ZIP
                     </button>
                     <button
                       onClick={() => deleteOrder(order.id)}
@@ -544,7 +332,7 @@ const AdminPortal: React.FC = () => {
                         fontSize: '14px'
                       }}
                     >
-                      🗑️ Ta bort
+                      Ta bort
                     </button>
                   </div>
                 </div>
