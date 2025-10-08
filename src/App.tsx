@@ -8502,7 +8502,7 @@ Monterhyra Beställningssystem
                 {renderLights('right')}
                 
                 {/* Truss-strukturer */}
-                {selectedTrussType > 0 && (() => {
+                {selectedTrussType > 0 && floorIndex !== null && (() => {
                   const trussConfig = TRUSS_TYPES[selectedTrussType];
                   const floor = FLOOR_SIZES[floorIndex];
                   
