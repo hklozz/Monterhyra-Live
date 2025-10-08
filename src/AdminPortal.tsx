@@ -1231,7 +1231,8 @@ const AdminPortal: React.FC = () => {
                 )}
               </div>
 
-              {/* Packlista */}
+              {/* Packlista - DOLD */}
+              {false && (
               <div style={{
                 backgroundColor: '#f8f9fa',
                 padding: '20px',
@@ -1418,6 +1419,7 @@ const AdminPortal: React.FC = () => {
                   })()}
                 </div>
               </div>
+              )}
             </div>
           </div>
         )}

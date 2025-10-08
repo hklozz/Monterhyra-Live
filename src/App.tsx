@@ -7678,7 +7678,7 @@ Monterhyra Beställningssystem
                           setNextFurnitureId(prev => prev + 1);
                         }}
                       >
-                        <planeGeometry args={[0.4, 0.4]} />
+                        <planeGeometry args={[0.2, 0.2]} />
                         <meshBasicMaterial color="#4169E1" opacity={0.4} transparent />
                       </mesh>
                     );
