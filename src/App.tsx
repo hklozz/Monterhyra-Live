@@ -6594,6 +6594,54 @@ Monterhyra Beställningssystem
                                 const g = GRAPHICS.find(gr => gr.value === graphic);
                                 if (g) (packlistaData.totals as any)['Grafik'] = g.label;
                               }
+                              
+                              // Växter
+                              if ((plants || []).length > 0) {
+                                const plantCounts: Record<string, number> = {};
+                                (plants || []).forEach(p => {
+                                  const label = PLANT_TYPES[p.type]?.label || 'Okänd';
+                                  plantCounts[label] = (plantCounts[label] || 0) + 1;
+                                });
+                                Object.keys(plantCounts).forEach(lbl => {
+                                  (packlistaData.totals as any)[lbl] = ((packlistaData.totals as any)[lbl] || 0) + plantCounts[lbl];
+                                });
+                              }
+                              
+                              // Möbler
+                              if ((furniture || []).length > 0) {
+                                const furnCounts: Record<string, number> = {};
+                                (furniture || []).forEach(f => {
+                                  const label = FURNITURE_TYPES[f.type]?.label || 'Okänd';
+                                  furnCounts[label] = (furnCounts[label] || 0) + 1;
+                                });
+                                Object.keys(furnCounts).forEach(lbl => {
+                                  (packlistaData.totals as any)[lbl] = ((packlistaData.totals as any)[lbl] || 0) + furnCounts[lbl];
+                                });
+                              }
+                              
+                              // Truss-delar
+                              if (selectedTrussType > 0) {
+                                const sel = TRUSS_TYPES[selectedTrussType];
+                                if (sel.type === 'hanging-square') {
+                                  (packlistaData.totals as any)['Truss 2m'] = ((packlistaData.totals as any)['Truss 2m'] || 0) + 4;
+                                  (packlistaData.totals as any)['Vajer upphängning'] = ((packlistaData.totals as any)['Vajer upphängning'] || 0) + 4;
+                                  (packlistaData.totals as any)['Trusslampa'] = ((packlistaData.totals as any)['Trusslampa'] || 0) + 4;
+                                } else if (sel.type === 'hanging-round') {
+                                  (packlistaData.totals as any)['Truss rund 90grader'] = ((packlistaData.totals as any)['Truss rund 90grader'] || 0) + 4;
+                                  (packlistaData.totals as any)['Vajer upphängning'] = ((packlistaData.totals as any)['Vajer upphängning'] || 0) + 4;
+                                  (packlistaData.totals as any)['Trusslampa'] = ((packlistaData.totals as any)['Trusslampa'] || 0) + 6;
+                                } else if (sel.type === 'front-straight') {
+                                  const frontWidth = floorIndex !== null ? (FLOOR_SIZES[floorIndex].custom ? customFloorWidth : FLOOR_SIZES[floorIndex].width) : 0;
+                                  const twoMeterCount = Math.floor(frontWidth / 2);
+                                  const remainder = frontWidth - (twoMeterCount * 2);
+                                  const oneMeterCount = Math.round(remainder);
+                                  if (twoMeterCount > 0) (packlistaData.totals as any)['Truss 2m'] = ((packlistaData.totals as any)['Truss 2m'] || 0) + twoMeterCount;
+                                  if (oneMeterCount > 0) (packlistaData.totals as any)['Truss 1m'] = ((packlistaData.totals as any)['Truss 1m'] || 0) + oneMeterCount;
+                                  (packlistaData.totals as any)['Vajer upphängning'] = ((packlistaData.totals as any)['Vajer upphängning'] || 0) + 4;
+                                  const lampCount = Math.round(frontWidth);
+                                  if (lampCount > 0) (packlistaData.totals as any)['Trusslampa'] = ((packlistaData.totals as any)['Trusslampa'] || 0) + lampCount;
+                                }
+                              }
                             } catch (e) {
                               console.error('Fel vid förbättring av packlista:', e);
                             }
