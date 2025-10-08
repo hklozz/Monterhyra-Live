@@ -8516,7 +8516,7 @@ Monterhyra Beställningssystem
                     return Array.from({length: numSegments}).map((_, i) => {
                       const segLength = i === numSegments - 1 ? trussLength - (numSegments - 1) : 1;
                       const posX = -trussLength/2 + i + segLength/2;
-                      const posZ = floor.depth/2 + 0.2; // Lite utanför framkanten
+                      const posZ = floor.depth/2; // På framkanten av montern
                       
                       return (
                         <group key={`truss-front-${i}`}>
@@ -8548,13 +8548,13 @@ Monterhyra Beställningssystem
                             const lightPosX = posX + (-segLength/2 + lightIndex + 0.5);
                             return (
                               <group key={`light-${lightIndex}`}>
-                                <mesh position={[lightPosX, trussHeight - trussConfig.height/2 - 0.15, posZ - trussConfig.width/2 - 0.05]}>
+                                <mesh position={[lightPosX, trussHeight - trussConfig.height/2 - 0.15, posZ - trussConfig.width/2]}>
                                   <cylinderGeometry args={[0.08, 0.12, 0.2, 12]} />
                                   <meshStandardMaterial color="#333333" roughness={0.4} metalness={0.6} />
                                 </mesh>
                                 <spotLight
-                                  position={[lightPosX, trussHeight - trussConfig.height/2 - 0.25, posZ - trussConfig.width/2 - 0.05]}
-                                  target-position={[lightPosX, 0, posZ - 2]}
+                                  position={[lightPosX, trussHeight - trussConfig.height/2 - 0.25, posZ - trussConfig.width/2]}
+                                  target-position={[lightPosX, 0, posZ - 1]}
                                   intensity={0.8}
                                   angle={Math.PI / 2.5}
                                   penumbra={0.7}
@@ -8563,7 +8563,7 @@ Monterhyra Beställningssystem
                                   decay={0.8}
                                 />
                                 <pointLight
-                                  position={[lightPosX, trussHeight - trussConfig.height/2 - 0.25, posZ - trussConfig.width/2 - 0.05]}
+                                  position={[lightPosX, trussHeight - trussConfig.height/2 - 0.25, posZ - trussConfig.width/2]}
                                   intensity={0.4}
                                   color="#ffffff"
                                   distance={6}
