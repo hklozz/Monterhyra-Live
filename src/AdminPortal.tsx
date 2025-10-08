@@ -190,7 +190,7 @@ const AdminPortal: React.FC = () => {
       console.log('🌿 Plants:', order.orderData?.plants);
       console.log('🎨 Graphic:', order.orderData);
       
-      // Kategorisera alla items
+      // Kategorisera alla items från packlistan (alla items finns redan i packlista.totals från floating packlist logic)
       const categorized: {
         tv: Array<[string, any]>;
         disk: Array<[string, any]>;
@@ -209,82 +209,58 @@ const AdminPortal: React.FC = () => {
         ovrigt: []
       };
       
-      // Lägg till TVs från orderData (inte packlistan)
-      if (order.orderData?.tvs && Array.isArray(order.orderData.tvs)) {
-        const tvCounts: Record<string, number> = {};
-        order.orderData.tvs.forEach((tv: any) => {
-          const size = tv.size || 'unknown';
-          tvCounts[size] = (tvCounts[size] || 0) + 1;
-        });
-        Object.entries(tvCounts).forEach(([size, count]) => {
-          categorized.tv.push([`TV ${size}"`, count]);
-        });
-      }
-      
-      // Lägg till Diskar från orderData
-      if (order.orderData?.counters && Array.isArray(order.orderData.counters)) {
-        const counterCounts: Record<string, number> = {};
-        order.orderData.counters.forEach((counter: any) => {
-          const type = counter.type || 'unknown';
-          counterCounts[type] = (counterCounts[type] || 0) + 1;
-        });
-        Object.entries(counterCounts).forEach(([type, count]) => {
-          categorized.disk.push([`Disk ${type}`, count]);
-        });
-      }
-      
-      // Lägg till Möbler från orderData
-      if (order.orderData?.furniture && Array.isArray(order.orderData.furniture)) {
-        const furnitureCounts: Record<string, number> = {};
-        order.orderData.furniture.forEach((item: any) => {
-          const type = item.type || 'unknown';
-          furnitureCounts[type] = (furnitureCounts[type] || 0) + 1;
-        });
-        Object.entries(furnitureCounts).forEach(([type, count]) => {
-          categorized.moblerVaxter.push([type, count]);
-        });
-      }
-      
-      // Lägg till Växter från orderData
-      if (order.orderData?.plants && Array.isArray(order.orderData.plants)) {
-        const plantCounts: Record<string, number> = {};
-        order.orderData.plants.forEach((item: any) => {
-          const type = item.type || 'unknown';
-          plantCounts[type] = (plantCounts[type] || 0) + 1;
-        });
-        Object.entries(plantCounts).forEach(([type, count]) => {
-          categorized.moblerVaxter.push([type, count]);
-        });
-      }
-      
       // Gå igenom alla items i packlistan och kategorisera
       Object.entries(packlista).forEach(([key, value]: [string, any]) => {
-        // Om value är ett number, konvertera till quantity-objekt
-        const quantity = typeof value === 'number' ? value : (value?.quantity || 0);
-        if (!quantity || quantity <= 0) return;
+        // Hantera olika typer av värden (nummer, sträng, objekt)
+        let quantity: number | string = 0;
+        let displayValue: string | number = 0;
+        
+        if (typeof value === 'number') {
+          quantity = value;
+          displayValue = value;
+        } else if (typeof value === 'string') {
+          // För items som "Matta" som har strängvärden som "3×2 Röd matta"
+          quantity = 1; // Anta 1 styck om det är en sträng
+          displayValue = value;
+        } else if (value && typeof value === 'object' && value.quantity) {
+          quantity = value.quantity;
+          displayValue = value.quantity;
+        } else {
+          return; // Hoppa över om inget giltigt värde
+        }
+        
+        // Hoppa över om quantity är 0 eller negativt (men bara för numeriska värden)
+        if (typeof quantity === 'number' && quantity <= 0) return;
         
         // TV & Skärmar - format: "TV 43"", "TV 55"" etc
         if (key.startsWith('TV ')) {
-          categorized.tv.push([key, quantity]);
+          categorized.tv.push([key, displayValue]);
         }
-        // Disk - format: "disk innehylla"
-        else if (key.toLowerCase().includes('disk')) {
-          categorized.disk.push([key, quantity]);
+        // Disk - format: "disk innehylla", "Disk 1m", "Disk 1.5m", etc.
+        else if (key.toLowerCase().includes('disk') || key.startsWith('Disk ')) {
+          categorized.disk.push([key, displayValue]);
         }
-        // Möbler & Växter - alla möbel- och växttyper
+        // Möbler & Växter - alla möbel- och växttyper från FURNITURE_TYPES och PLANT_TYPES
         else if (
+          // Möbler
           key === 'Soffa' || key === 'Fåtölj' || key === 'Barbord' || key === 'Barstol' ||
           key === 'Pall' || key === 'Sidobord' || key === 'Klädhängare' ||
+          key === 'Hyllplan' || key === 'Hyllbracket' ||
+          // Växter
           key === 'Monstera' || key === 'Ficus' || key === 'Bambu' || key === 'Kaktus' ||
           key === 'Lavendel' || key === 'Palmlilja' || key === 'Rosmarin' ||
           key === 'Sansevieria' || key === 'Olivträd' || key === 'Dracaena' ||
-          key === 'Hyllplan' || key === 'Hyllbracket'
+          // Småsaker som också kan vara möbler/växter
+          key === 'Blomma' || key === 'Espressomaskin' || key === 'Godiskål'
         ) {
-          categorized.moblerVaxter.push([key, quantity]);
+          categorized.moblerVaxter.push([key, displayValue]);
         }
         // Teknik & Belysning
-        else if (key === 'SAM-led' || key === 'Högtalare' || key === 'Högtalarstativ') {
-          categorized.teknik.push([key, quantity]);
+        else if (
+          key === 'SAM-led' || key === 'Högtalare' || key === 'Högtalarstativ' ||
+          key.includes('Högtalar')
+        ) {
+          categorized.teknik.push([key, displayValue]);
         }
         // Tryck & Grafik - Vepa, Forex, Hyrgrafik, Matta, Grafik
         else if (
@@ -293,9 +269,10 @@ const AdminPortal: React.FC = () => {
           key.includes('Hyrgrafik') ||
           key === 'Grafik' ||
           key.includes('grafik') ||
-          key === 'Matta'
+          key === 'Matta' ||
+          key.startsWith('Grafik ')
         ) {
-          categorized.tryck.push([key, quantity]);
+          categorized.tryck.push([key, displayValue]);
         }
         // BeMatrix - ramar och strukturdelar
         else if (
