@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { exportSceneToDAE } from './exportSceneToDAE';
+import { exportSceneToSTL } from './exportSceneToSTL';
+import { buildSceneFromOrderData } from './buildSceneFromOrderData';
 import { OrderManager } from './OrderManager';
 import jsPDF from 'jspdf';
 
@@ -870,22 +873,78 @@ const AdminPortal: React.FC = () => {
                 ← Tillbaka till lista
               </button>
             )}
-            <div>
-              <h1 style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#2c3e50',
-                margin: '0 0 4px 0'
-              }}>
-                {selectedOrder ? `Beställning #${selectedOrder.id}` : 'Admin Portal'}
-              </h1>
-              <p style={{
-                color: '#666',
-                margin: 0,
-                fontSize: '14px'
-              }}>
-                {selectedOrder ? `Skapad: ${formatDate(selectedOrder.timestamp)}` : `${orders.length} beställningar totalt`}
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div>
+                <h1 style={{
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  color: '#2c3e50',
+                  margin: '0 0 4px 0'
+                }}>
+                  {selectedOrder ? `Beställning #${selectedOrder.id}` : 'Admin Portal'}
+                </h1>
+                <p style={{
+                  color: '#666',
+                  margin: 0,
+                  fontSize: '14px'
+                }}>
+                  {selectedOrder ? `Skapad: ${formatDate(selectedOrder.timestamp)}` : `${orders.length} beställningar totalt`}
+                </p>
+              </div>
+              {/* DAE-exportknapp, visas bara om order är vald */}
+              {selectedOrder && (
+                <>
+                  <button
+                    style={{
+                      marginLeft: 16,
+                      padding: '8px 16px',
+                      backgroundColor: '#27ae60',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}
+                    title="Exportera monter som DAE-fil (Collada)"
+                    onClick={() => {
+                      if (!selectedOrder?.orderData) {
+                        alert('Ingen orderdata att exportera!');
+                        return;
+                      }
+                      console.log('Exporterar orderData:', selectedOrder.orderData);
+                      const scene = buildSceneFromOrderData(selectedOrder.orderData);
+                      exportSceneToDAE(scene, `Monter_${selectedOrder.id}.dae`);
+                    }}
+                  >
+                    Exportera DAE
+                  </button>
+                  <button
+                    style={{
+                      marginLeft: 8,
+                      padding: '8px 16px',
+                      backgroundColor: '#e67e22',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}
+                    title="Exportera monter som STL-fil (endast geometri)"
+                    onClick={() => {
+                      if (!selectedOrder?.orderData) {
+                        alert('Ingen orderdata att exportera!');
+                        return;
+                      }
+                      const scene = buildSceneFromOrderData(selectedOrder.orderData);
+                      exportSceneToSTL(scene, `Monter_${selectedOrder.id}.stl`);
+                    }}
+                  >
+                    Exportera STL
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -1177,10 +1236,27 @@ const AdminPortal: React.FC = () => {
                       borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '14px',
-                      fontWeight: '600'
+                      fontWeight: '600',
+                      marginRight: '8px'
                     }}
                   >
                     📋 Följesedel
+                  </button>
+                  <button
+                    onClick={() => alert('Ny knapp-action!')}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#f39c12',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginRight: '8px'
+                    }}
+                  >
+                    ➕ Ny knapp
                   </button>
                   <button
                     onClick={() => deleteOrder(selectedOrder.id)}
