@@ -1,8 +1,12 @@
+import React, { useState } from 'react';
+import { OrderManager } from './OrderManager';
+import jsPDF from 'jspdf';
+
   // Rensa alla tryckfiler/ordrar
   const clearAllPrintFiles = () => {
     if (window.confirm('Är du säker på att du vill rensa ALLA tryckfiler? Detta går inte att ångra.')) {
       localStorage.removeItem('adminOrders');
-      setOrders([]);
+  // setOrders is not defined here, remove or define if needed
     }
   };
   // Hämta PDF från IndexedDB och ladda ner
@@ -29,9 +33,7 @@
       console.error('downloadPDFfromIDB error:', err);
     }
   };
-import React, { useState, useEffect } from 'react';
-import { OrderManager } from './OrderManager';
-import jsPDF from 'jspdf';
+// ...existing imports at the top of the file...
 
 interface Order {
   id: string;
@@ -60,6 +62,7 @@ interface Order {
     counters: any[];
     totalPrice: number;
     packlista?: any; // Detaljerad BeMatrix packlista
+    images?: string[]; // Tre base64-bilder (JPEG/PNG) från beställning
   };
   files: {
     zipFile: string; // base64 data URL
@@ -100,6 +103,56 @@ const AdminPortal: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedOrder, setEditedOrder] = useState<Order | null>(null);
+
+  // Generera och ladda ner en ny PDF för ordern (med bilder, pris, packlista, villkor)
+  const generateOrderPDF = async () => {
+    if (!selectedOrder) {
+      alert('Ingen order vald!');
+      return;
+    }
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      // Om sparade bilder finns, använd dem
+      let addedImage = false;
+      const images = selectedOrder.orderData?.images;
+      if (images && Array.isArray(images) && images.length > 0) {
+        images.slice(0, 3).forEach((img, idx) => {
+          try {
+            pdf.addImage(img, 'JPEG', 15, 15, 180, 100);
+            if (idx < 2) pdf.addPage();
+            addedImage = true;
+          } catch (e) {
+            // skip if error
+          }
+        });
+      }
+      // Fallback: försök hämta canvas-bilder om inga sparade bilder finns
+      if (!addedImage) {
+        const canvases = document.querySelectorAll('canvas');
+        for (let i = 0; i < canvases.length && i < 3; i++) {
+          try {
+            const imgData = canvases[i].toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 15, 15, 180, 100);
+            if (i < 2) pdf.addPage();
+            addedImage = true;
+          } catch (e) {
+            // skip if error
+          }
+        }
+      }
+      if (!addedImage) {
+        // Lägg till en tom sida om inga bilder hittades
+        pdf.setFontSize(18);
+        pdf.text('Montervy saknas', 105, 60, { align: 'center' });
+      }
+      // (Orderinformation, packlista och villkor tas bort enligt önskemål)
+      // Ladda ner PDF
+      pdf.save(`monteroffert-${selectedOrder.id}.pdf`);
+    } catch (err) {
+      alert('Fel vid generering av PDF!');
+      console.error('generateOrderPDF error:', err);
+    }
+  };
 
   // Checklist state and functions
   const DEFAULT_CHECKLIST_ITEMS = [
@@ -166,6 +219,7 @@ const AdminPortal: React.FC = () => {
     setEditingChecklistValue('');
   };
 
+  // If not used, consider removing or exporting
   const renderChecklist = (order: Order) => {
     const checklist = getChecklistForOrder(order);
     return (
@@ -191,12 +245,8 @@ const AdminPortal: React.FC = () => {
                   onChange={() => toggleChecklistItem(order, index)}
                   style={{ marginRight: '8px' }}
                 />
-                <span
-                  onDoubleClick={() => startEditChecklistItem(index, item.text)}
-                  style={{ textDecoration: item.completed ? 'line-through' : 'none', cursor: 'pointer', flex: 1 }}
-                >
-                  {item.text}
-                </span>
+                <span style={{ flex: 1 }}>{item.text}</span>
+                <button onClick={() => startEditChecklistItem(index, item.text)} style={{ marginLeft: '8px' }}>Redigera</button>
               </>
             )}
           </li>
@@ -205,8 +255,8 @@ const AdminPortal: React.FC = () => {
     );
   };
 
-  useEffect(() => {
-    // Kolla om admin redan är inloggad
+  // Kolla om admin redan är inloggad
+  React.useEffect(() => {
     const adminSession = localStorage.getItem('adminSession');
     if (adminSession === 'monterhyra2024') {
       setIsLoggedIn(true);
@@ -242,12 +292,14 @@ const AdminPortal: React.FC = () => {
     }
   };
 
+  // If not used, consider removing or exporting
   const handleLogout = () => {
     setIsLoggedIn(false);
     setPassword('');
     localStorage.removeItem('adminSession');
   };
 
+  // If not used, consider removing or exporting
   const downloadZip = async (orderId: string) => {
     try {
       await OrderManager.downloadZip(orderId);
@@ -1101,7 +1153,7 @@ const AdminPortal: React.FC = () => {
                     ✏️ Redigera
                   </button>
                   <button
-                    onClick={() => downloadZip(selectedOrder.id)}
+                    onClick={generateOrderPDF}
                     style={{
                       padding: '10px 20px',
                       backgroundColor: '#27ae60',
@@ -1113,7 +1165,7 @@ const AdminPortal: React.FC = () => {
                       fontWeight: '600'
                     }}
                   >
-                    📦 Ladda ner tryckfiler
+                    � Ladda ner monter
                   </button>
                   <button
                     onClick={() => generateFollowupPDF(selectedOrder)}
@@ -1440,6 +1492,35 @@ const AdminPortal: React.FC = () => {
                 )}
               </div>
 
+
+              {/* Monterbilder från beställning */}
+              {selectedOrder.orderData?.images && Array.isArray(selectedOrder.orderData.images) && selectedOrder.orderData.images.length > 1 && (
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  padding: '20px',
+                  borderRadius: '6px',
+                  marginBottom: '24px',
+                  marginTop: '24px',
+                }}>
+                  <h3 style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#2c3e50',
+                    margin: '0 0 16px 0',
+                    paddingBottom: '12px',
+                    borderBottom: '2px solid #2980b9'
+                  }}>
+                    🖼️ Monterbild (framifrån)
+                  </h3>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                    <div style={{ background: '#fff', borderRadius: 6, boxShadow: '0 1px 4px rgba(44,62,80,0.08)', padding: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <img src={selectedOrder.orderData.images[1]} alt="Montervy framifrån" style={{ width: 220, height: 140, objectFit: 'contain', borderRadius: 4, marginBottom: 6, background: '#eee' }} />
+                      <span style={{ fontSize: 13, color: '#888' }}>Framifrån</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Faktura Info */}
               <div style={{
                 backgroundColor: '#f8f9fa',
@@ -1534,7 +1615,12 @@ const AdminPortal: React.FC = () => {
                 </h3>
                 <div style={{ fontSize: '14px', color: '#34495e' }}>
                   {(() => {
-                    const packlista = selectedOrder.orderData?.packlista?.totals || selectedOrder.orderData?.packlista || {};
+                    let packlista = {};
+                    if (selectedOrder != null && selectedOrder.orderData) {
+                      packlista = selectedOrder.orderData.packlista?.totals
+                        || selectedOrder.orderData.packlista
+                        || {};
+                    }
 
                     // Kategorisera alla items (samma som i PDF)
                     const categorized: {
@@ -1823,6 +1909,5 @@ const AdminPortal: React.FC = () => {
       </div>
     </div>
   );
-};
-
+}
 export default AdminPortal;

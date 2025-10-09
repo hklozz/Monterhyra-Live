@@ -28,6 +28,7 @@ export interface OrderData {
   storages: any[];
   totalPrice: number;
   packlista?: any; // Detaljerad BeMatrix packlista med alla ramar, diskar, corners osv.
+  images?: string[]; // Tre base64-bilder (JPEG/PNG) från beställning
 }
 
 export interface Order {
