@@ -1,3 +1,10 @@
+  // Rensa alla tryckfiler/ordrar
+  const clearAllPrintFiles = () => {
+    if (window.confirm('Är du säker på att du vill rensa ALLA tryckfiler? Detta går inte att ångra.')) {
+      localStorage.removeItem('adminOrders');
+      setOrders([]);
+    }
+  };
   // Hämta PDF från IndexedDB och ladda ner
   const downloadPDFfromIDB = async (orderId: string) => {
     try {
@@ -29,6 +36,7 @@ import jsPDF from 'jspdf';
 interface Order {
   id: string;
   timestamp: string;
+  namn?: string; // Valfritt namn på order eller tryckfil
   customerInfo: {
     name: string;
     email: string;
@@ -71,12 +79,19 @@ interface Order {
     betalningsvillkor: string;
   };
   checklist?: Array<{ text: string; completed: boolean }>;
+  printOnly?: boolean;
 }
 
 const AdminPortal: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
+
+  // Filtrera ut autosparade tryckfiler från orderlistan
+  const realOrders = orders.filter(order => {
+    // Dölj om printOnly är true eller kundnamnet börjar med 'Auto-saved:'
+    return !order.printOnly && !(order.customerInfo?.name?.startsWith('Auto-saved:'));
+  });
   // Logga alla ordrar till konsolen för felsökning
   React.useEffect(() => {
     console.log('Alla ordrar i adminpanelen:', orders);
@@ -825,102 +840,80 @@ const AdminPortal: React.FC = () => {
 
         {/* Overview List eller Detail View */}
         {!selectedOrder ? (
-          /* Overview List */
           <>
-            {orders.length === 0 ? (
-              <div style={{
-                backgroundColor: 'white',
-                padding: '40px',
-                borderRadius: '8px',
-                textAlign: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
-                <p style={{
-                  color: '#666',
-                  fontSize: '18px',
-                  margin: 0
-                }}>
-                  Inga beställningar ännu
-                </p>
+            {/* Overview List */}
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(44,62,80,0.07)',
+              padding: '24px',
+              marginBottom: '32px',
+              maxWidth: 900,
+              marginLeft: 'auto',
+              marginRight: 'auto',
+            }}>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#34495e', marginBottom: 16, letterSpacing: '0.5px' }}>
+                Beställningar
               </div>
-            ) : (
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                overflow: 'hidden',
-                maxHeight: '70vh',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#cbd5e0 #f7fafc',
-                marginBottom: '32px'
-              }}>
-                {/* Table Header */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '120px 1fr 180px 150px 180px',
-                  gap: '16px',
-                  padding: '16px 20px',
-                  backgroundColor: '#34495e',
-                  color: 'white',
-                  fontWeight: '600',
-                  fontSize: '14px',
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 1
-                }}>
-                  <div>Order #</div>
-                  <div>Kund</div>
-                  <div>Eventdatum</div>
-                  <div>Totalpris</div>
-                  <div>Åtgärder</div>
-                </div>
-
-                {/* Table Rows */}
-                {orders.map((order) => (
-                  <div
-                    key={order.id}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '120px 1fr 180px 150px 180px',
-                      gap: '16px',
-                      padding: '20px',
-                      borderBottom: '1px solid #ecf0f1',
-                      transition: 'background-color 0.2s',
-                      cursor: 'pointer'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                  >
-                    <div style={{ fontWeight: '600', color: '#2c3e50' }}>#{order.id}</div>
-                    <div style={{ color: '#34495e' }}>
-                      <div style={{ fontWeight: '600' }}>{order.customerInfo?.name || 'Okänd'}</div>
-                      <div style={{ fontSize: '13px', color: '#7f8c8d' }}>{order.customerInfo?.company || '-'}</div>
-                    </div>
-                    <div style={{ color: '#34495e' }}>{order.customerInfo?.eventDate || '-'}</div>
-                    <div style={{ fontWeight: '600', color: '#27ae60' }}>{formatPrice(order.orderData?.totalPrice || 0)}</div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => setSelectedOrder(order)}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#3498db',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          fontWeight: '500'
-                        }}
-                      >
-                        Visa detaljer →
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Order #</th>
+                    <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Kund</th>
+                    <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Eventdatum</th>
+                    <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Totalpris</th>
+                    <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Åtgärder</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {realOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: 'center', color: '#aaa', fontStyle: 'italic', padding: '16px' }}>
+                        Inga ordrar ännu.
+                      </td>
+                    </tr>
+                  ) : (
+                    realOrders.map(order => (
+                      <tr key={order.id}>
+                        <td style={{ fontWeight: 600, color: '#2c3e50', padding: '10px 8px' }}>#{order.id}</td>
+                        <td style={{ padding: '10px 8px' }}>
+                          <input
+                            type="text"
+                            value={order.namn || order.customerInfo?.name || ''}
+                            onChange={e => {
+                              const updatedOrders = orders.map(o => o.id === order.id ? { ...o, namn: e.target.value } : o);
+                              setOrders(updatedOrders);
+                              localStorage.setItem('adminOrders', JSON.stringify(updatedOrders));
+                            }}
+                            style={{ width: '100%', minWidth: 0, padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                            placeholder="Namn på order"
+                          />
+                        </td>
+                        <td style={{ padding: '10px 8px' }}>{order.customerInfo?.eventDate || '-'}</td>
+                        <td style={{ color: '#27ae60', fontWeight: 600, padding: '10px 8px' }}>{order.orderData?.totalPrice ? order.orderData.totalPrice.toLocaleString('sv-SE') + ' kr' : '0 kr'}</td>
+                        <td style={{ padding: '10px 8px' }}>
+                          <button
+                            style={{
+                              backgroundColor: '#3498db',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '8px 18px',
+                              fontWeight: 600,
+                              fontSize: '15px',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => setSelectedOrder(order)}
+                          >
+                            Visa detaljer →
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
             {/* Tryckfiler-ruta */}
             <div style={{
               backgroundColor: 'white',
@@ -943,97 +936,133 @@ const AdminPortal: React.FC = () => {
                 }}>
                   🖨️ Tryckfiler
                 </h2>
-                <button
-                  onClick={loadOrders}
-                  style={{
-                    padding: '6px 16px',
-                    backgroundColor: '#3498db',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    marginLeft: 16
-                  }}
-                  title="Ladda om listan med tryckfiler"
-                >
-                  Uppdatera
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={loadOrders}
+                    style={{
+                      padding: '6px 16px',
+                      backgroundColor: '#3498db',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginLeft: 0
+                    }}
+                    title="Ladda om listan med tryckfiler"
+                  >
+                    Uppdatera
+                  </button>
+                  <button
+                    onClick={clearAllPrintFiles}
+                    style={{
+                      padding: '6px 16px',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                    }}
+                    title="Rensa alla tryckfiler (ordrar)"
+                  >
+                    Rensa alla tryckfiler
+                  </button>
+                </div>
               </div>
               <div style={{ fontSize: '15px', color: '#34495e', marginBottom: '12px' }}>
                 Här visas alla PDF-tryckfiler som är kopplade till ordrar. Klicka för att ladda ner.
               </div>
-
-  // Logga alla ordrar till konsolen för felsökning
               <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                {orders.filter(order => {
-                  const f = order.files;
-                  return (f && ((f.zipFile && f.zipFile.startsWith('data:application/pdf')) || (!f.zipFile && f.storedInIDB)));
-                }).length === 0 ? (
+                {(() => {
+                  // Hämta alla riktiga order-id:n
+                  const realOrderIds = new Set(realOrders.map(o => o.id));
+                  return orders.filter(order => {
+                    // Visa tryckfiler om deras id INTE finns bland riktiga ordrar
+                    const f = order.files;
+                    const isPrintFile = order.printOnly === true && !realOrderIds.has(order.id);
+                    return isPrintFile && (f && ((f.zipFile && f.zipFile.startsWith('data:application/pdf')) || (!f.zipFile && f.storedInIDB)));
+                  });
+                })().length === 0 ? (
                   <div style={{ color: '#aaa', fontStyle: 'italic' }}>Inga tryckfiler uppladdade ännu.</div>
                 ) : (
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    {orders.filter(order => {
-                      const f = order.files;
-                      return (f && ((f.zipFile && f.zipFile.startsWith('data:application/pdf')) || (!f.zipFile && f.storedInIDB)));
-                    }).map(order => {
-                      const f = order.files;
-                      const hasPDF = f.zipFile && f.zipFile.startsWith('data:application/pdf');
-                      return (
-                        <li key={order.id} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          marginBottom: '10px',
-                          borderBottom: '1px solid #f0f0f0',
-                          paddingBottom: '8px'
-                        }}>
-                          <span style={{ fontWeight: 600, color: '#2c3e50', minWidth: 80 }}>#{order.id}</span>
-                          <span style={{ flex: 1 }}>{order.customerInfo?.name || 'Okänd'}</span>
-                          {hasPDF ? (
-                            <a
-                              href={f.zipFile}
-                              download={`Tryckfil_${order.id}.pdf`}
-                              style={{
-                                padding: '6px 16px',
-                                backgroundColor: '#e74c3c',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                textDecoration: 'none'
+                    {(() => {
+                      const realOrderIds = new Set(realOrders.map(o => o.id));
+                      return orders.filter(order => {
+                        const f = order.files;
+                        const isPrintFile = order.printOnly === true && !realOrderIds.has(order.id);
+                        return isPrintFile && (f && ((f.zipFile && f.zipFile.startsWith('data:application/pdf')) || (!f.zipFile && f.storedInIDB)));
+                      }).map(order => {
+                        const f = order.files;
+                        const hasPDF = f.zipFile && f.zipFile.startsWith('data:application/pdf');
+                        return (
+                          <li key={order.id} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            marginBottom: '10px',
+                            borderBottom: '1px solid #f0f0f0',
+                            paddingBottom: '8px'
+                          }}>
+                            <span style={{ fontWeight: 600, color: '#2c3e50', minWidth: 80 }}>#{order.id}</span>
+                            <input
+                              type="text"
+                              value={order.namn || order.customerInfo?.name || ''}
+                              onChange={e => {
+                                const updatedOrders = orders.map(o => o.id === order.id ? { ...o, namn: e.target.value } : o);
+                                setOrders(updatedOrders);
+                                localStorage.setItem('adminOrders', JSON.stringify(updatedOrders));
                               }}
-                            >
-                              Ladda ner PDF
-                            </a>
-                          ) : (
-                            <>
-                              <span style={{ color: '#e67e22', fontWeight: 500, marginRight: 8 }}>
-                                PDF endast i IDB (för stor för localStorage)
-                              </span>
-                              <button
+                              style={{ flex: 1, minWidth: 0, padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                              placeholder="Namn på tryckfil/order"
+                            />
+                            {hasPDF ? (
+                              <a
+                                href={f.zipFile}
+                                download={`Tryckfil_${order.id}.pdf`}
                                 style={{
                                   padding: '6px 16px',
-                                  backgroundColor: '#e67e22',
+                                  backgroundColor: '#e74c3c',
                                   color: 'white',
                                   border: 'none',
                                   borderRadius: '4px',
                                   cursor: 'pointer',
                                   fontSize: '14px',
                                   fontWeight: '600',
+                                  textDecoration: 'none'
                                 }}
-                                onClick={() => downloadPDFfromIDB(order.id)}
                               >
-                                Ladda ner från IDB
-                              </button>
-                            </>
-                          )}
-                        </li>
-                      );
-                    })}
+                                Ladda ner PDF
+                              </a>
+                            ) : (
+                              <>
+                                <span style={{ color: '#e67e22', fontWeight: 500, marginRight: 8 }}>
+                                  PDF endast i IDB (för stor för localStorage)
+                                </span>
+                                <button
+                                  style={{
+                                    padding: '6px 16px',
+                                    backgroundColor: '#e67e22',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                  }}
+                                  onClick={() => downloadPDFfromIDB(order.id)}
+                                >
+                                  Ladda ner från IDB
+                                </button>
+                              </>
+                            )}
+                          </li>
+                        );
+                      });
+                    })()}
                   </ul>
                 )}
               </div>
@@ -1178,7 +1207,17 @@ const AdminPortal: React.FC = () => {
                 {isEditing && editedOrder ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
-                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px', fontSize: '13px' }}>Namn:</label>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px', fontSize: '13px' }}>Ordernamn:</label>
+                      <input
+                        type="text"
+                        value={editedOrder.namn || ''}
+                        onChange={e => setEditedOrder({ ...editedOrder, namn: e.target.value })}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                        placeholder="Valfritt namn på ordern eller tryckfilen"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px', fontSize: '13px' }}>Namn (kund):</label>
                       <input
                         type="text"
                         value={editedOrder.customerInfo?.name || ''}
@@ -1225,7 +1264,8 @@ const AdminPortal: React.FC = () => {
                   </div>
                 ) : (
                   <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#34495e' }}>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Namn:</strong> {selectedOrder.customerInfo?.name || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Ordernamn:</strong> {selectedOrder.namn || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Namn (kund):</strong> {selectedOrder.customerInfo?.name || '-'}</p>
                     <p style={{ margin: '0 0 8px 0' }}><strong>E-post:</strong> {selectedOrder.customerInfo?.email || '-'}</p>
                     <p style={{ margin: '0 0 8px 0' }}><strong>Telefon:</strong> {selectedOrder.customerInfo?.phone || '-'}</p>
                     <p style={{ margin: '0 0 8px 0' }}><strong>Företag:</strong> {selectedOrder.customerInfo?.company || '-'}</p>
