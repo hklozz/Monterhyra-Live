@@ -5372,239 +5372,63 @@ export default function App() {
                       
                       try {
                         // Försök att fånga tre olika vyer av montern
+                        let views: string[] = [];
                         if (captureRef.current && captureRef.current.captureViews) {
                           try {
-                            // Få tre olika kameravyer från CaptureHelper (lägre upplösning för mindre filstorlek)
-                            const views = captureRef.current.captureViews(800, 533);
-                            
-                            // Sida 1: Ovanifrån-vy
-                            if (views[0]) {
-                              // Lägg till kontaktinformation överst på första sidan
-                              pdf.setFontSize(16);
-                              pdf.setTextColor(40, 62, 80);
-                              pdf.text('MONTEROFFERT', 15, 25);
-                              
-                              // Kontaktinformation
-                              pdf.setFontSize(10);
-                              pdf.setTextColor(0, 0, 0);
-                              let yPos = 35;
-                              
-                              if (registrationData.name) {
-                                pdf.text(`Kontaktperson: ${registrationData.name}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              if (registrationData.company) {
-                                pdf.text(`Företag: ${registrationData.company}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              if (registrationData.email) {
-                                pdf.text(`E-post: ${registrationData.email}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              if (registrationData.phone) {
-                                pdf.text(`Telefon: ${registrationData.phone}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              if (registrationData.orgNumber) {
-                                pdf.text(`Organisationsnummer: ${registrationData.orgNumber}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              
-                              // Linje under kontaktinfo
-                              pdf.setDrawColor(200, 200, 200);
-                              pdf.line(15, yPos + 3, 195, yPos + 3);
-                              
-                              // Montervy - flyttad ner för att ge plats för kontaktinfo
-                              const imageYPos = yPos + 10;
-                              const imageHeight = 100; // Mindre höjd för att få plats
-                              pdf.addImage(views[0], 'JPEG', 15, imageYPos, 180, imageHeight);
-                              addWatermark(pdf);
-                              // Lägg till text som beskriver vyn
-                              pdf.setFontSize(10);
-                              pdf.text('Planvy - ovanifrån', 15, imageYPos + imageHeight + 5);
-                            }
-                            
-                            // Sida 2: Perspektivvy 
-                            if (views[1]) {
-                              pdf.addPage();
-                              pdf.addImage(views[1], 'JPEG', 15, 15, 180, 120);
-                              addWatermark(pdf);
-                              pdf.setFontSize(10);
-                              pdf.text('Perspektivvy', 15, 140);
-                            }
-                            
-                            // Sida 3: Helvy från andra sidan
-                            if (views[2]) {
-                              pdf.addPage();
-                              pdf.addImage(views[2], 'JPEG', 15, 15, 180, 120);
-                              addWatermark(pdf);
-                              pdf.setFontSize(10);
-                              pdf.text('Helvy', 15, 140);
-                            }
-                            
+                            // Få tre olika kameravyer från CaptureHelper
+                            views = captureRef.current.captureViews(1200, 800);
                           } catch (e) {
                             console.warn('Kunde inte fånga olika vyer, använder fallback', e);
-                            // Fallback: använd canvas direkt om CaptureHelper misslyckas
-                            if (canvasEl) {
-                              const imgData = canvasEl.toDataURL('image/jpeg', 0.7); // JPEG med 70% kvalitet
-                              
-                              // Lägg till kontaktinformation överst på första sidan
-                              pdf.setFontSize(16);
-                              pdf.setTextColor(40, 62, 80);
-                              pdf.text('MONTEROFFERT', 15, 25);
-                              
-                              // Kontaktinformation
-                              pdf.setFontSize(10);
-                              pdf.setTextColor(0, 0, 0);
-                              let yPos = 35;
-                              
-                              if (registrationData.name) {
-                                pdf.text(`Kontaktperson: ${registrationData.name}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              if (registrationData.company) {
-                                pdf.text(`Företag: ${registrationData.company}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              if (registrationData.email) {
-                                pdf.text(`E-post: ${registrationData.email}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              if (registrationData.phone) {
-                                pdf.text(`Telefon: ${registrationData.phone}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              if (registrationData.orgNumber) {
-                                pdf.text(`Organisationsnummer: ${registrationData.orgNumber}`, 15, yPos);
-                                yPos += 5;
-                              }
-                              
-                              // Linje under kontaktinfo
-                              pdf.setDrawColor(200, 200, 200);
-                              pdf.line(15, yPos + 3, 195, yPos + 3);
-                              
-                              // 3D-vy - flyttad ner för att ge plats för kontaktinfo
-                              const imageYPos = yPos + 10;
-                              const imageHeight = 100;
-                              pdf.addImage(imgData, 'JPEG', 15, imageYPos, 180, imageHeight);
-                              pdf.setFontSize(10);
-                              pdf.text('3D-vy av montern', 15, imageYPos + imageHeight + 5);
-                              
-                              pdf.addPage();
-                              pdf.addImage(imgData, 'JPEG', 15, 15, 180, 120);
-                              pdf.text('3D-vy av montern', 15, 140);
-                              pdf.addPage();
-                              pdf.addImage(imgData, 'JPEG', 15, 15, 180, 120);
-                              pdf.text('3D-vy av montern', 15, 140);
-                            }
-                          }
-                        } else if (canvasEl) {
-                          // Fallback: använd vanlig canvas-bild om CaptureHelper inte finns
-                          try {
-                            const imgData = canvasEl.toDataURL('image/jpeg', 0.7); // JPEG med 70% kvalitet
-                            
-                            // Lägg till kontaktinformation överst på första sidan
-                            pdf.setFontSize(16);
-                            pdf.setTextColor(40, 62, 80);
-                            pdf.text('MONTEROFFERT', 15, 25);
-                            
-                            // Kontaktinformation
-                            pdf.setFontSize(10);
-                            pdf.setTextColor(0, 0, 0);
-                            let yPos = 35;
-                            
-                            if (registrationData.name) {
-                              pdf.text(`Kontaktperson: ${registrationData.name}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            if (registrationData.company) {
-                              pdf.text(`Företag: ${registrationData.company}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            if (registrationData.email) {
-                              pdf.text(`E-post: ${registrationData.email}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            if (registrationData.phone) {
-                              pdf.text(`Telefon: ${registrationData.phone}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            if (registrationData.orgNumber) {
-                              pdf.text(`Organisationsnummer: ${registrationData.orgNumber}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            
-                            // Linje under kontaktinfo
-                            pdf.setDrawColor(200, 200, 200);
-                            pdf.line(15, yPos + 3, 195, yPos + 3);
-                            
-                            // Lägg till samma vy med olika beskrivningar - första sidan med kontaktinfo
-                            const imageYPos = yPos + 10;
-                            const imageHeight = 100;
-                            pdf.addImage(imgData, 'JPEG', 15, imageYPos, 180, imageHeight);
-                            pdf.setFontSize(10);
-                            pdf.text('3D-vy av montern', 15, imageYPos + imageHeight + 5);
-                            
-                            pdf.addPage();
-                            pdf.addImage(imgData, 'JPEG', 15, 15, 180, 120);
-                            pdf.text('3D-vy av montern', 15, 140);
-                            pdf.addPage();
-                            pdf.addImage(imgData, 'JPEG', 15, 15, 180, 120);
-                            pdf.text('3D-vy av montern', 15, 140);
-                          } catch (e) {
-                            // If canvas is tainted or toDataURL fails, fallback to html2canvas
-                            const cFallback = await html2canvas(canvasEl as HTMLElement, { backgroundColor: null, scale: 1 });
-                            const imgFb = cFallback.toDataURL('image/jpeg', 0.7); // JPEG med 70% kvalitet
-                            
-                            // Lägg till kontaktinformation överst på första sidan
-                            pdf.setFontSize(16);
-                            pdf.setTextColor(40, 62, 80);
-                            pdf.text('MONTEROFFERT', 15, 25);
-                            
-                            // Kontaktinformation
-                            pdf.setFontSize(10);
-                            pdf.setTextColor(0, 0, 0);
-                            let yPos = 35;
-                            
-                            if (registrationData.name) {
-                              pdf.text(`Kontaktperson: ${registrationData.name}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            if (registrationData.company) {
-                              pdf.text(`Företag: ${registrationData.company}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            if (registrationData.email) {
-                              pdf.text(`E-post: ${registrationData.email}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            if (registrationData.phone) {
-                              pdf.text(`Telefon: ${registrationData.phone}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            if (registrationData.orgNumber) {
-                              pdf.text(`Organisationsnummer: ${registrationData.orgNumber}`, 15, yPos);
-                              yPos += 5;
-                            }
-                            
-                            // Linje under kontaktinfo
-                            pdf.setDrawColor(200, 200, 200);
-                            pdf.line(15, yPos + 3, 195, yPos + 3);
-                            
-                            const imageYPos = yPos + 10;
-                            const imageHeight = 100;
-                            pdf.addImage(imgFb, 'JPEG', 15, imageYPos, 180, imageHeight);
-                            pdf.setFontSize(10);
-                            pdf.text('3D-vy av montern', 15, imageYPos + imageHeight + 5);
-                            
-                            pdf.addPage();
-                            pdf.addImage(imgFb, 'JPEG', 15, 15, 180, 120);
-                            pdf.text('3D-vy av montern', 15, 140);
-                            pdf.addPage();
-                            pdf.addImage(imgFb, 'JPEG', 15, 15, 180, 120);
-                            pdf.text('3D-vy av montern', 15, 140);
                           }
                         }
+                        // Om vi inte fick ut tre vyer, använd canvas som fallback
+                        if (views.length < 3 && canvasEl) {
+                          const imgData = canvasEl.toDataURL('image/jpeg', 0.7);
+                          views = [imgData, imgData, imgData];
+                        }
+                        // Om vi fortfarande inte har tre vyer, använd tomma bilder
+                        while (views.length < 3) views.push('');
+
+                        // Sida 1: Ovanifrån-vy med kontaktinfo
+                        pdf.setFontSize(16);
+                        pdf.setTextColor(40, 62, 80);
+                        pdf.text('MONTEROFFERT', 15, 25);
+                        pdf.setFontSize(10);
+                        pdf.setTextColor(0, 0, 0);
+                        let yPos = 35;
+                        if (registrationData.name) { pdf.text(`Kontaktperson: ${registrationData.name}`, 15, yPos); yPos += 5; }
+                        if (registrationData.company) { pdf.text(`Företag: ${registrationData.company}`, 15, yPos); yPos += 5; }
+                        if (registrationData.email) { pdf.text(`E-post: ${registrationData.email}`, 15, yPos); yPos += 5; }
+                        if (registrationData.phone) { pdf.text(`Telefon: ${registrationData.phone}`, 15, yPos); yPos += 5; }
+                        if (registrationData.orgNumber) { pdf.text(`Organisationsnummer: ${registrationData.orgNumber}`, 15, yPos); yPos += 5; }
+                        pdf.setDrawColor(200, 200, 200);
+                        pdf.line(15, yPos + 3, 195, yPos + 3);
+                        const imageYPos = yPos + 10;
+                        const imageHeight = 100;
+                        if (views[0]) {
+                          pdf.addImage(views[0], 'JPEG', 15, imageYPos, 180, imageHeight);
+                        }
+                        addWatermark(pdf);
+                        pdf.setFontSize(10);
+                        pdf.text('Planvy - ovanifrån', 15, imageYPos + imageHeight + 5);
+
+                        // Sida 2: Perspektivvy
+                        pdf.addPage();
+                        if (views[1]) {
+                          pdf.addImage(views[1], 'JPEG', 15, 15, 180, 120);
+                        }
+                        addWatermark(pdf);
+                        pdf.setFontSize(10);
+                        pdf.text('Perspektivvy', 15, 140);
+
+                        // Sida 3: Helvy framifrån
+                        pdf.addPage();
+                        if (views[2]) {
+                          pdf.addImage(views[2], 'JPEG', 15, 15, 180, 120);
+                        }
+                        addWatermark(pdf);
+                        pdf.setFontSize(10);
+                        pdf.text('Helvy', 15, 140);
 
                         // Sida 4: Prissammanställning med snygg ruta
                         pdf.addPage();
@@ -5753,49 +5577,42 @@ export default function App() {
                         // (Ingen kod här, packlistan genereras ej)
 
                         // Lägg till juridisk sida med villkor
+
                         pdf.addPage();
                         addWatermark(pdf);
-                        
                         // Rubrik
                         pdf.setFontSize(18);
                         pdf.setTextColor(40, 62, 80);
                         pdf.text('VILLKOR & ANSVARSFRISKRIVNING', 15, 25);
-                        
                         // Innehåll
                         pdf.setFontSize(10);
                         pdf.setTextColor(0, 0, 0);
-                        let yPos = 35;
-                        
+                        let yPosVillkor = 35;
                         const addSection = (title: string, content: string[]) => {
                           pdf.setFontSize(12);
                           pdf.setTextColor(40, 62, 80);
-                          pdf.text(title, 15, yPos);
-                          yPos += 8;
-                          
+                          pdf.text(title, 15, yPosVillkor);
+                          yPosVillkor += 8;
                           pdf.setFontSize(9);
                           pdf.setTextColor(0, 0, 0);
                           content.forEach(line => {
                             const splitText = pdf.splitTextToSize(line, 180);
-                            pdf.text(splitText, 15, yPos);
-                            yPos += splitText.length * 4;
+                            pdf.text(splitText, 15, yPosVillkor);
+                            yPosVillkor += splitText.length * 4;
                           });
-                          yPos += 3;
+                          yPosVillkor += 3;
                         };
-
                         addSection('1. Ansvarsfriskrivning', [
                           'Denna PDF är endast en offert och inte ett bindande avtal.',
                           'Priser, produkter och innehåll kan komma att ändras. Slutgiltig orderbekräftelse sker först efter skriftligt godkännande från Monterhyra. Vi reserverar oss för tryckfel, prisändringar och eventuella tekniska avvikelser i produkter och material.'
                         ]);
-
                         addSection('2. Äganderätt / Upphovsrätt', [
                           'Alla ritningar, 3D-visualiseringar, bilder och dokument i denna PDF tillhör Monterhyra och får inte kopieras, spridas eller användas av tredje part utan skriftligt tillstånd.'
                         ]);
-
                         addSection('3. Beställningsvillkor', [
                           'En beställning blir giltig först när den har mottagits och bekräftats skriftligt av Monterhyra.',
                           'Leveranstider och priser är preliminära fram till orderbekräftelse.'
                         ]);
-
                         addSection('4. Ansvar för leverans & montering', [
                           'Monterhyra ansvarar inte för förseningar eller skador orsakade av:',
                           '• Tredje part (t.ex. transportföretag)',
@@ -5803,11 +5620,9 @@ export default function App() {
                           '• Förändringar i kundens monteryta eller miljö som påverkar montering',
                           '• Övriga omständigheter utanför Monterhyras kontroll'
                         ]);
-
                         addSection('5. Integritet / GDPR', [
                           'Personuppgifter som samlas in i samband med beställning hanteras enligt gällande dataskyddslagstiftning (GDPR) och används endast för att fullfölja beställningen.'
                         ]);
-
                         addSection('ALLMÄNNA VILLKOR', [
                           'Offert och accept – Denna PDF utgör endast en offert. Beställning blir giltig först efter skriftlig bekräftelse från Monterhyra.',
                           '',
@@ -6491,6 +6306,22 @@ Monterhyra Beställningssystem
                               console.error('Fel vid förbättring av packlista:', e);
                             }
                             
+                            // Spara de tre vyerna (ovanifrån, perspektiv, framifrån) i orderData.images
+                            let orderImages: string[] = [];
+                            if (captureRef.current && captureRef.current.captureViews) {
+                              try {
+                                orderImages = captureRef.current.captureViews(1200, 800);
+                              } catch (e) {
+                                // fallback: försök ta canvas
+                                const canvasEl = document.querySelector('canvas') as HTMLCanvasElement | null;
+                                if (canvasEl) {
+                                  const imgData = canvasEl.toDataURL('image/jpeg', 0.7);
+                                  orderImages = [imgData, imgData, imgData];
+                                }
+                              }
+                            }
+                            while (orderImages.length < 3) orderImages.push('');
+
                             const orderData: OrderData = {
                               floorSize: floorIndex !== null ? FLOOR_SIZES[floorIndex] : null,
                               wallConfig: {
@@ -6504,7 +6335,8 @@ Monterhyra Beställningssystem
                               decorations: [],
                               storages: [],
                               totalPrice: totalCost,
-                              packlista: packlistaData // Spara hela den förbättrade packlistan
+                              packlista: packlistaData, // Spara hela den förbättrade packlistan
+                              images: orderImages // Spara bilderna för admin/kund
                             };
                             
                             // Samla alla PDF-filer
