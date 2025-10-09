@@ -409,26 +409,26 @@ export default function ForexPDFGenerator({
     setIsGenerating(true);
     
     try {
-      const zip = new JSZip();
-      
       for (const design of designs) {
         const pdfBlob = await generateWallPDF(design);
         const fileName = `FOREX_${design.wallLabel.replace(' ', '_')}_${design.widthMM}x${design.heightMM}mm.pdf`;
-        zip.file(fileName, pdfBlob);
+        // Spara i adminpanelen
+        try {
+          const { OrderManager } = await import('./OrderManager');
+          await OrderManager.savePrintPDF(fileName, pdfBlob);
+        } catch (err) {
+          console.warn('Kunde ej spara PDF i adminpanelen:', err);
+        }
+        // Ladda ner lokalt
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(pdfBlob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
-      
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(zipBlob);
-      link.download = 'Monterhyra_Tryckfiler_FOREX.zip';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
       // Visa success-meddelande men stäng INTE popup
-      alert('✅ PDF-filer nedladdade!\n\nDu kan nu:\n• Fortsätta redigera designen\n• Applicera designen på väggen\n• Eller stänga fönstret');
-      
+      alert('✅ PDF-filer nedladdade och sparade i admin!\n\nDu kan nu:\n• Fortsätta redigera designen\n• Applicera designen på väggen\n• Eller stänga fönstret');
     } catch (error) {
       console.error('Fel vid generering av PDFs:', error);
       alert('Ett fel uppstod vid generering av PDF-filer. Vänligen försök igen.');

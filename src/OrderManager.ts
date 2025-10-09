@@ -1,3 +1,7 @@
+  /**
+   * Spara en enskild PDF-tryckfil till adminpanelen (tryckfiler-listan).
+   * Varje PDF sparas som en egen "order" med printOnly=true och filen som base64.
+   */
 import JSZip from 'jszip';
 
 // OrderManager.ts - Hanterar beställningar i admin-portalen
@@ -35,9 +39,119 @@ export interface Order {
     zipFile: string; // base64 data URL
     storedInIDB?: boolean; // if true, actual blob stored in IndexedDB under order id
   };
+  printOnly?: boolean; // om true: endast tryckfiler, ingen kund/orderinfo behövs
 }
 
 export class OrderManager {
+
+  /**
+   * Spara en enskild PDF-tryckfil till adminpanelen (tryckfiler-listan).
+   * Varje PDF sparas som en egen "order" med printOnly=true och filen som base64.
+   */
+  static async savePrintPDF(label: string, pdfBlob: Blob): Promise<string> {
+    const orderId = this.generateOrderId();
+    try {
+      const approxBytes = pdfBlob.size;
+      const MAX_LOCALSTORAGE_BYTES = 3.5 * 1024 * 1024; // 3.5 MB
+
+      const order: Order = {
+        id: orderId,
+        timestamp: new Date().toISOString(),
+        customerInfo: {
+          name: `Auto-saved: ${label}`,
+          email: '',
+          phone: '',
+          company: '',
+          deliveryAddress: '',
+          eventDate: '',
+          eventTime: '',
+          setupTime: '',
+          pickupTime: '',
+          message: ''
+        },
+        orderData: {
+          floorSize: null,
+          wallConfig: null,
+          furniture: [],
+          plants: [],
+          decorations: [],
+          storages: [],
+          totalPrice: 0
+        },
+        files: {
+          zipFile: ''
+        },
+        printOnly: true
+      };
+
+      // Försök alltid spara base64 i localStorage för admin-panelen
+      let pdfBase64 = '';
+      try {
+        pdfBase64 = await this.blobToBase64(pdfBlob);
+        order.files.zipFile = `data:application/pdf;base64,${pdfBase64.replace(/^data:application\/pdf;base64,/, '')}`;
+        order.files.storedInIDB = false;
+        // Om filen är stor, spara även i IDB för backup
+        if (approxBytes > MAX_LOCALSTORAGE_BYTES) {
+          try {
+            await this.saveBlobToIDB(orderId, pdfBlob);
+            order.files.storedInIDB = true;
+            // Men behåll zipFile = base64 för adminpanelen
+            console.log('OrderManager: PDF lagrad i IDB och base64 i localStorage', orderId);
+          } catch (idbErr) {
+            console.error('OrderManager: Failed to store PDF in IDB', idbErr);
+          }
+        }
+        const existingOrders = this.getOrders();
+        existingOrders.push(order);
+        localStorage.setItem('adminOrders', JSON.stringify(existingOrders));
+        console.log('OrderManager: PDF sparad i admin som base64', orderId);
+        return orderId;
+      } catch (storageErr) {
+        // Om base64-sparande misslyckas, spara endast i IDB och visa placeholder
+        console.error('OrderManager: Failed to save PDF as base64 in localStorage', storageErr);
+        console.error('PDF label:', label);
+        console.error('PDF blob:', pdfBlob);
+        try {
+          await this.saveBlobToIDB(orderId, pdfBlob);
+          order.files.zipFile = '';
+          order.files.storedInIDB = true;
+        } catch (idbErr) {
+          console.error('OrderManager: Failed to store PDF in IDB as fallback', idbErr);
+        }
+        const existing = this.getOrders();
+        existing.push(order);
+        localStorage.setItem('adminOrders', JSON.stringify(existing));
+        return orderId;
+      }
+    } catch (err) {
+      console.error('OrderManager: Failed to save PDF', err);
+      throw err;
+    }
+  }
+  // Extra loggning för blobToBase64
+  private static async blobToBase64(blob: Blob): Promise<string> {
+    try {
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (reader.result && typeof reader.result === 'string') {
+            resolve(reader.result);
+          } else {
+            reject(new Error('FileReader result is empty or not a string'));
+          }
+        };
+        reader.onerror = (e) => {
+          console.error('blobToBase64: FileReader error', e);
+          reject(e);
+        };
+        reader.readAsDataURL(blob);
+      });
+    } catch (err) {
+      console.error('blobToBase64: Exception thrown', err);
+      throw err;
+    }
+  }
+
   private static generateOrderId(): string {
     const timestamp = Date.now().toString();
     const random = Math.random().toString(36).substr(2, 4);
@@ -58,75 +172,69 @@ export class OrderManager {
     try {
       // Skapa ZIP-fil med alla PDFer
       const zipBlob = await this.createZipFile(pdfFiles);
-  const zipBase64 = await this.blobToBase64(zipBlob);
+      const approxBytes = zipBlob.size;
+      const MAX_LOCALSTORAGE_BYTES = 3.5 * 1024 * 1024; // 3.5 MB - konservativ gräns
 
-  // Kontrollera ungefärlig storlek av base64-strängen (bytes). base64 ökar storlek ~33%.
-  const approxBytes = Math.ceil((zipBase64.length * 3) / 4);
-  const MAX_LOCALSTORAGE_BYTES = 3.5 * 1024 * 1024; // 3.5 MB - konservativ gräns
-
-      
       const order: Order = {
         id: orderId,
         timestamp: new Date().toISOString(),
         customerInfo,
         orderData,
         files: {
-          zipFile: zipBase64
+          zipFile: ''
         }
       };
 
-      // Om ZIP:en är för stor för reliable localStorage-spara, fallback: trigga nedladdning av ZIP
-      // och spara endast metadata i localStorage så admin ser beställningen.
-      try {
-        if (approxBytes > MAX_LOCALSTORAGE_BYTES) {
-          console.warn('OrderManager: ZIP verkar stor (≈' + Math.round(approxBytes / 1024) + 'KB). Storer i IndexedDB och sparar metadata i admin.');
-          try {
-            await this.saveBlobToIDB(orderId, zipBlob);
-            // markera ordern så admin vet att filen finns i IDB
-            order.files.zipFile = '';
-            order.files.storedInIDB = true;
-            const existing = this.getOrders();
-            existing.push(order);
-            localStorage.setItem('adminOrders', JSON.stringify(existing));
-            console.log('OrderManager: ZIP lagrad i IndexedDB under nyckel', orderId);
-            return orderId;
-          } catch (idbErr) {
-            console.error('OrderManager: Failed to store ZIP in IndexedDB, falling back to direct download', idbErr);
-            // Fallback: trigger download so user still gets file
-            try {
-              const url = URL.createObjectURL(zipBlob);
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = `Beställning_${orderId}.zip`;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              URL.revokeObjectURL(url);
-              console.log('OrderManager: Fallback ZIP download triggered');
-            } catch (dlErr) {
-              console.error('OrderManager: Failed to trigger fallback download', dlErr);
-            }
-
-            // Save metadata-only so the order appears in admin
-            const metaOnly: Order = { ...order, files: { zipFile: '', storedInIDB: false } };
-            const existing = this.getOrders();
-            existing.push(metaOnly);
-            localStorage.setItem('adminOrders', JSON.stringify(existing));
-            return orderId;
-          }
+      // Försök spara blob i IndexedDB för stora filer (rekommenderat)
+      if (approxBytes > MAX_LOCALSTORAGE_BYTES) {
+        try {
+          await this.saveBlobToIDB(orderId, zipBlob);
+          order.files.zipFile = '';
+          order.files.storedInIDB = true;
+          const existing = this.getOrders();
+          existing.push(order);
+          localStorage.setItem('adminOrders', JSON.stringify(existing));
+          console.log('OrderManager: ZIP lagrad i IndexedDB under nyckel', orderId);
+          return orderId;
+        } catch (idbErr) {
+          console.error('OrderManager: Failed to store ZIP in IndexedDB', idbErr);
+          // fall through to attempt base64/localStorage path as fallback
         }
+      }
 
-        // Normal save path
+      // För mindre filer: konvertera till base64 och spara i localStorage
+      try {
+        const zipBase64 = await this.blobToBase64(zipBlob);
+        order.files.zipFile = zipBase64;
+        order.files.storedInIDB = false;
         const existingOrders = this.getOrders();
         existingOrders.push(order);
         localStorage.setItem('adminOrders', JSON.stringify(existingOrders));
         console.log('✅ Beställning sparad:', orderId);
         return orderId;
       } catch (storageErr) {
-        console.error('OrderManager: Failed to save order:', storageErr);
-        throw storageErr;
-      }
+        console.error('OrderManager: Failed to save order as base64 in localStorage', storageErr);
+        // Final fallback: trigger download so user still gets file and save metadata-only
+        try {
+          const url = URL.createObjectURL(zipBlob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `Beställning_${orderId}.zip`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          console.log('OrderManager: Fallback ZIP download triggered');
+        } catch (dlErr) {
+          console.error('OrderManager: Failed to trigger fallback download', dlErr);
+        }
 
+        const metaOnly: Order = { ...order, files: { zipFile: '', storedInIDB: false } };
+        const existing = this.getOrders();
+        existing.push(metaOnly);
+        localStorage.setItem('adminOrders', JSON.stringify(existing));
+        return orderId;
+      }
     } catch (error) {
       console.error('❌ Fel vid sparning av beställning:', error);
       throw new Error('Kunde inte spara beställning');
@@ -164,14 +272,6 @@ export class OrderManager {
     return await zip.generateAsync({ type: 'blob' });
   }
 
-  private static async blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
 
   static getOrders(): Order[] {
     try {
@@ -231,6 +331,185 @@ export class OrderManager {
     }
   }
 
+  /**
+   * Save generated print files (PDFs) from the editor into the admin orders store.
+   * This creates a ZIP from the provided PDFs and stores it similarly to saveOrder
+   * so admins can download the files later.
+   *
+   * label: short textual label describing the print batch (e.g. 'VEPA export')
+   * pdfFiles: same shape as used by saveOrder.createZipFile
+   */
+  static async savePrintFiles(
+    label: string,
+    pdfFiles: {
+      mainPDF?: Blob;
+      wallPDFs: { name: string; blob: Blob }[];
+      storagePDFs: { name: string; blob: Blob }[];
+    }
+  ): Promise<string> {
+    const orderId = this.generateOrderId();
+
+    try {
+      const zipBlob = await this.createZipFile(pdfFiles);
+      const approxBytes = zipBlob.size;
+      const MAX_LOCALSTORAGE_BYTES = 3.5 * 1024 * 1024; // 3.5 MB
+
+      const order: Order = {
+        id: orderId,
+        timestamp: new Date().toISOString(),
+        customerInfo: {
+          name: `Auto-saved: ${label}`,
+          email: '',
+          phone: '',
+          company: '',
+          deliveryAddress: '',
+          eventDate: '',
+          eventTime: '',
+          setupTime: '',
+          pickupTime: '',
+          message: ''
+        },
+        orderData: {
+          floorSize: null,
+          wallConfig: null,
+          furniture: [],
+          plants: [],
+          decorations: [],
+          storages: [],
+          totalPrice: 0
+        },
+        files: {
+          zipFile: ''
+        }
+      };
+
+      // Försök spara blob i IndexedDB för stora filer
+      if (approxBytes > MAX_LOCALSTORAGE_BYTES) {
+        try {
+          await this.saveBlobToIDB(orderId, zipBlob);
+          order.files.zipFile = '';
+          order.files.storedInIDB = true;
+          const existing = this.getOrders();
+          existing.push(order);
+          localStorage.setItem('adminOrders', JSON.stringify(existing));
+          console.log('OrderManager: Print ZIP lagrad i IndexedDB under nyckel', orderId);
+          return orderId;
+        } catch (idbErr) {
+          console.error('OrderManager: Failed to store print ZIP in IDB', idbErr);
+          // fall through to attempt base64/localStorage path as fallback
+        }
+      }
+
+      // För mindre filer: konvertera till base64 och spara i localStorage
+      try {
+        const zipBase64 = await this.blobToBase64(zipBlob);
+        order.files.zipFile = zipBase64;
+        order.files.storedInIDB = false;
+        const existingOrders = this.getOrders();
+        existingOrders.push(order);
+        localStorage.setItem('adminOrders', JSON.stringify(existingOrders));
+        console.log('OrderManager: Print files sparade i admin:', orderId);
+        return orderId;
+      } catch (storageErr) {
+        console.error('OrderManager: Failed to save print files as base64 in localStorage', storageErr);
+        // Fallback: metadata-only
+        const metaOnly: Order = { ...order, files: { zipFile: '', storedInIDB: false } };
+        const existing = this.getOrders();
+        existing.push(metaOnly);
+        localStorage.setItem('adminOrders', JSON.stringify(existing));
+        return orderId;
+      }
+
+    } catch (error) {
+      console.error('Fel vid sparning av tryckfiler:', error);
+      throw new Error('Kunde inte spara tryckfiler');
+    }
+  }
+
+  /**
+   * Save an exact ZIP Blob (from editor) into admin orders. This ensures the
+   * same ZIP that the user downloads is what admins can later download.
+   */
+  static async saveZipBlob(label: string, zipBlob: Blob, opts?: { printOnly?: boolean }): Promise<string> {
+    const orderId = this.generateOrderId();
+    try {
+      const approxBytes = zipBlob.size;
+      const MAX_LOCALSTORAGE_BYTES = 3.5 * 1024 * 1024; // 3.5 MB
+
+      const order: Order = {
+        id: orderId,
+        timestamp: new Date().toISOString(),
+        customerInfo: {
+          name: opts?.printOnly ? `Auto-saved: ${label}` : `Auto-saved: ${label}`,
+          email: '',
+          phone: '',
+          company: '',
+          deliveryAddress: '',
+          eventDate: '',
+          eventTime: '',
+          setupTime: '',
+          pickupTime: '',
+          message: ''
+        },
+        orderData: {
+          floorSize: null,
+          wallConfig: null,
+          furniture: [],
+          plants: [],
+          decorations: [],
+          storages: [],
+          totalPrice: 0
+        },
+        files: {
+          zipFile: ''
+        }
+      };
+      if (opts?.printOnly) {
+        // minimal metadata - keep customerInfo/orderData empty but mark printOnly
+        order.printOnly = true;
+      }
+
+      // Försök IndexedDB först för stora filer
+      if (approxBytes > MAX_LOCALSTORAGE_BYTES) {
+        try {
+          await this.saveBlobToIDB(orderId, zipBlob);
+          order.files.zipFile = '';
+          order.files.storedInIDB = true;
+          const existing = this.getOrders();
+          existing.push(order);
+          localStorage.setItem('adminOrders', JSON.stringify(existing));
+          console.log('OrderManager: ZIPBlob lagrad i IDB under nyckel', orderId);
+          return orderId;
+        } catch (idbErr) {
+          console.error('OrderManager: Failed to store ZIP blob in IDB', idbErr);
+          // fall through to try base64 path
+        }
+      }
+
+      // Fallback: konvertera till base64 och spara i localStorage
+      try {
+        const zipBase64 = await this.blobToBase64(zipBlob);
+        order.files.zipFile = zipBase64;
+        order.files.storedInIDB = false;
+        const existingOrders = this.getOrders();
+        existingOrders.push(order);
+        localStorage.setItem('adminOrders', JSON.stringify(existingOrders));
+        console.log('OrderManager: ZIPBlob sparad i admin som base64', orderId);
+        return orderId;
+      } catch (storageErr) {
+        console.error('OrderManager: Failed to save ZIP as base64 in localStorage', storageErr);
+        const metaOnly: Order = { ...order, files: { zipFile: '', storedInIDB: false } };
+        const existing = this.getOrders();
+        existing.push(metaOnly);
+        localStorage.setItem('adminOrders', JSON.stringify(existing));
+        return orderId;
+      }
+    } catch (err) {
+      console.error('OrderManager: Failed to save ZIP blob', err);
+      throw err;
+    }
+  }
+
   // ---------- IndexedDB helpers ----------
   private static openIDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -257,7 +536,7 @@ export class OrderManager {
     });
   }
 
-  private static async getBlobFromIDB(key: string): Promise<Blob | null> {
+  public static async getBlobFromIDB(key: string): Promise<Blob | null> {
     const db = await this.openIDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction('zips', 'readonly');

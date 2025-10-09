@@ -1,3 +1,27 @@
+  // Hämta PDF från IndexedDB och ladda ner
+  const downloadPDFfromIDB = async (orderId: string) => {
+    try {
+      // @ts-ignore: OrderManager har metoden men TS kanske inte vet
+      const blob = await OrderManager.getBlobFromIDB(orderId);
+      if (!blob) {
+        alert('Kunde inte hitta PDF i IndexedDB!');
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Tryckfil_${orderId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    } catch (err) {
+      alert('Fel vid hämtning av PDF från IndexedDB!');
+      console.error('downloadPDFfromIDB error:', err);
+    }
+  };
 import React, { useState, useEffect } from 'react';
 import { OrderManager } from './OrderManager';
 import jsPDF from 'jspdf';
@@ -31,6 +55,7 @@ interface Order {
   };
   files: {
     zipFile: string; // base64 data URL
+    storedInIDB?: boolean;
   };
   // Nya fält för personal och faktura
   staffInfo?: {
@@ -52,6 +77,10 @@ const AdminPortal: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
+  // Logga alla ordrar till konsolen för felsökning
+  React.useEffect(() => {
+    console.log('Alla ordrar i adminpanelen:', orders);
+  }, [orders]);
   const [loginError, setLoginError] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -175,8 +204,11 @@ const AdminPortal: React.FC = () => {
     if (savedOrders) {
       try {
         const parsedOrders = JSON.parse(savedOrders);
-        console.log('Loaded orders:', parsedOrders);
         setOrders(parsedOrders);
+        // Logga direkt efter setOrders
+        setTimeout(() => {
+          console.log('Loaded orders (efter setOrders):', parsedOrders);
+        }, 0);
       } catch (error) {
         console.error('Fel vid laddning av beställningar:', error);
       }
@@ -794,98 +826,219 @@ const AdminPortal: React.FC = () => {
         {/* Overview List eller Detail View */}
         {!selectedOrder ? (
           /* Overview List */
-          orders.length === 0 ? (
-            <div style={{
-              backgroundColor: 'white',
-              padding: '40px',
-              borderRadius: '8px',
-              textAlign: 'center',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <p style={{
-                color: '#666',
-                fontSize: '18px',
-                margin: 0
-              }}>
-                Inga beställningar ännu
-              </p>
-            </div>
-          ) : (
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              overflow: 'hidden',
-              maxHeight: '70vh',
-              overflowY: 'auto',
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#cbd5e0 #f7fafc'
-            }}>
-              {/* Table Header */}
+          <>
+            {orders.length === 0 ? (
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: '120px 1fr 180px 150px 180px',
-                gap: '16px',
-                padding: '16px 20px',
-                backgroundColor: '#34495e',
-                color: 'white',
-                fontWeight: '600',
-                fontSize: '14px',
-                position: 'sticky',
-                top: 0,
-                zIndex: 1
+                backgroundColor: 'white',
+                padding: '40px',
+                borderRadius: '8px',
+                textAlign: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}>
-                <div>Order #</div>
-                <div>Kund</div>
-                <div>Eventdatum</div>
-                <div>Totalpris</div>
-                <div>Åtgärder</div>
+                <p style={{
+                  color: '#666',
+                  fontSize: '18px',
+                  margin: 0
+                }}>
+                  Inga beställningar ännu
+                </p>
+              </div>
+            ) : (
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                overflow: 'hidden',
+                maxHeight: '70vh',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#cbd5e0 #f7fafc',
+                marginBottom: '32px'
+              }}>
+                {/* Table Header */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '120px 1fr 180px 150px 180px',
+                  gap: '16px',
+                  padding: '16px 20px',
+                  backgroundColor: '#34495e',
+                  color: 'white',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 1
+                }}>
+                  <div>Order #</div>
+                  <div>Kund</div>
+                  <div>Eventdatum</div>
+                  <div>Totalpris</div>
+                  <div>Åtgärder</div>
+                </div>
+
+                {/* Table Rows */}
+                {orders.map((order) => (
+                  <div
+                    key={order.id}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '120px 1fr 180px 150px 180px',
+                      gap: '16px',
+                      padding: '20px',
+                      borderBottom: '1px solid #ecf0f1',
+                      transition: 'background-color 0.2s',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                  >
+                    <div style={{ fontWeight: '600', color: '#2c3e50' }}>#{order.id}</div>
+                    <div style={{ color: '#34495e' }}>
+                      <div style={{ fontWeight: '600' }}>{order.customerInfo?.name || 'Okänd'}</div>
+                      <div style={{ fontSize: '13px', color: '#7f8c8d' }}>{order.customerInfo?.company || '-'}</div>
+                    </div>
+                    <div style={{ color: '#34495e' }}>{order.customerInfo?.eventDate || '-'}</div>
+                    <div style={{ fontWeight: '600', color: '#27ae60' }}>{formatPrice(order.orderData?.totalPrice || 0)}</div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#3498db',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: '500'
+                        }}
+                      >
+                        Visa detaljer →
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Tryckfiler-ruta */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+              marginTop: '0',
+              padding: '24px',
+              marginBottom: '32px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  color: '#e74c3c',
+                  margin: 0,
+                  letterSpacing: '0.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  🖨️ Tryckfiler
+                </h2>
+                <button
+                  onClick={loadOrders}
+                  style={{
+                    padding: '6px 16px',
+                    backgroundColor: '#3498db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginLeft: 16
+                  }}
+                  title="Ladda om listan med tryckfiler"
+                >
+                  Uppdatera
+                </button>
+              </div>
+              <div style={{ fontSize: '15px', color: '#34495e', marginBottom: '12px' }}>
+                Här visas alla PDF-tryckfiler som är kopplade till ordrar. Klicka för att ladda ner.
               </div>
 
-              {/* Table Rows */}
-              {orders.map((order) => (
-                <div
-                  key={order.id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '120px 1fr 180px 150px 180px',
-                    gap: '16px',
-                    padding: '20px',
-                    borderBottom: '1px solid #ecf0f1',
-                    transition: 'background-color 0.2s',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                >
-                  <div style={{ fontWeight: '600', color: '#2c3e50' }}>#{order.id}</div>
-                  <div style={{ color: '#34495e' }}>
-                    <div style={{ fontWeight: '600' }}>{order.customerInfo?.name || 'Okänd'}</div>
-                    <div style={{ fontSize: '13px', color: '#7f8c8d' }}>{order.customerInfo?.company || '-'}</div>
-                  </div>
-                  <div style={{ color: '#34495e' }}>{order.customerInfo?.eventDate || '-'}</div>
-                  <div style={{ fontWeight: '600', color: '#27ae60' }}>{formatPrice(order.orderData?.totalPrice || 0)}</div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => setSelectedOrder(order)}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#3498db',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        fontWeight: '500'
-                      }}
-                    >
-                      Visa detaljer →
-                    </button>
-                  </div>
-                </div>
-              ))}
+  // Logga alla ordrar till konsolen för felsökning
+              <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                {orders.filter(order => {
+                  const f = order.files;
+                  return (f && ((f.zipFile && f.zipFile.startsWith('data:application/pdf')) || (!f.zipFile && f.storedInIDB)));
+                }).length === 0 ? (
+                  <div style={{ color: '#aaa', fontStyle: 'italic' }}>Inga tryckfiler uppladdade ännu.</div>
+                ) : (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {orders.filter(order => {
+                      const f = order.files;
+                      return (f && ((f.zipFile && f.zipFile.startsWith('data:application/pdf')) || (!f.zipFile && f.storedInIDB)));
+                    }).map(order => {
+                      const f = order.files;
+                      const hasPDF = f.zipFile && f.zipFile.startsWith('data:application/pdf');
+                      return (
+                        <li key={order.id} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          marginBottom: '10px',
+                          borderBottom: '1px solid #f0f0f0',
+                          paddingBottom: '8px'
+                        }}>
+                          <span style={{ fontWeight: 600, color: '#2c3e50', minWidth: 80 }}>#{order.id}</span>
+                          <span style={{ flex: 1 }}>{order.customerInfo?.name || 'Okänd'}</span>
+                          {hasPDF ? (
+                            <a
+                              href={f.zipFile}
+                              download={`Tryckfil_${order.id}.pdf`}
+                              style={{
+                                padding: '6px 16px',
+                                backgroundColor: '#e74c3c',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                textDecoration: 'none'
+                              }}
+                            >
+                              Ladda ner PDF
+                            </a>
+                          ) : (
+                            <>
+                              <span style={{ color: '#e67e22', fontWeight: 500, marginRight: 8 }}>
+                                PDF endast i IDB (för stor för localStorage)
+                              </span>
+                              <button
+                                style={{
+                                  padding: '6px 16px',
+                                  backgroundColor: '#e67e22',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  fontWeight: '600',
+                                }}
+                                onClick={() => downloadPDFfromIDB(order.id)}
+                              >
+                                Ladda ner från IDB
+                              </button>
+                            </>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
             </div>
-          )
+          </>
         ) : (
           /* Detail View */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', maxHeight: '200vh', overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', paddingRight: '12px' }}>

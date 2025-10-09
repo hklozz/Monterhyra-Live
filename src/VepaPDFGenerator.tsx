@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import jsPDF from 'jspdf';
 import JSZip from 'jszip';
+import { OrderManager } from './OrderManager';
 
 // beMatrix dimensioner: 62mm x 62mm moduler
 const BEMATRIX_MODULE_SIZE = 62; // mm
@@ -340,29 +341,26 @@ export default function VepaPDFGenerator({
     setIsGenerating(true);
     
     try {
-      const zip = new JSZip();
-      
-      // Generera PDF för varje vägg
+      // Generera och spara PDF för varje vägg
       for (const design of designs) {
         const pdfBlob = await generateWallPDF(design);
         const fileName = `${design.wallLabel.replace(' ', '_')}_${design.widthMM}x${design.heightMM}mm.pdf`;
-        zip.file(fileName, pdfBlob);
+        // Spara i adminpanelen
+        try {
+          await OrderManager.savePrintPDF(fileName, pdfBlob);
+        } catch (err) {
+          console.warn('Kunde ej spara PDF i adminpanelen:', err);
+        }
+        // Ladda ner lokalt
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(pdfBlob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
-      
-      // Generera ZIP
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      
-      // Ladda ner ZIP
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(zipBlob);
-      link.download = 'Monterhyra_Tryckfiler_VEPA.zip';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
       // Visa success-meddelande men stäng INTE popup
-      alert('✅ PDF-filer nedladdade!\n\nDu kan nu:\n• Fortsätta redigera designen\n• Applicera designen på väggen\n• Eller stänga fönstret');
-      
+      alert('✅ PDF-filer nedladdade och sparade i admin!\n\nDu kan nu:\n• Fortsätta redigera designen\n• Applicera designen på väggen\n• Eller stänga fönstret');
     } catch (error) {
       console.error('Fel vid generering av PDFs:', error);
       alert('Ett fel uppstod vid generering av PDF-filer. Vänligen försök igen.');

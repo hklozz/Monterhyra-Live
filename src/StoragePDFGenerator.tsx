@@ -279,28 +279,27 @@ export default function StoragePDFGenerator({
     setIsGenerating(true);
     
     try {
-      const zip = new JSZip();
       const bleedMM = printType === 'vepa' ? 30 : 3; // 30mm för VEPA, 3mm för Forex
-      
       for (const design of designs) {
         const pdf = await generateWallPDF(design, bleedMM, printType);
         const pdfBlob = pdf.output('blob');
-        zip.file(`Forrad_${design.wallLabel.replace(/\s+/g, '_')}_${design.widthMM}x${design.heightMM}mm.pdf`, pdfBlob);
+        const fileName = `Forrad_${design.wallLabel.replace(/\s+/g, '_')}_${design.widthMM}x${design.heightMM}mm.pdf`;
+        // Spara i adminpanelen
+        try {
+          const { OrderManager } = await import('./OrderManager');
+          await OrderManager.savePrintPDF(fileName, pdfBlob);
+        } catch (err) {
+          console.warn('Kunde ej spara PDF i adminpanelen:', err);
+        }
+        // Ladda ner lokalt
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(pdfBlob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
-      
-      // Ladda ner ZIP
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Forrad_${printType.toUpperCase()}_PDF_${Date.now()}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      alert(`✅ PDF-filer nedladdade! Du kan nu:\n• Fortsätta redigera designen\n• Skicka PDF-filerna till tryckeriet\n• Applicera designen på 3D-modellen`);
-      
+      alert(`✅ PDF-filer nedladdade och sparade i admin! Du kan nu:\n• Fortsätta redigera designen\n• Skicka PDF-filerna till tryckeriet\n• Applicera designen på 3D-modellen`);
     } catch (error) {
       console.error('❌ Fel vid PDF-generering:', error);
       alert('❌ Kunde inte generera PDF-filer');
