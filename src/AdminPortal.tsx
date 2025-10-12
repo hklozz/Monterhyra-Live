@@ -69,6 +69,7 @@ interface Order {
   };
   files: {
     zipFile: string; // base64 data URL
+    objFile?: string; // base64 data URL for OBJ file
     storedInIDB?: boolean;
   };
   // Nya fält för personal och faktura
@@ -636,6 +637,47 @@ const AdminPortal: React.FC = () => {
     } catch (error) {
       console.error('Fel vid generering av följesedel:', error);
       alert('Kunde inte generera följesedel. Se konsolen för detaljer.');
+    }
+  };
+
+  const createTrelloCard = async (order: Order) => {
+    if (!order) {
+      alert('Ingen order vald!');
+      return;
+    }
+
+    const projectName = `Monterhyra Order #${order.id} - ${order.customerInfo?.company || order.customerInfo?.name || 'Okänd kund'}`;
+
+    try {
+      const response = await fetch('http://localhost:4000/api/trello', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: projectName,
+          desc: `Beställning från ${order.customerInfo?.name || 'Okänd'} (${order.customerInfo?.company || ''})\nEventdatum: ${order.customerInfo?.eventDate || 'Ej angivet'}\nTotalpris: ${order.orderData?.totalPrice?.toLocaleString('sv-SE') || 0} kr`,
+          due: order.customerInfo?.eventDate ? new Date(order.customerInfo.eventDate).toISOString() : null
+        })
+      });
+
+      if (response.ok) {
+        alert('Order skickad till Trello!');
+      } else {
+        const errorText = await response.text();
+        alert('Fel vid skapande av Trello-kort: ' + errorText);
+      }
+    } catch (error) {
+      alert('Tekniskt fel vid Trello-anrop: ' + error);
+    }
+  };
+
+  const downloadOBJ = async (orderId: string) => {
+    try {
+      await OrderManager.downloadOBJ(orderId);
+    } catch (error) {
+      console.error('Fel vid nedladdning:', error);
+      alert('Kunde inte ladda ner OBJ-fil');
     }
   };
 
@@ -1257,6 +1299,36 @@ const AdminPortal: React.FC = () => {
                     }}
                   >
                     ➕ Ny knapp
+                  </button>
+                  <button
+                    onClick={() => createTrelloCard(selectedOrder)}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#0079bf',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    ➕ Skicka till Trello
+                  </button>
+                  <button
+                    onClick={() => downloadOBJ(selectedOrder.id)}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#9b59b6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    🎯 Ladda ner 3D-modell (OBJ)
                   </button>
                   <button
                     onClick={() => deleteOrder(selectedOrder.id)}

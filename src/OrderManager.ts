@@ -38,6 +38,7 @@ export interface Order {
   orderData: OrderData;
   files: {
     zipFile: string; // base64 data URL
+    objFile?: string; // base64 data URL for OBJ file
     storedInIDB?: boolean; // if true, actual blob stored in IndexedDB under order id
   };
   printOnly?: boolean; // om true: endast tryckfiler, ingen kund/orderinfo behövs
@@ -328,6 +329,37 @@ export class OrderManager {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Fel vid nedladdning av ZIP-fil:', error);
+      throw error;
+    }
+  }
+
+  static async downloadOBJ(orderId: string): Promise<void> {
+    const order = this.getOrder(orderId);
+    if (!order) throw new Error('OBJ-fil hittades inte');
+
+    try {
+      let blob: Blob | null = null;
+      if (order.files.storedInIDB) {
+        // Hämta från IndexedDB
+        blob = await this.getBlobFromIDB(`${orderId}_obj`);
+        if (!blob) throw new Error('OBJ-filen finns inte i IndexedDB');
+      } else if (order.files.objFile) {
+        const response = await fetch(order.files.objFile);
+        blob = await response.blob();
+      } else {
+        throw new Error('OBJ-fil hittades inte');
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `3D-modell_${orderId}.obj`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Fel vid nedladdning av OBJ-fil:', error);
       throw error;
     }
   }
