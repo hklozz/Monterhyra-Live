@@ -26,6 +26,8 @@ export interface OrderData {
   plants: any[];
   decorations: any[];
   storages: any[];
+  counters: any[];
+  tvs: any[];
   totalPrice: number;
   packlista?: any; // Detaljerad BeMatrix packlista med alla ramar, diskar, corners osv.
   images?: string[]; // Tre base64-bilder (JPEG/PNG) från beställning
@@ -45,6 +47,182 @@ export interface Order {
 }
 
 export class OrderManager {
+
+  /**
+   * Diagnostiserar localStorage-problem
+   */
+  static diagnoseStorage(): void {
+    console.log('🔍 Diagnostiserar localStorage och IndexedDB...');
+
+    try {
+      const adminOrders = localStorage.getItem('adminOrders');
+      if (adminOrders) {
+        console.log('📊 adminOrders längd:', adminOrders.length, 'tecken');
+        console.log('📊 Första 200 tecken:', adminOrders.substring(0, 200));
+
+        try {
+          const parsed = JSON.parse(adminOrders);
+          console.log('✅ adminOrders kan parsas, innehåller', Array.isArray(parsed) ? parsed.length : 'N/A', 'objekt');
+
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            console.log('📋 Första ordern:', {
+              id: parsed[0].id,
+              timestamp: parsed[0].timestamp,
+              customerName: parsed[0].customerInfo?.name,
+              orderDataKeys: Object.keys(parsed[0].orderData || {}),
+              hasFiles: !!parsed[0].files,
+              storedInIDB: parsed[0].files?.storedInIDB,
+              zipFileSize: parsed[0].files?.zipFile ? Math.round(parsed[0].files.zipFile.length / 1024) + 'KB' : 'N/A'
+            });
+          }
+        } catch (parseError) {
+          console.error('❌ adminOrders kan inte parsas:', parseError);
+        }
+      } else {
+        console.log('ℹ️ adminOrders finns inte i localStorage');
+      }
+
+      // Kolla localStorage-användning
+      let totalSize = 0;
+      let itemCount = 0;
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          itemCount++;
+          const value = localStorage.getItem(key);
+          if (value) {
+            totalSize += value.length * 2; // UTF-16 uppskattning
+          }
+        }
+      }
+      console.log('💾 localStorage:', itemCount, 'objekt,', Math.round(totalSize / 1024), 'KB används');
+      console.log('📊 Tillgängligt utrymme uppskattat:', Math.round((5 * 1024 * 1024 - totalSize) / 1024), 'KB');
+
+      // Kontrollera IndexedDB
+      this.checkIndexedDBStatus();
+
+    } catch (error) {
+      console.error('❌ Fel vid diagnostisering:', error);
+    }
+  }
+
+  /**
+   * Kontrollerar IndexedDB-status
+   */
+  static async checkIndexedDBStatus(): Promise<void> {
+    console.log('🔍 Kontrollerar IndexedDB-status...');
+
+    try {
+      const request = indexedDB.open('MonterhyraOrders', 1);
+
+      request.onerror = () => {
+        console.error('❌ IndexedDB fel:', request.error);
+      };
+
+      request.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        console.log('✅ IndexedDB öppnad framgångsrikt');
+
+        // Lista alla object stores
+        const objectStoreNames = Array.from(db.objectStoreNames);
+        console.log('📁 Object stores:', objectStoreNames);
+
+        // Kontrollera varje object store
+        objectStoreNames.forEach(storeName => {
+          const transaction = db.transaction([storeName], 'readonly');
+          const store = transaction.objectStore(storeName);
+
+          const countRequest = store.count();
+          countRequest.onsuccess = () => {
+            console.log(`📊 ${storeName}: ${countRequest.result} objekt`);
+          };
+
+          countRequest.onerror = () => {
+            console.error(`❌ Fel vid räkning av ${storeName}:`, countRequest.error);
+          };
+        });
+
+        db.close();
+      };
+
+      request.onupgradeneeded = (event) => {
+        console.log('🔄 IndexedDB uppgradering behövs');
+        const db = (event.target as IDBOpenDBRequest).result;
+
+        // Skapa object stores om de inte finns
+        if (!db.objectStoreNames.contains('pdfFiles')) {
+          db.createObjectStore('pdfFiles');
+          console.log('📁 Skapade pdfFiles object store');
+        }
+        if (!db.objectStoreNames.contains('zipFiles')) {
+          db.createObjectStore('zipFiles');
+          console.log('📁 Skapade zipFiles object store');
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Fel vid IndexedDB-kontroll:', error);
+    }
+  }
+
+  /**
+   * Uppskattar nuvarande localStorage-användning
+   */
+  private static estimateLocalStorageUsage(): number {
+    let totalSize = 0;
+    try {
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          const value = localStorage.getItem(key);
+          if (value) {
+            // Uppskatta storlek (varje tecken är ~2 bytes i UTF-16)
+            totalSize += value.length * 2;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Kunde inte uppskatta localStorage-användning:', error);
+    }
+    return totalSize;
+  }
+
+  private static sanitizeOrderData(orderData: any): any {
+    try {
+      // Skapa en djup kopia och ta bort problematiska värden
+      const sanitized = JSON.parse(JSON.stringify(orderData, (key, value) => {
+        // Ta bort funktioner
+        if (typeof value === 'function') {
+          console.warn(`⚠️ Tar bort funktion från orderData.${key}`);
+          return undefined;
+        }
+        // Ta bort undefined värden (de blir null i JSON)
+        if (value === undefined) {
+          console.warn(`⚠️ Konverterar undefined till null i orderData.${key}`);
+          return null;
+        }
+        return value;
+      }));
+
+      console.log('✅ orderData saniterad för serialisering');
+      return sanitized;
+
+    } catch (error) {
+      console.error('❌ Fel vid sanitering av orderData:', error);
+      // Fallback: returnera en minimal version
+      return {
+        floorSize: orderData.floorSize || null,
+        wallConfig: orderData.wallConfig || null,
+        furniture: orderData.furniture || [],
+        plants: orderData.plants || [],
+        decorations: orderData.decorations || [],
+        storages: orderData.storages || [],
+        counters: orderData.counters || [],
+        tvs: orderData.tvs || [],
+        totalPrice: orderData.totalPrice || 0,
+        packlista: orderData.packlista || null,
+        images: orderData.images || []
+      };
+    }
+  }
 
   /**
    * Spara en enskild PDF-tryckfil till adminpanelen (tryckfiler-listan).
@@ -78,6 +256,8 @@ export class OrderManager {
           plants: [],
           decorations: [],
           storages: [],
+          counters: [],
+          tvs: [],
           totalPrice: 0
         },
         files: {
@@ -170,80 +350,138 @@ export class OrderManager {
     }
   ): Promise<string> {
     const orderId = this.generateOrderId();
-    
+
     try {
+      console.log('💾 Försöker spara beställning...', { orderId, customerInfo, orderDataKeys: Object.keys(orderData) });
+
       // Skapa ZIP-fil med alla PDFer
       const zipBlob = await this.createZipFile(pdfFiles);
       const approxBytes = zipBlob.size;
-      const MAX_LOCALSTORAGE_BYTES = 3.5 * 1024 * 1024; // 3.5 MB - konservativ gräns
+      const MAX_LOCALSTORAGE_BYTES = 2.5 * 1024 * 1024; // Sänkt till 2.5 MB för säkerhet
 
       const order: Order = {
         id: orderId,
         timestamp: new Date().toISOString(),
         customerInfo,
-        orderData,
+        orderData: this.sanitizeOrderData(orderData), // Sanitera orderData
         files: {
           zipFile: ''
         }
       };
 
-      // Försök spara blob i IndexedDB för stora filer (rekommenderat)
+      // Validera att orderData kan serialiseras (efter sanitering)
+      try {
+        JSON.stringify(orderData);
+        console.log('✅ orderData kan serialiseras');
+      } catch (jsonError) {
+        console.error('❌ orderData innehåller icke-serialiserbara värden:', jsonError);
+        throw new Error(`OrderData innehåller icke-serialiserbara värden: ${jsonError}`);
+      }
+
+      // För stora filer: använd alltid IndexedDB
       if (approxBytes > MAX_LOCALSTORAGE_BYTES) {
+        console.log('📦 Stor fil (', approxBytes, 'bytes) - använder IndexedDB');
         try {
           await this.saveBlobToIDB(orderId, zipBlob);
-          order.files.zipFile = '';
+          order.files.zipFile = ''; // Ingen base64 för stora filer
           order.files.storedInIDB = true;
+
+          // Försök spara metadata i localStorage
           const existing = this.getOrders();
           existing.push(order);
-          localStorage.setItem('adminOrders', JSON.stringify(existing));
-          console.log('OrderManager: ZIP lagrad i IndexedDB under nyckel', orderId);
-          return orderId;
+
+          try {
+            localStorage.setItem('adminOrders', JSON.stringify(existing));
+            console.log('OrderManager: ZIP lagrad i IndexedDB, metadata i localStorage', orderId);
+            return orderId;
+          } catch (quotaError) {
+            console.warn('⚠️ localStorage kvot överskreds för metadata, sparar endast i IndexedDB');
+            // Spara metadata separat i IndexedDB
+            await this.saveBlobToIDB(`${orderId}_metadata`, new Blob([JSON.stringify(order)]));
+            console.log('OrderManager: Både ZIP och metadata sparade i IndexedDB', orderId);
+            return orderId;
+          }
+
         } catch (idbErr) {
-          console.error('OrderManager: Failed to store ZIP in IndexedDB', idbErr);
-          // fall through to attempt base64/localStorage path as fallback
+          console.error('OrderManager: IndexedDB misslyckades för stor fil', idbErr);
+          throw new Error(`Kunde inte spara stor fil (${approxBytes} bytes): ${idbErr}`);
         }
       }
 
-      // För mindre filer: konvertera till base64 och spara i localStorage
+      // För mindre filer: försök base64 i localStorage först
+      console.log('📦 Liten fil (', approxBytes, 'bytes) - försöker base64 i localStorage');
       try {
         const zipBase64 = await this.blobToBase64(zipBlob);
         order.files.zipFile = zipBase64;
         order.files.storedInIDB = false;
+
         const existingOrders = this.getOrders();
         existingOrders.push(order);
-        localStorage.setItem('adminOrders', JSON.stringify(existingOrders));
-        console.log('✅ Beställning sparad:', orderId);
-        return orderId;
-      } catch (storageErr) {
-        console.error('OrderManager: Failed to save order as base64 in localStorage', storageErr);
-        // Final fallback: trigger download so user still gets file and save metadata-only
+
+        // Validera att hela order-arrayen kan serialiseras och får plats
         try {
-          const url = URL.createObjectURL(zipBlob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `Beställning_${orderId}.zip`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          console.log('OrderManager: Fallback ZIP download triggered');
-        } catch (dlErr) {
-          console.error('OrderManager: Failed to trigger fallback download', dlErr);
+          const serialized = JSON.stringify(existingOrders);
+          const serializedSize = serialized.length;
+
+          console.log('✅ Hela order-arrayen kan serialiseras, storlek:', serializedSize, 'tecken');
+
+          // Kontrollera om det finns tillräckligt med utrymme (uppskattning)
+          const currentUsage = this.estimateLocalStorageUsage();
+          const availableSpace = 4.5 * 1024 * 1024 - currentUsage; // 4.5MB säkerhetsmarginal
+
+          if (serializedSize > availableSpace) {
+            console.warn('⚠️ Uppskattat utrymme otillräckligt, använder IndexedDB istället');
+            throw new Error('Quota exceeded');
+          }
+
+          localStorage.setItem('adminOrders', serialized);
+          console.log('✅ Beställning sparad som base64 i localStorage:', orderId);
+          return orderId;
+
+        } catch (serializeError) {
+          console.error('❌ Serialisering eller kvot-fel:', serializeError);
+          throw serializeError;
         }
 
-        const metaOnly: Order = { ...order, files: { zipFile: '', storedInIDB: false } };
-        const existing = this.getOrders();
-        existing.push(metaOnly);
-        localStorage.setItem('adminOrders', JSON.stringify(existing));
-        return orderId;
+      } catch (storageErr) {
+        console.error('OrderManager: base64 i localStorage misslyckades:', storageErr);
+
+        // Fallback: försök IndexedDB
+        try {
+          console.log('🔄 Försöker fallback till IndexedDB...');
+          await this.saveBlobToIDB(orderId, zipBlob);
+          order.files.zipFile = '';
+          order.files.storedInIDB = true;
+
+          const existing = this.getOrders();
+          existing.push(order);
+
+          try {
+            localStorage.setItem('adminOrders', JSON.stringify(existing));
+            console.log('OrderManager: Fallback lyckades - ZIP i IDB, metadata i localStorage', orderId);
+            return orderId;
+          } catch (metaQuotaError) {
+            // Spara metadata också i IndexedDB
+            await this.saveBlobToIDB(`${orderId}_metadata`, new Blob([JSON.stringify(order)]));
+            console.log('OrderManager: Full fallback - allt i IndexedDB', orderId);
+            return orderId;
+          }
+
+        } catch (idbFallbackErr) {
+          console.error('OrderManager: Alla spar-metoder misslyckades:', idbFallbackErr);
+          throw new Error(`Kunde inte spara beställning: alla lagringsmetoder misslyckades`);
+        }
       }
     } catch (error) {
       console.error('❌ Fel vid sparning av beställning:', error);
-      throw new Error('Kunde inte spara beställning');
+      console.error('Error details:', {
+        message: (error as any).message,
+        stack: (error as any).stack,
+        name: (error as any).name
+      });
+      throw new Error(`Kunde inte spara beställning: ${(error as any).message}`);
     }
-  }
-
-  private static async createZipFile(pdfFiles: {
+  }  private static async createZipFile(pdfFiles: {
     mainPDF?: Blob;
     wallPDFs: { name: string; blob: Blob }[];
     storagePDFs: { name: string; blob: Blob }[];
@@ -278,9 +516,47 @@ export class OrderManager {
   static getOrders(): Order[] {
     try {
       const savedOrders = localStorage.getItem('adminOrders');
-      return savedOrders ? JSON.parse(savedOrders) : [];
+      if (!savedOrders) {
+        console.log('ℹ️ Inga sparade beställningar hittades i localStorage');
+        return [];
+      }
+
+      console.log('📖 Laddar beställningar från localStorage, längd:', savedOrders.length, 'tecken');
+
+      const parsed = JSON.parse(savedOrders);
+
+      // Validera att det är en array
+      if (!Array.isArray(parsed)) {
+        console.error('❌ Sparade beställningar är inte en array:', typeof parsed);
+        // Försök skapa backup och rensa
+        localStorage.setItem('adminOrders_backup', savedOrders);
+        localStorage.removeItem('adminOrders');
+        console.log('📋 Skapade backup av korrupt data och rensade localStorage');
+        return [];
+      }
+
+      console.log('✅ Laddade', parsed.length, 'beställningar från localStorage');
+      return parsed;
+
     } catch (error) {
-      console.error('Fel vid laddning av beställningar:', error);
+      console.error('❌ Fel vid laddning av beställningar från localStorage:', error);
+      console.error('Error details:', {
+        message: (error as any).message,
+        name: (error as any).name
+      });
+
+      // Försök skapa backup av korrupt data
+      try {
+        const corruptData = localStorage.getItem('adminOrders');
+        if (corruptData) {
+          localStorage.setItem('adminOrders_corrupt_backup', corruptData);
+          localStorage.removeItem('adminOrders');
+          console.log('📋 Skapade backup av korrupt data under "adminOrders_corrupt_backup"');
+        }
+      } catch (backupError) {
+        console.error('❌ Kunde inte skapa backup av korrupt data:', backupError);
+      }
+
       return [];
     }
   }
@@ -409,6 +685,8 @@ export class OrderManager {
           plants: [],
           decorations: [],
           storages: [],
+          counters: [],
+          tvs: [],
           totalPrice: 0
         },
         files: {
@@ -491,6 +769,8 @@ export class OrderManager {
           plants: [],
           decorations: [],
           storages: [],
+          counters: [],
+          tvs: [],
           totalPrice: 0
         },
         files: {

@@ -34,16 +34,58 @@ export function buildSceneFromOrderData(orderData: any): THREE.Scene {
   }
 
   // --- Väggar ---
-  if (orderData.wallConfig) {
-    const { width, depth, height, color: wallColor } = orderData.wallConfig;
-    if (width && height) {
-      const wall = new THREE.Mesh(
-        new THREE.BoxGeometry(width, height, 0.1),
-        new THREE.MeshStandardMaterial({ color: wallColor || 0xffffff })
+  if (orderData.wallConfig && orderData.floorSize) {
+    const { shape } = orderData.wallConfig;
+    const floorSize = orderData.floorSize;
+
+    if (shape === 'straight') {
+      // Huvudvägg (bakvägg)
+      const backWall = new THREE.Mesh(
+        new THREE.BoxGeometry(floorSize.width, 2.5, 0.15),
+        new THREE.MeshStandardMaterial({ color: 0xf8f9fa })
       );
-      wall.position.y = height / 2;
-      wall.position.z = -depth / 2 + 0.05;
-      scene.add(wall);
+      backWall.position.set(0, 1.25, -floorSize.length/2);
+      scene.add(backWall);
+    } else if (shape === 'l') {
+      // Bakvägg
+      const backWall = new THREE.Mesh(
+        new THREE.BoxGeometry(floorSize.width, 2.5, 0.15),
+        new THREE.MeshStandardMaterial({ color: 0xf8f9fa })
+      );
+      backWall.position.set(0, 1.25, -floorSize.length/2);
+      scene.add(backWall);
+
+      // Sidovägg (vänster)
+      const leftWall = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 2.5, floorSize.length),
+        new THREE.MeshStandardMaterial({ color: 0xf8f9fa })
+      );
+      leftWall.position.set(-floorSize.width/2, 1.25, 0);
+      scene.add(leftWall);
+    } else if (shape === 'u') {
+      // Bakvägg
+      const backWall = new THREE.Mesh(
+        new THREE.BoxGeometry(floorSize.width, 2.5, 0.15),
+        new THREE.MeshStandardMaterial({ color: 0xf8f9fa })
+      );
+      backWall.position.set(0, 1.25, -floorSize.length/2);
+      scene.add(backWall);
+
+      // Vänster sidovägg
+      const leftWall = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 2.5, floorSize.length),
+        new THREE.MeshStandardMaterial({ color: 0xf8f9fa })
+      );
+      leftWall.position.set(-floorSize.width/2, 1.25, 0);
+      scene.add(leftWall);
+
+      // Höger sidovägg
+      const rightWall = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 2.5, floorSize.length),
+        new THREE.MeshStandardMaterial({ color: 0xf8f9fa })
+      );
+      rightWall.position.set(floorSize.width/2, 1.25, 0);
+      scene.add(rightWall);
     }
   }
 
@@ -141,6 +183,79 @@ export function buildSceneFromOrderData(orderData: any): THREE.Scene {
       );
       mesh.position.set(item.position?.x || 0, 0.5, item.position?.z || 0);
       scene.add(mesh);
+    });
+  }
+
+  // --- Förråd/storages ---
+  if (Array.isArray(orderData.storages)) {
+    orderData.storages.forEach((item: any) => {
+      const storageColor = item.color || 0xffffff;
+      const storageHeight = orderData.wallConfig?.height || 2.5;
+      const wallThickness = 0.1;
+
+      // Storage dimensions based on type (simplified mapping)
+      let width = 1;
+      let depth = 1;
+      if (item.type === 1) { width = 1; depth = 1; } // 1x1m
+      else if (item.type === 2) { width = 2; depth = 1; } // 2x1m
+      else if (item.type === 3) { width = 3; depth = 1; } // 3x1m
+      else if (item.type === 4) { width = 4; depth = 1; } // 4x1m
+
+      // Storage floor
+      const floorMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(width, 0.06, depth),
+        new THREE.MeshStandardMaterial({ color: storageColor })
+      );
+      floorMesh.position.set(item.position?.x || 0, 0.03, item.position?.z || 0);
+      if (item.rotation) {
+        floorMesh.rotation.y = item.rotation * Math.PI / 180;
+      }
+      scene.add(floorMesh);
+
+      // Storage walls (back, left, right, front)
+      // Back wall
+      const backWall = new THREE.Mesh(
+        new THREE.BoxGeometry(width, storageHeight, wallThickness),
+        new THREE.MeshStandardMaterial({ color: storageColor })
+      );
+      backWall.position.set(item.position?.x || 0, storageHeight/2, (item.position?.z || 0) - depth/2 + wallThickness/2);
+      if (item.rotation) {
+        backWall.rotation.y = item.rotation * Math.PI / 180;
+      }
+      scene.add(backWall);
+
+      // Left wall
+      const leftWall = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThickness, storageHeight, depth),
+        new THREE.MeshStandardMaterial({ color: storageColor })
+      );
+      leftWall.position.set((item.position?.x || 0) - width/2 + wallThickness/2, storageHeight/2, item.position?.z || 0);
+      if (item.rotation) {
+        leftWall.rotation.y = item.rotation * Math.PI / 180;
+      }
+      scene.add(leftWall);
+
+      // Right wall
+      const rightWall = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThickness, storageHeight, depth),
+        new THREE.MeshStandardMaterial({ color: storageColor })
+      );
+      rightWall.position.set((item.position?.x || 0) + width/2 - wallThickness/2, storageHeight/2, item.position?.z || 0);
+      if (item.rotation) {
+        rightWall.rotation.y = item.rotation * Math.PI / 180;
+      }
+      scene.add(rightWall);
+
+      // Front wall
+      const frontWall = new THREE.Mesh(
+        new THREE.BoxGeometry(width, storageHeight, wallThickness),
+        new THREE.MeshStandardMaterial({ color: storageColor })
+      );
+      frontWall.position.set(item.position?.x || 0, storageHeight/2, (item.position?.z || 0) + depth/2 - wallThickness/2);
+      if (item.rotation) {
+        frontWall.rotation.y = item.rotation * Math.PI / 180;
+      }
+      scene.add(frontWall);
     });
   }
 

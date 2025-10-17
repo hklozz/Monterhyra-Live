@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { exportSceneToDAE } from './exportSceneToDAE';
-import { exportSceneToSTL } from './exportSceneToSTL';
+import * as THREE from 'three';
 import { buildSceneFromOrderData } from './buildSceneFromOrderData';
+import { exportSceneToGLTF, exportSceneToThreeJSON } from './exportSceneToGLTF';
 import { OrderManager } from './OrderManager';
 import jsPDF from 'jspdf';
 
@@ -191,6 +191,13 @@ const AdminPortal: React.FC = () => {
     const checklist = getChecklistForOrder(order);
     checklist[index].completed = !checklist[index].completed;
     setSelectedOrder({ ...selectedOrder! });
+
+    // Spara ändringen till localStorage
+    const updatedOrders = orders.map(o =>
+      o.id === order.id ? { ...o, checklist: [...checklist] } : o
+    );
+    setOrders(updatedOrders);
+    localStorage.setItem('adminOrders', JSON.stringify(updatedOrders));
   };
 
   const addChecklistItem = (order: Order, text: string) => {
@@ -198,6 +205,13 @@ const AdminPortal: React.FC = () => {
     const checklist = getChecklistForOrder(order);
     checklist.push({ text: text.trim(), completed: false });
     setSelectedOrder({ ...selectedOrder! });
+
+    // Spara ändringen till localStorage
+    const updatedOrders = orders.map(o =>
+      o.id === order.id ? { ...o, checklist: [...checklist] } : o
+    );
+    setOrders(updatedOrders);
+    localStorage.setItem('adminOrders', JSON.stringify(updatedOrders));
   };
 
   // Inline edit state for checklist items
@@ -216,6 +230,13 @@ const AdminPortal: React.FC = () => {
     setEditingChecklistIndex(null);
     setEditingChecklistValue('');
     setSelectedOrder({ ...selectedOrder! });
+
+    // Spara ändringen till localStorage
+    const updatedOrders = orders.map(o =>
+      o.id === order.id ? { ...o, checklist: [...checklist] } : o
+    );
+    setOrders(updatedOrders);
+    localStorage.setItem('adminOrders', JSON.stringify(updatedOrders));
   };
 
   const cancelEditChecklistItem = () => {
@@ -672,12 +693,71 @@ const AdminPortal: React.FC = () => {
     }
   };
 
-  const downloadOBJ = async (orderId: string) => {
+  const downloadGLTF = async (orderId: string) => {
     try {
-      await OrderManager.downloadOBJ(orderId);
+      const order = OrderManager.getOrder(orderId);
+      if (!order) {
+        throw new Error('Beställning hittades inte');
+      }
+
+      console.log('🚀 Genererar 3D-scen för GLTF-export...', order.orderData);
+
+      const scene = buildSceneFromOrderData(order.orderData);
+
+      console.log('📊 Scen skapad för GLTF, antal objekt:', scene.children.length);
+
+      // Räkna meshes
+      let meshCount = 0;
+      scene.traverse((child) => {
+        if (child instanceof THREE.Mesh) meshCount++;
+      });
+      console.log('📊 Meshes i scenen:', meshCount);
+
+      if (meshCount === 0) {
+        throw new Error('Inga 3D-objekt att exportera. Kontrollera att beställningen innehåller möbler, förråd eller andra element.');
+      }
+
+      console.log('📤 Exporterar till GLTF/GLB...');
+      const filename = `3D-modell_${orderId}`;
+      await exportSceneToGLTF(scene, filename, true); // true = GLB format
+
     } catch (error) {
-      console.error('Fel vid nedladdning:', error);
-      alert('Kunde inte ladda ner OBJ-fil');
+      console.error('Fel vid GLTF-nedladdning:', error);
+      alert('Kunde inte ladda ner GLTF-fil: ' + (error as Error).message);
+    }
+  };
+
+  const downloadThreeJSON = async (orderId: string) => {
+    try {
+      const order = OrderManager.getOrder(orderId);
+      if (!order) {
+        throw new Error('Beställning hittades inte');
+      }
+
+      console.log('🚀 Genererar 3D-scen för Three.js JSON-export...', order.orderData);
+
+      const scene = buildSceneFromOrderData(order.orderData);
+
+      console.log('📊 Scen skapad för JSON, antal objekt:', scene.children.length);
+
+      // Räkna meshes
+      let meshCount = 0;
+      scene.traverse((child) => {
+        if (child instanceof THREE.Mesh) meshCount++;
+      });
+      console.log('📊 Meshes i scenen:', meshCount);
+
+      if (meshCount === 0) {
+        throw new Error('Inga 3D-objekt att exportera. Kontrollera att beställningen innehåller möbler, förråd eller andra element.');
+      }
+
+      console.log('📤 Exporterar till Three.js JSON...');
+      const filename = `3D-modell_${orderId}`;
+      await exportSceneToThreeJSON(scene, filename);
+
+    } catch (error) {
+      console.error('Fel vid Three.js JSON-nedladdning:', error);
+      alert('Kunde inte ladda ner Three.js JSON-fil: ' + (error as Error).message);
     }
   };
 
@@ -933,60 +1013,6 @@ const AdminPortal: React.FC = () => {
                   {selectedOrder ? `Skapad: ${formatDate(selectedOrder.timestamp)}` : `${orders.length} beställningar totalt`}
                 </p>
               </div>
-              {/* DAE-exportknapp, visas bara om order är vald */}
-              {selectedOrder && (
-                <>
-                  <button
-                    style={{
-                      marginLeft: 16,
-                      padding: '8px 16px',
-                      backgroundColor: '#27ae60',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}
-                    title="Exportera monter som DAE-fil (Collada)"
-                    onClick={() => {
-                      if (!selectedOrder?.orderData) {
-                        alert('Ingen orderdata att exportera!');
-                        return;
-                      }
-                      console.log('Exporterar orderData:', selectedOrder.orderData);
-                      const scene = buildSceneFromOrderData(selectedOrder.orderData);
-                      exportSceneToDAE(scene, `Monter_${selectedOrder.id}.dae`);
-                    }}
-                  >
-                    Exportera DAE
-                  </button>
-                  <button
-                    style={{
-                      marginLeft: 8,
-                      padding: '8px 16px',
-                      backgroundColor: '#e67e22',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}
-                    title="Exportera monter som STL-fil (endast geometri)"
-                    onClick={() => {
-                      if (!selectedOrder?.orderData) {
-                        alert('Ingen orderdata att exportera!');
-                        return;
-                      }
-                      const scene = buildSceneFromOrderData(selectedOrder.orderData);
-                      exportSceneToSTL(scene, `Monter_${selectedOrder.id}.stl`);
-                    }}
-                  >
-                    Exportera STL
-                  </button>
-                </>
-              )}
             </div>
           </div>
         </div>
@@ -1015,13 +1041,14 @@ const AdminPortal: React.FC = () => {
                     <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Kund</th>
                     <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Eventdatum</th>
                     <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Totalpris</th>
+                    <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Lagring</th>
                     <th style={{ textAlign: 'left', padding: '12px 8px', background: '#34495e', color: 'white', fontWeight: 700 }}>Åtgärder</th>
                   </tr>
                 </thead>
                 <tbody>
                   {realOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={5} style={{ textAlign: 'center', color: '#aaa', fontStyle: 'italic', padding: '16px' }}>
+                      <td colSpan={6} style={{ textAlign: 'center', color: '#aaa', fontStyle: 'italic', padding: '16px' }}>
                         Inga ordrar ännu.
                       </td>
                     </tr>
@@ -1044,6 +1071,21 @@ const AdminPortal: React.FC = () => {
                         </td>
                         <td style={{ padding: '10px 8px' }}>{order.customerInfo?.eventDate || '-'}</td>
                         <td style={{ color: '#27ae60', fontWeight: 600, padding: '10px 8px' }}>{order.orderData?.totalPrice ? order.orderData.totalPrice.toLocaleString('sv-SE') + ' kr' : '0 kr'}</td>
+                        <td style={{ padding: '10px 8px' }}>
+                          {order.files?.storedInIDB ? (
+                            <span style={{ color: '#e67e22', fontSize: '12px', fontWeight: 600 }}>
+                              🗄️ IDB
+                            </span>
+                          ) : order.files?.zipFile ? (
+                            <span style={{ color: '#27ae60', fontSize: '12px', fontWeight: 600 }}>
+                              💾 localStorage
+                            </span>
+                          ) : (
+                            <span style={{ color: '#95a5a6', fontSize: '12px', fontWeight: 600 }}>
+                              📄 Endast metadata
+                            </span>
+                          )}
+                        </td>
                         <td style={{ padding: '10px 8px' }}>
                           <button
                             style={{
@@ -1122,6 +1164,33 @@ const AdminPortal: React.FC = () => {
                     title="Rensa alla tryckfiler (ordrar)"
                   >
                     Rensa alla tryckfiler
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('🔍 Diagnostiserar localStorage...');
+                      // @ts-ignore - OrderManager har metoden
+                      if (typeof OrderManager.diagnoseStorage === 'function') {
+                        OrderManager.diagnoseStorage();
+                        alert('Diagnostik körd! Kolla konsolen (F12) för detaljer.');
+                      } else {
+                        console.error('diagnoseStorage-metoden finns inte');
+                        alert('Diagnostik-funktionen är inte tillgänglig.');
+                      }
+                    }}
+                    style={{
+                      padding: '6px 16px',
+                      backgroundColor: '#f39c12',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginLeft: '8px'
+                    }}
+                    title="Diagnostisera localStorage-problem"
+                  >
+                    🔍 Diagnostisera
                   </button>
                 </div>
               </div>
@@ -1316,19 +1385,36 @@ const AdminPortal: React.FC = () => {
                     ➕ Skicka till Trello
                   </button>
                   <button
-                    onClick={() => downloadOBJ(selectedOrder.id)}
+                    onClick={() => downloadGLTF(selectedOrder.id)}
                     style={{
                       padding: '10px 20px',
-                      backgroundColor: '#9b59b6',
+                      backgroundColor: '#8e44ad',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '14px',
-                      fontWeight: '600'
+                      fontWeight: '600',
+                      marginLeft: '8px'
                     }}
                   >
-                    🎯 Ladda ner 3D-modell (OBJ)
+                    🚀 Ladda ner 3D-modell (GLB)
+                  </button>
+                  <button
+                    onClick={() => downloadThreeJSON(selectedOrder.id)}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#16a085',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginLeft: '8px'
+                    }}
+                  >
+                    📄 Ladda ner Three.js JSON
                   </button>
                   <button
                     onClick={() => deleteOrder(selectedOrder.id)}

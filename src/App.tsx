@@ -22,6 +22,7 @@ import type { StorageWallDesign } from './StoragePDFGenerator';
 import { OrderManager } from './OrderManager';
 import type { CustomerInfo, OrderData } from './OrderManager';
 import AdminPortal from './AdminPortal';
+import ErrorBoundary from './ErrorBoundary';
 
 // Custom Dropdown Component for visual elements
 const CustomDropdown = ({ 
@@ -2373,6 +2374,72 @@ function Furniture({ furnitureConfig, position, rotation }: {
   );
 }
 
+// Komponent för att exportera aktuell 3D-scen till Three.js JSON
+function SceneExporter({ orderData }: { orderData: OrderData }) {
+  const { scene, gl } = useThree();
+  const { exportSceneToThreeJSON } = useMemo(() => import('./exportSceneToGLTF'), []);
+
+  const handleExportCurrentScene = async () => {
+    try {
+      console.log('🎯 Exporterar aktuell 3D-scen till Three.js JSON...');
+
+      // Skapa ett rent klon av scenen utan UI-element
+      const cleanScene = scene.clone();
+
+      // Ta bort eventuella UI-element eller icke-geometriska objekt
+      cleanScene.traverse((child) => {
+        // Behåll endast meshes och grupper med geometri
+        if (!(child instanceof THREE.Mesh || child instanceof THREE.Group)) {
+          if (child.parent) {
+            child.parent.remove(child);
+          }
+        }
+      });
+
+      // Räkna meshes i den rena scenen
+      let meshCount = 0;
+      cleanScene.traverse((child) => {
+        if (child instanceof THREE.Mesh) meshCount++;
+      });
+
+      if (meshCount === 0) {
+        alert('Inga 3D-objekt att exportera i den aktuella vyn.');
+        return;
+      }
+
+      console.log('📊 Rensa scen innehåller', meshCount, 'meshes');
+
+      // Generera filnamn baserat på orderData
+      const customerName = orderData.customerInfo?.name || 'Unknown';
+      const filename = `3D-scen_${customerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+      // Exportera den rena scenen
+      await exportSceneToThreeJSON(cleanScene, filename);
+
+    } catch (error) {
+      console.error('❌ Fel vid export av aktuell scen:', error);
+      alert('Kunde inte exportera 3D-scenen: ' + (error as Error).message);
+    }
+  };
+
+  // Denna komponent renderar ingenting visuellt, den lägger bara till export-funktionalitet
+  // Vi kan lägga till en knapp senare om det behövs, men för nu använder vi tangentbordsgenväg
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Ctrl/Cmd + Shift + J för att exportera aktuell scen
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'J') {
+        event.preventDefault();
+        handleExportCurrentScene();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [orderData]);
+
+  return null; // Osynlig komponent
+}
+
 export default function App() {
   // 🛡️ SÄKERHETSVARIABLER
   const [devToolsUnlocked, setDevToolsUnlocked] = useState(false);
@@ -4611,8 +4678,8 @@ export default function App() {
             </div>
           )}
         </div>
-        {/* Förrådsinställningar för färg och grafik */}
-        {wallShape && wallShape !== '' && storages.length > 0 && (
+        {/* Förrådsinställningar för färg och grafik - DÖLJES */}
+        {false && wallShape && wallShape !== '' && storages.length > 0 && (
           <div>
             <label style={{ fontWeight: 600, marginRight: 8 }}>Förrådens utseende:</label>
             
@@ -4640,8 +4707,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Bildkontroller för förråd - visas alltid när vi har förråd och valt 'ladda upp' */}
-        {storages.length > 0 && storageGraphic === 'upload' && (
+        {/* Bildkontroller för förråd - visas alltid när vi har förråd och valt 'ladda upp' - DÖLJES */}
+        {false && storages.length > 0 && storageGraphic === 'upload' && (
           <div style={{marginTop:16}}>
             <label style={{ fontWeight: 600, marginRight: 8 }}>Förrådbilder:</label>
             
@@ -6330,10 +6397,34 @@ Monterhyra Beställningssystem
                                 width: floorIndex !== null ? FLOOR_SIZES[floorIndex].width : 0,
                                 depth: floorIndex !== null ? FLOOR_SIZES[floorIndex].depth : 0
                               },
-                              furniture: [],
-                              plants: [],
-                              decorations: [],
-                              storages: [],
+                              furniture: furniture.map(f => {
+                                const config = FURNITURE_TYPES[f.type];
+                                return {
+                                  ...f,
+                                  type: config?.label.toLowerCase().replace(/\s+/g, '') || 'unknown', // Konvertera till lowercase utan mellanslag
+                                  color: config?.color || 0xcccccc
+                                };
+                              }), // Konvertera möbler med rätt typ-strängar
+                              plants: plants.map(p => {
+                                const config = PLANT_TYPES[p.type];
+                                return {
+                                  ...p,
+                                  potColor: config?.color ? parseInt(config.color.replace('#', ''), 16) : 0x8B5A2B,
+                                  leafColor: config?.leafColor ? parseInt(config.leafColor.replace('#', ''), 16) : 0x228B22
+                                };
+                              }), // Konvertera växter med färg-info
+                              decorations: [], // Dekorationer (tom array tills vidare)
+                              storages: storages.map(s => ({ ...s })), // Kopiera förråd
+                              counters: counters.map(c => ({ ...c })), // Kopiera diskar
+                              tvs: tvs.map(t => {
+                                const config = TV_SIZES[t.size || 0];
+                                return {
+                                  ...t,
+                                  width: config?.width || 0,
+                                  height: config?.height || 0,
+                                  color: 0x222244 // Default TV color
+                                };
+                              }), // Konvertera TV-apparater med dimensioner
                               totalPrice: totalCost,
                               packlista: packlistaData, // Spara hela den förbättrade packlistan
                               images: orderImages // Spara bilderna för admin/kund
@@ -6481,7 +6572,15 @@ Monterhyra Beställningssystem
                               message: (adminError as any).message,
                               stack: (adminError as any).stack
                             });
-                            alert('⚠️ Varning: Beställningen kunde inte sparas i admin-portalen. Mailet skickades ändå.');
+
+                            // Diagnostisera localStorage
+                            console.log('🔍 Diagnostiserar localStorage efter fel...');
+                            // @ts-ignore - OrderManager har metoden
+                            if (typeof OrderManager.diagnoseStorage === 'function') {
+                              OrderManager.diagnoseStorage();
+                            }
+
+                            alert(`⚠️ Varning: Beställningen kunde inte sparas i admin-portalen.\n\nFel: ${(adminError as any).message}\n\nMailet skickades ändå. Kontakta support om problemet kvarstår.`);
                             // Fortsätt ändå, mailet är viktigast
                           }
                           
@@ -6643,7 +6742,8 @@ Monterhyra Beställningssystem
           const floorDimensions = getFloorDimensions();
           
           return (
-            <Canvas 
+            <ErrorBoundary>
+              <Canvas 
               camera={{ 
                 position: window.innerWidth <= 768 ? [0, 4, 10] : [0, 2, 6], // Zooma ut mer på mobil
                 fov: window.innerWidth <= 768 ? 75 : 50 // Mycket bredare synfält på mobil
@@ -10327,8 +10427,39 @@ Monterhyra Beställningssystem
               );
             })}
             
+            {/* Komponent för att exportera aktuell scen */}
+            <SceneExporter orderData={{
+              customerInfo: { name: 'CurrentScene', company: '' },
+              floorIndex,
+              customFloorWidth,
+              customFloorDepth,
+              wallShape,
+              wallHeight,
+              carpetIndex,
+              graphic,
+              counters,
+              storages,
+              plants,
+              furniture,
+              tvs,
+              speakers,
+              wallShelves,
+              counterPanelColor,
+              storageColor,
+              storageGraphic,
+              storageWallSelections,
+              showEspressoMachine,
+              showFlowerVase,
+              showCandyBowl,
+              selectedTrussType,
+              showLights,
+              showClothingRacks,
+              images: []
+            }} />
+            
             <OrbitControls />
           </Canvas>
+            </ErrorBoundary>
           );
         })()}
       </div>
