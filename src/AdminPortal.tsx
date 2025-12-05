@@ -245,6 +245,7 @@ const AdminPortal: React.FC = () => {
   };
 
   // If not used, consider removing or exporting
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderChecklist = (order: Order) => {
     const checklist = getChecklistForOrder(order);
     return (
@@ -318,6 +319,7 @@ const AdminPortal: React.FC = () => {
   };
 
   // If not used, consider removing or exporting
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleLogout = () => {
     setIsLoggedIn(false);
     setPassword('');
@@ -325,6 +327,7 @@ const AdminPortal: React.FC = () => {
   };
 
   // If not used, consider removing or exporting
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const downloadZip = async (orderId: string) => {
     try {
       await OrderManager.downloadZip(orderId);
@@ -846,6 +849,7 @@ const AdminPortal: React.FC = () => {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('sv-SE', {
       style: 'currency',
