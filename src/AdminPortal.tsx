@@ -1853,11 +1853,10 @@ const AdminPortal: React.FC = () => {
                 </h3>
                 <div style={{ fontSize: '14px', color: '#34495e' }}>
                   {(() => {
-                    // @ts-ignore - selectedOrder is checked before this block
                     let packlista = {};
                     if (selectedOrder != null && selectedOrder.orderData) {
-                      packlista = selectedOrder.orderData.packlista?.totals
-                        || selectedOrder.orderData.packlista
+                      packlista = selectedOrder!.orderData!.packlista?.totals
+                        || selectedOrder!.orderData!.packlista
                         || {};
                     }
 
