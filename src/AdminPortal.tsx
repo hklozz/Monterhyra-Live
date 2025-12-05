@@ -1855,6 +1855,7 @@ const AdminPortal: React.FC = () => {
                   {(() => {
                     let packlista = {};
                     if (selectedOrder != null && selectedOrder.orderData) {
+                      // @ts-ignore - selectedOrder null checked above
                       packlista = selectedOrder!.orderData.packlista?.totals
                         || selectedOrder!.orderData.packlista
                         || {};
