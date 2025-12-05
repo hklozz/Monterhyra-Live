@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import jsPDF from 'jspdf';
-import JSZip from 'jszip';
 import { OrderManager } from './OrderManager';
 
 // beMatrix dimensioner: 62mm x 62mm moduler

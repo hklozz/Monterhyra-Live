@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
-import JSZip from 'jszip';
 
 // Hjälpare: konvertera hex-färg (#rrggbb eller #rgb) till [r,g,b]
 function parseHexToRgb(hex?: string): [number, number, number] | null {
