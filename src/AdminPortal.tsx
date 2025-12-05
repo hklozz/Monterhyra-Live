@@ -1852,11 +1852,11 @@ const AdminPortal: React.FC = () => {
                   � Komplett Packlista
                 </h3>
                 <div style={{ fontSize: '14px', color: '#34495e' }}>
-                  {(() => {
-                    if (!selectedOrder?.orderData) return null;
-                    
-                    const packlista = selectedOrder.orderData.packlista?.totals
-                      || selectedOrder.orderData.packlista
+                  {selectedOrder?.orderData && (() => {
+                    const order = selectedOrder;
+                    if (!order) return null;
+                    const packlista = order!.orderData!.packlista?.totals
+                      || order!.orderData!.packlista
                       || {};
 
                     // Kategorisera alla items (samma som i PDF)
