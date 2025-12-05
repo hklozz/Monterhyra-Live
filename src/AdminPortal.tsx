@@ -1853,12 +1853,11 @@ const AdminPortal: React.FC = () => {
                 </h3>
                 <div style={{ fontSize: '14px', color: '#34495e' }}>
                   {(() => {
-                    let packlista = {};
-                    if (selectedOrder != null && selectedOrder.orderData) {
-                      packlista = selectedOrder!.orderData!.packlista?.totals
-                        || selectedOrder!.orderData!.packlista
-                        || {};
-                    }
+                    if (!selectedOrder?.orderData) return null;
+                    
+                    const packlista = selectedOrder.orderData.packlista?.totals
+                      || selectedOrder.orderData.packlista
+                      || {};
 
                     // Kategorisera alla items (samma som i PDF)
                     const categorized: {
