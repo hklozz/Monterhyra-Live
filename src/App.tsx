@@ -2738,6 +2738,10 @@ export default function App() {
   const [selectedPlantType, setSelectedPlantType] = useState(0); // Vald växttyp
   const [furniture, setFurniture] = useState<Array<{id: number, type: number, position: {x: number, z: number}, rotation: number}>>([]);
   const [furnitureMarkersVisible, setFurnitureMarkersVisible] = useState(false);
+  
+  // Mobile drawer state
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [mobileActiveTab, setMobileActiveTab] = useState<'size' | 'walls' | 'furniture' | 'details' | 'export'>('size');
   const [nextFurnitureId, setNextFurnitureId] = useState(1);
   const [selectedFurnitureType, setSelectedFurnitureType] = useState(0); // Vald möbeltyp
   const [storageColor, setStorageColor] = useState('#BFBFBF'); // Förrådens färg
@@ -3227,32 +3231,40 @@ export default function App() {
       background: '#f0f0f0', 
       position: 'relative',
       display: 'flex',
-      flexDirection: 'row' // Always side by side
+      flexDirection: window.innerWidth <= 768 ? 'column' : 'row' // Column på mobil, row på desktop
     }}>
       
-      {/* Mobile Development Notice */}
-      {window.innerWidth <= 768 && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          background: 'linear-gradient(90deg, #ff9500 0%, #ffa726 100%)',
-          color: 'white',
-          padding: '8px',
-          textAlign: 'center',
-          fontSize: '12px',
-          fontWeight: '600',
-          zIndex: 10000,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-        }}>
-          📱 Mobilversion under uppbyggnad - Använd desktop för bästa upplevelse
-        </div>
+      {/* Mobile FAB - Floating Action Button (endast mobil) */}
+      {window.innerWidth <= 768 && !mobileDrawerOpen && (
+        <button
+          onClick={() => setMobileDrawerOpen(true)}
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            width: '64px',
+            height: '64px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            border: 'none',
+            fontSize: '28px',
+            cursor: 'pointer',
+            boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          ⚙️
+        </button>
       )}
       
       {/* 3D Canvas Container */}
       <div className="canvas-container" style={{
-        flex: window.innerWidth <= 768 ? '0.6' : '1',
+        flex: window.innerWidth <= 768 ? '1' : '1',
         position: 'relative',
         background: '#f0f0f0',
         overflowY: 'auto', // Ensure vertical scrolling is enabled
@@ -3663,42 +3675,88 @@ export default function App() {
         )}
       </div>
 
-      {/* Sidopanel */}
+      {/* Sidopanel / Mobile Drawer */}
       <div className="controls-container" style={{
         position: 'fixed',
-        left: 0,
-        top: 0,
-        width: window.innerWidth <= 768 ? '20vw' : '320px',
-        height: '100vh',
-        maxHeight: '100vh',
+        left: window.innerWidth <= 768 ? 0 : 0,
+        top: window.innerWidth <= 768 ? 'auto' : 0,
+        bottom: window.innerWidth <= 768 ? (mobileDrawerOpen ? 0 : '-100%') : 'auto',
+        width: window.innerWidth <= 768 ? '100%' : '320px',
+        height: window.innerWidth <= 768 ? '75vh' : '100vh',
+        maxHeight: window.innerWidth <= 768 ? '75vh' : '100vh',
         boxSizing: 'border-box',
         background: 'linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%)',
         backdropFilter: 'blur(12px)',
-        borderRight: '2px solid #e1e8ed',
-        boxShadow: '8px 0 32px rgba(0, 0, 0, 0.08)',
-        padding: window.innerWidth <= 768 ? '12px' : '24px',
-        paddingBottom: 56, // extra space so bottom controls (t.ex. Lampor) aren't hidden under edge
+        borderRight: window.innerWidth <= 768 ? 'none' : '2px solid #e1e8ed',
+        borderTop: window.innerWidth <= 768 ? '2px solid #e1e8ed' : 'none',
+        borderTopLeftRadius: window.innerWidth <= 768 ? '24px' : 0,
+        borderTopRightRadius: window.innerWidth <= 768 ? '24px' : 0,
+        boxShadow: window.innerWidth <= 768 
+          ? '0 -8px 32px rgba(0, 0, 0, 0.15)' 
+          : '8px 0 32px rgba(0, 0, 0, 0.08)',
+        padding: window.innerWidth <= 768 ? '24px 20px' : '24px',
+        paddingBottom: 56,
         display: 'flex',
         flexDirection: 'column',
-        gap: 0, // Remove gap, use marginTop instead for better control
-        zIndex: 1000,
-        overflowY: 'auto', // Lägg till scrollning
+        gap: 0,
+        zIndex: window.innerWidth <= 768 ? 10000 : 1000,
+        overflowY: 'auto',
         overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch',
-        fontSize: window.innerWidth <= 768 ? '12px' : '14px'
+        fontSize: window.innerWidth <= 768 ? '14px' : '14px',
+        transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}>
+        {/* Mobile Drawer Handle & Close Button */}
+        {window.innerWidth <= 768 && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginBottom: '16px',
+            marginTop: '-12px'
+          }}>
+            <div style={{
+              width: '48px',
+              height: '5px',
+              background: '#cbd5e0',
+              borderRadius: '10px',
+              marginBottom: '16px'
+            }} />
+            <button
+              onClick={() => setMobileDrawerOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'rgba(0, 0, 0, 0.05)',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        
         <div style={{
           position: 'sticky',
           top: 0,
           background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
-          margin: window.innerWidth <= 768 ? '-12px -12px 12px -12px' : '-24px -24px 24px -24px',
-          padding: window.innerWidth <= 768 ? '12px' : '20px 24px',
+          margin: window.innerWidth <= 768 ? '-24px -20px 20px -20px' : '-24px -24px 24px -24px',
+          padding: window.innerWidth <= 768 ? '16px 20px' : '20px 24px',
           borderRadius: '0 0 12px 12px',
           zIndex: 10
         }}>
           <h2 style={{
             fontWeight: 700, 
-            fontSize: window.innerWidth <= 768 ? '16px' : '20px', 
+            fontSize: window.innerWidth <= 768 ? '18px' : '20px', 
             margin: 0,
             color: 'white',
             textShadow: '0 1px 2px rgba(0,0,0,0.2)'
