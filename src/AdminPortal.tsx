@@ -245,7 +245,7 @@ const AdminPortal: React.FC = () => {
   };
 
   // If not used, consider removing or exporting
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore - Unused function kept for future use
   const _renderChecklist = (order: Order) => {
     const checklist = getChecklistForOrder(order);
     return (
@@ -319,7 +319,7 @@ const AdminPortal: React.FC = () => {
   };
 
   // If not used, consider removing or exporting
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore - Unused function kept for future use
   const _handleLogout = () => {
     setIsLoggedIn(false);
     setPassword('');
@@ -327,7 +327,7 @@ const AdminPortal: React.FC = () => {
   };
 
   // If not used, consider removing or exporting
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore - Unused function kept for future use
   const _downloadZip = async (orderId: string) => {
     try {
       await OrderManager.downloadZip(orderId);
@@ -849,7 +849,7 @@ const AdminPortal: React.FC = () => {
     });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore - Unused function kept for future use
   const _formatPrice = (price: number) => {
     return new Intl.NumberFormat('sv-SE', {
       style: 'currency',

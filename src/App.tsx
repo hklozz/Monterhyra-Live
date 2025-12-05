@@ -396,6 +396,7 @@ const ExhibitionBoothRenderer: React.FC<{
 
   const floorSize = floorSizeMap[booth.floor] || { width: 3, length: 3 };
 
+  // @ts-ignore - Unused variable kept for reference
   const _floorDimensions = (() => {
     if (floorIndex === null) return { width: 3, depth: 3 };
     const floorConfig = FLOOR_SIZES[floorIndex];
@@ -1152,6 +1153,7 @@ function Carpet({ width, depth, color }: { width: number, depth: number, color: 
 
 // VEPA Wall component - renderar design från VepaPDFGenerator
 // Hook för att skapa VEPA texture från design
+// @ts-ignore - Unused function kept for future use
 function _useVepaTexture(design: any) {
   const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
 
@@ -2375,6 +2377,7 @@ function Furniture({ furnitureConfig, position, rotation }: {
 }
 
 // Komponent för att exportera aktuell 3D-scen till Three.js JSON
+// @ts-ignore - Unused function kept for future use
 function SceneExporter({ orderData }: { orderData: OrderData }) {
   const { scene } = useThree();
   // @ts-ignore - Dynamic import type issue
@@ -3042,10 +3045,12 @@ export default function App() {
     // Rotera förrådet och kolla mot monterväggarna
     const rad = (storage.rotation * Math.PI) / 180;
     const cos = Math.cos(rad);
+    // @ts-ignore - Unused variable kept for reference
     const _sin = Math.sin(rad);
     
     // Monterväggpositioner
     const boothBackWall = -actualDepth / 2;
+    // @ts-ignore - Unused variable kept for reference
     const _boothFrontWall = actualDepth / 2;
     const boothLeftWall = -actualWidth / 2;
     const boothRightWall = actualWidth / 2;
