@@ -1855,8 +1855,8 @@ const AdminPortal: React.FC = () => {
                   {(() => {
                     let packlista = {};
                     if (selectedOrder != null && selectedOrder.orderData) {
-                      packlista = selectedOrder.orderData.packlista?.totals
-                        || selectedOrder.orderData.packlista
+                      packlista = selectedOrder!.orderData.packlista?.totals
+                        || selectedOrder!.orderData.packlista
                         || {};
                     }
 

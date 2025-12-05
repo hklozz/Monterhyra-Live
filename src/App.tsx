@@ -385,7 +385,7 @@ const ExhibitionBoothRenderer: React.FC<{
   floorIndex: number | null,
   customFloorWidth: number,
   customFloorDepth: number
-}> = ({ booth, position, selectedTrussType, floorIndex, customFloorWidth, customFloorDepth }) => {
+}> = ({ booth, position, selectedTrussType: _selectedTrussType, floorIndex, customFloorWidth, customFloorDepth }) => {
   if (!booth) return null;
 
   const floorSizeMap: { [key: string]: { width: number, length: number } } = {
@@ -396,7 +396,7 @@ const ExhibitionBoothRenderer: React.FC<{
 
   const floorSize = floorSizeMap[booth.floor] || { width: 3, length: 3 };
 
-  const floorDimensions = (() => {
+  const _floorDimensions = (() => {
     if (floorIndex === null) return { width: 3, depth: 3 };
     const floorConfig = FLOOR_SIZES[floorIndex];
     if (floorConfig?.custom) {
@@ -1152,7 +1152,7 @@ function Carpet({ width, depth, color }: { width: number, depth: number, color: 
 
 // VEPA Wall component - renderar design från VepaPDFGenerator
 // Hook för att skapa VEPA texture från design
-function useVepaTexture(design: any) {
+function _useVepaTexture(design: any) {
   const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
 
   useEffect(() => {
