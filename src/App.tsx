@@ -1183,11 +1183,11 @@ function useVepaTexture(design: any) {
     if (design.backgroundImage) {
       const bgImg = new Image();
       bgImg.onload = () => {
-        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+        ctx!.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
         if (design.logo) {
           const logoImg = new Image();
           logoImg.onload = () => {
-            ctx.drawImage(
+            ctx!.drawImage(
               logoImg,
               design.logo.x * mmToPixels,
               design.logo.y * mmToPixels,
@@ -1206,7 +1206,7 @@ function useVepaTexture(design: any) {
         if (design.logo) {
           const logoImg = new Image();
           logoImg.onload = () => {
-            ctx.drawImage(
+            ctx!.drawImage(
               logoImg,
               design.logo.x * mmToPixels,
               design.logo.y * mmToPixels,
@@ -1225,7 +1225,7 @@ function useVepaTexture(design: any) {
     } else if (design.logo) {
       const logoImg = new Image();
       logoImg.onload = () => {
-        ctx.drawImage(
+        ctx!.drawImage(
           logoImg,
           design.logo.x * mmToPixels,
           design.logo.y * mmToPixels,
@@ -1289,7 +1289,7 @@ function VepaWallOverlay({ design, wallLength, wallHeight, position, rotation }:
     if (design.backgroundImage) {
       const bgImg = new Image();
       bgImg.onload = () => {
-        ctx.drawImage(bgImg, 0, 0, 512, 512);
+        ctx!.drawImage(bgImg, 0, 0, 512, 512);
         console.log('✅ Background image drawn');
         if (design.logo) {
           loadLogo();
@@ -1319,7 +1319,7 @@ function VepaWallOverlay({ design, wallLength, wallHeight, position, rotation }:
       logoImg.onload = () => {
         const scaleX = 512 / design.widthMM;
         const scaleY = 512 / design.heightMM;
-        ctx.drawImage(
+        ctx!.drawImage(
           logoImg,
           design.logo.x * scaleX,
           design.logo.y * scaleY,
@@ -1400,7 +1400,7 @@ function ForexWallOverlay({ design, wallLength, wallHeight, position, rotation }
     if (design.backgroundImage) {
       const bgImg = new Image();
       bgImg.onload = () => {
-        ctx.drawImage(bgImg, 0, 0, 512, 512);
+        ctx!.drawImage(bgImg, 0, 0, 512, 512);
         console.log('✅ Background image drawn');
         if (design.logo) {
           loadLogo();
@@ -1430,7 +1430,7 @@ function ForexWallOverlay({ design, wallLength, wallHeight, position, rotation }
       logoImg.onload = () => {
         const scaleX = 512 / design.widthMM;
         const scaleY = 512 / design.heightMM;
-        ctx.drawImage(
+        ctx!.drawImage(
           logoImg,
           design.logo.x * scaleX,
           design.logo.y * scaleY,
@@ -1499,7 +1499,7 @@ function StorageWallOverlay({ imageUrl, wallWidth, wallHeight, position, rotatio
     // Ladda och rita bilden
     const img = new Image();
     img.onload = () => {
-      ctx.drawImage(img, 0, 0, 512, 512);
+      ctx!.drawImage(img, 0, 0, 512, 512);
       updateTexture();
     };
     img.onerror = () => {
@@ -1565,7 +1565,7 @@ function StorageWallDesignOverlay({ design, wallWidth, wallHeight, position, rot
     if (design.backgroundImage) {
       const bgImg = new Image();
       bgImg.onload = () => {
-        ctx.drawImage(bgImg, 0, 0, 512, 512);
+        ctx!.drawImage(bgImg, 0, 0, 512, 512);
         if (design.logo) {
           loadLogo();
         } else {
@@ -1593,7 +1593,7 @@ function StorageWallDesignOverlay({ design, wallWidth, wallHeight, position, rot
       logoImg.onload = () => {
         const scaleX = 512 / design.widthMM;
         const scaleY = 512 / design.heightMM;
-        ctx.drawImage(
+        ctx!.drawImage(
           logoImg,
           design.logo!.x * scaleX,
           design.logo!.y * scaleY,
@@ -2376,7 +2376,9 @@ function Furniture({ furnitureConfig, position, rotation }: {
 
 // Komponent för att exportera aktuell 3D-scen till Three.js JSON
 function SceneExporter({ orderData }: { orderData: OrderData }) {
-  const { scene, gl } = useThree();
+  const { scene } = useThree();
+  // @ts-ignore - Dynamic import type issue
+  // @ts-ignore - Dynamic import type issue
   const { exportSceneToThreeJSON } = useMemo(() => import('./exportSceneToGLTF'), []);
 
   const handleExportCurrentScene = async () => {
