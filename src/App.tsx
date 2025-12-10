@@ -2739,10 +2739,8 @@ export default function App() {
   const [furniture, setFurniture] = useState<Array<{id: number, type: number, position: {x: number, z: number}, rotation: number}>>([]);
   const [furnitureMarkersVisible, setFurnitureMarkersVisible] = useState(false);
   
-  // Mobile drawer state
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  // @ts-ignore - Will be used for tab navigation in next update
-  const [mobileActiveTab, setMobileActiveTab] = useState<'size' | 'walls' | 'furniture' | 'details' | 'export'>('size');
+  // Mobile state - step-based navigation
+  const [mobileStep, setMobileStep] = useState(0); // 0=storlek, 1=väggar, 2=möbler, 3=detaljer
   const [nextFurnitureId, setNextFurnitureId] = useState(1);
   const [selectedFurnitureType, setSelectedFurnitureType] = useState(0); // Vald möbeltyp
   const [storageColor, setStorageColor] = useState('#BFBFBF'); // Förrådens färg
@@ -3232,45 +3230,106 @@ export default function App() {
       background: '#f0f0f0', 
       position: 'relative',
       display: 'flex',
-      flexDirection: window.innerWidth <= 768 ? 'column' : 'row' // Column på mobil, row på desktop
+      flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
     }}>
       
-      {/* Mobile FAB - Floating Action Button (endast mobil) */}
-      {window.innerWidth <= 768 && !mobileDrawerOpen && (
-        <button
-          onClick={() => setMobileDrawerOpen(true)}
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            border: 'none',
-            fontSize: '28px',
-            cursor: 'pointer',
-            boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
-            zIndex: 9999,
+      {/* Mobile Bottom Navigation (endast mobil) */}
+      {window.innerWidth <= 768 && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'white',
+          borderTop: '1px solid #e0e0e0',
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
+          zIndex: 10000,
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          {/* Current Step Content */}
+          <div style={{
+            padding: '20px',
+            maxHeight: '40vh',
+            overflowY: 'auto',
+            background: '#fafafa'
+          }}>
+            {mobileStep === 0 && (
+              <div>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Välj monterstorlek</h3>
+                {/* Storlek-kontroller här */}
+              </div>
+            )}
+            {mobileStep === 1 && (
+              <div>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Välj väggform</h3>
+                {/* Vägg-kontroller här */}
+              </div>
+            )}
+            {mobileStep === 2 && (
+              <div>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Lägg till möbler</h3>
+                {/* Möbel-kontroller här */}
+              </div>
+            )}
+            {mobileStep === 3 && (
+              <div>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Klar att beställa!</h3>
+                <button style={{
+                  width: '100%',
+                  padding: '16px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}>
+                  📧 Skicka beställning
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {/* Bottom Tab Bar */}
+          <div style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          ⚙️
-        </button>
+            justifyContent: 'space-around',
+            padding: '12px 0',
+            background: 'white'
+          }}>
+            {['📐', '🏢', '🪑', '✅'].map((emoji, idx) => (
+              <button
+                key={idx}
+                onClick={() => setMobileStep(idx)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: mobileStep === idx ? '#667eea' : 'transparent',
+                  color: mobileStep === idx ? 'white' : '#666',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
       
       {/* 3D Canvas Container */}
       <div className="canvas-container" style={{
-        flex: window.innerWidth <= 768 ? '1' : '1',
+        flex: 1,
         position: 'relative',
         background: '#f0f0f0',
-        overflowY: 'auto', // Ensure vertical scrolling is enabled
-        overflowX: 'hidden', // Prevent horizontal scrolling
-        WebkitOverflowScrolling: 'touch', // Enable smooth scrolling on iOS
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
         height: '100%', // Ensure the container takes full height
         maxHeight: '100vh', // Prevent overflow beyond the viewport
       }}>
@@ -3676,82 +3735,38 @@ export default function App() {
         )}
       </div>
 
-      {/* Sidopanel / Mobile Drawer */}
+      {/* Sidopanel (endast desktop) */}
+      {window.innerWidth > 768 && (
       <div className="controls-container" style={{
         position: 'fixed',
-        left: window.innerWidth <= 768 ? 0 : 0,
-        top: window.innerWidth <= 768 ? 'auto' : 0,
-        bottom: window.innerWidth <= 768 ? (mobileDrawerOpen ? 0 : '-100%') : 'auto',
-        width: window.innerWidth <= 768 ? '100%' : '320px',
-        height: window.innerWidth <= 768 ? '75vh' : '100vh',
-        maxHeight: window.innerWidth <= 768 ? '75vh' : '100vh',
+        left: 0,
+        top: 0,
+        width: '320px',
+        height: '100vh',
+        maxHeight: '100vh',
         boxSizing: 'border-box',
         background: 'linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%)',
         backdropFilter: 'blur(12px)',
-        borderRight: window.innerWidth <= 768 ? 'none' : '2px solid #e1e8ed',
-        borderTop: window.innerWidth <= 768 ? '2px solid #e1e8ed' : 'none',
-        borderTopLeftRadius: window.innerWidth <= 768 ? '24px' : 0,
-        borderTopRightRadius: window.innerWidth <= 768 ? '24px' : 0,
-        boxShadow: window.innerWidth <= 768 
-          ? '0 -8px 32px rgba(0, 0, 0, 0.15)' 
-          : '8px 0 32px rgba(0, 0, 0, 0.08)',
-        padding: window.innerWidth <= 768 ? '24px 20px' : '24px',
+        borderRight: '2px solid #e1e8ed',
+        boxShadow: '8px 0 32px rgba(0, 0, 0, 0.08)',
+        padding: '24px',
         paddingBottom: 56,
         display: 'flex',
         flexDirection: 'column',
         gap: 0,
-        zIndex: window.innerWidth <= 768 ? 10000 : 1000,
+        zIndex: 1000,
         overflowY: 'auto',
         overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch',
-        fontSize: window.innerWidth <= 768 ? '14px' : '14px',
-        transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        fontSize: '14px'
       }}>
-        {/* Mobile Drawer Handle & Close Button */}
-        {window.innerWidth <= 768 && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            marginBottom: '16px',
-            marginTop: '-12px'
-          }}>
-            <div style={{
-              width: '48px',
-              height: '5px',
-              background: '#cbd5e0',
-              borderRadius: '10px',
-              marginBottom: '16px'
-            }} />
-            <button
-              onClick={() => setMobileDrawerOpen(false)}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                background: 'rgba(0, 0, 0, 0.05)',
-                border: 'none',
-                fontSize: '20px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        )}
         
         <div style={{
           position: 'sticky',
           top: 0,
           background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
-          margin: window.innerWidth <= 768 ? '-24px -20px 20px -20px' : '-24px -24px 24px -24px',
-          padding: window.innerWidth <= 768 ? '16px 20px' : '20px 24px',
+          margin: '-24px -24px 24px -24px',
+          padding: '20px 24px',
           borderRadius: '0 0 12px 12px',
           zIndex: 10
         }}>
@@ -6707,6 +6722,7 @@ Monterhyra Beställningssystem
           </div>
         </div>
       </div>
+      )}
       
       {/* Mässmiljö-knapp i högra hörnet */}
       <button
