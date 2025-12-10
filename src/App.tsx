@@ -3257,19 +3257,130 @@ export default function App() {
             {mobileStep === 0 && (
               <div>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Välj monterstorlek</h3>
-                {/* Storlek-kontroller här */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {FLOOR_SIZES.map((floor, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setFloorIndex(index)}
+                      style={{
+                        padding: '16px',
+                        background: floorIndex === index ? '#667eea' : 'white',
+                        color: floorIndex === index ? 'white' : '#333',
+                        border: '2px solid #e0e0e0',
+                        borderRadius: '12px',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}
+                    >
+                      {floor.image && <img src={floor.image} alt={floor.label} style={{ width: '32px', height: '32px' }} />}
+                      {floor.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             {mobileStep === 1 && (
               <div>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Välj väggform</h3>
-                {/* Vägg-kontroller här */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {WALL_SHAPES.map((shape) => (
+                    <button
+                      key={shape.value}
+                      onClick={() => setWallShape(shape.value)}
+                      style={{
+                        padding: '16px',
+                        background: wallShape === shape.value ? '#667eea' : 'white',
+                        color: wallShape === shape.value ? 'white' : '#333',
+                        border: '2px solid #e0e0e0',
+                        borderRadius: '12px',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}
+                    >
+                      {shape.image && <img src={shape.image} alt={shape.label} style={{ width: '32px', height: '32px' }} />}
+                      {shape.label}
+                    </button>
+                  ))}
+                </div>
+                
+                {wallShape && (
+                  <div style={{ marginTop: '20px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', display: 'block' }}>Väggfärg:</label>
+                    <input 
+                      type="color" 
+                      value={CARPET_COLORS[carpetIndex]?.color || '#ffffff'} 
+                      onChange={(e) => {
+                        const colorIndex = CARPET_COLORS.findIndex(c => c.color === e.target.value);
+                        if (colorIndex >= 0) setCarpetIndex(colorIndex);
+                      }}
+                      style={{ width: '100%', height: '48px', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                    />
+                  </div>
+                )}
               </div>
             )}
             {mobileStep === 2 && (
               <div>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Lägg till möbler</h3>
-                {/* Möbel-kontroller här */}
+                
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', display: 'block' }}>Välj möbel:</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    {FURNITURE_TYPES.slice(0, 4).map((furniture, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setSelectedFurnitureType(index);
+                          setFurnitureMarkersVisible(true);
+                        }}
+                        style={{
+                          padding: '12px',
+                          background: selectedFurnitureType === index ? '#667eea' : 'white',
+                          color: selectedFurnitureType === index ? 'white' : '#333',
+                          border: '2px solid #e0e0e0',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {furniture.label}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button
+                    onClick={() => setFurnitureMarkersVisible(!furnitureMarkersVisible)}
+                    style={{
+                      width: '100%',
+                      marginTop: '12px',
+                      padding: '16px',
+                      background: furnitureMarkersVisible ? '#28a745' : '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {furnitureMarkersVisible ? '✓ Klicka i 3D-vyn för att placera' : '📍 Aktivera placeringsläge'}
+                  </button>
+                </div>
+                
+                <div style={{ fontSize: '13px', color: '#666', marginTop: '12px', padding: '12px', background: '#f0f0f0', borderRadius: '8px' }}>
+                  💡 Tryck på möbler i 3D-vyn för att rotera eller ta bort
+                </div>
               </div>
             )}
             {mobileStep === 3 && (
@@ -3330,8 +3441,10 @@ export default function App() {
         overflowY: 'auto',
         overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch',
-        height: '100%', // Ensure the container takes full height
-        maxHeight: '100vh', // Prevent overflow beyond the viewport
+        height: window.innerWidth <= 768 ? 'calc(100vh - 60vh)' : '100%',
+        minHeight: window.innerWidth <= 768 ? 'calc(100vh - 60vh)' : '100vh',
+        marginLeft: window.innerWidth <= 768 ? '0' : '320px',
+        width: window.innerWidth <= 768 ? '100vw' : 'calc(100vw - 320px)'
       }}>
       {/* Floating live packlista (always visible) - DOLD */}
       <div id="packlista-floating" style={{ position: 'fixed', left: 340, top: 12, width: 200, padding: 8, background: '#fff', border: '1px solid #ddd', borderRadius: 6, boxShadow: '0 6px 20px rgba(0,0,0,0.12)', zIndex: 1201, display: 'none' }}>
