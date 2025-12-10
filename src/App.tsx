@@ -2741,6 +2741,7 @@ export default function App() {
   
   // Mobile drawer state
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  // @ts-ignore - Will be used for tab navigation in next update
   const [mobileActiveTab, setMobileActiveTab] = useState<'size' | 'walls' | 'furniture' | 'details' | 'export'>('size');
   const [nextFurnitureId, setNextFurnitureId] = useState(1);
   const [selectedFurnitureType, setSelectedFurnitureType] = useState(0); // Vald möbeltyp
