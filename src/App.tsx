@@ -3227,10 +3227,10 @@ export default function App() {
     <div className="app-container" data-unused={__unused_refs.length} style={{ 
       width: '100vw', 
       height: '100vh', 
-      background: '#f0f0f0', 
+      background: '#f0f0f0',
       position: 'relative',
       display: 'flex',
-      flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
+      flexDirection: 'row'
     }}>
       
       {/* Mobile Bottom Navigation (endast mobil) */}
@@ -3435,16 +3435,14 @@ export default function App() {
       
       {/* 3D Canvas Container */}
       <div className="canvas-container" style={{
-        flex: 1,
+        flex: window.innerWidth <= 768 ? '0.6' : '1',
         position: 'relative',
         background: '#f0f0f0',
         overflowY: 'auto',
         overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch',
-        height: window.innerWidth <= 768 ? 'calc(100vh - 60vh)' : '100%',
-        minHeight: window.innerWidth <= 768 ? 'calc(100vh - 60vh)' : '100vh',
-        marginLeft: window.innerWidth <= 768 ? '0' : '320px',
-        width: window.innerWidth <= 768 ? '100vw' : 'calc(100vw - 320px)'
+        height: '100%',
+        maxHeight: '100vh'
       }}>
       {/* Floating live packlista (always visible) - DOLD */}
       <div id="packlista-floating" style={{ position: 'fixed', left: 340, top: 12, width: 200, padding: 8, background: '#fff', border: '1px solid #ddd', borderRadius: 6, boxShadow: '0 6px 20px rgba(0,0,0,0.12)', zIndex: 1201, display: 'none' }}>
