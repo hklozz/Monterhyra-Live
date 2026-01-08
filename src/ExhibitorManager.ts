@@ -44,24 +44,111 @@ export interface EventBranding {
 }
 
 export interface EventPricing {
-  // Per square meter prices
-  basePrice?: number; // Base price per m²
+  // Grundpriser
+  floor?: {
+    basePricePerSqm?: number;
+    minSize?: number;
+  };
   
-  // Component prices (can override defaults)
-  wallPrice?: number;
-  floorPrice?: number;
+  // Väggar
+  walls?: {
+    straight?: number;
+    lShape?: number;
+    uShape?: number;
+    heightSurcharge?: {
+      2.5?: number;
+      3.0?: number;
+      3.5?: number;
+    };
+  };
   
-  // Furniture prices
-  counterPrice?: number;
-  tvPrice?: number;
-  plantPrice?: number;
+  // Golv och mattor
+  carpet?: {
+    none?: number;
+    colored?: number;
+    salsa?: number;
+    patterned?: number;
+  };
   
-  // Additional fees
-  lightingPrice?: number;
-  setupFee?: number;
+  // Ramar
+  frames?: {
+    '1x2.5'?: number;
+  };
   
-  // Custom pricing rules
-  customPrices?: Record<string, number>;
+  // Grafik
+  graphics?: {
+    none?: number;
+    hyr?: number;
+    forex?: number;
+    vepa?: number;
+  };
+  
+  // Möbler
+  furniture?: {
+    table?: number;
+    chair?: number;
+    stool?: number;
+    sofa?: number;
+    armchair?: number;
+    side_table?: number;
+    podium?: number;
+  };
+  
+  // Diskar
+  counters?: {
+    perMeter?: number;
+    lShape?: number;
+    lShapeMirrored?: number;
+  };
+  
+  // Disktillbehör
+  counterItems?: {
+    espressoMachine?: number;
+    flowerVase?: number;
+    candyBowl?: number;
+  };
+  
+  // TV-skärmar
+  tvs?: {
+    43?: number;
+    55?: number;
+    70?: number;
+  };
+  
+  // Förråd
+  storage?: {
+    perSqm?: number;
+  };
+  
+  // Växter
+  plants?: {
+    small?: number;
+    medium?: number;
+    large?: number;
+  };
+  
+  // Belysning
+  lighting?: {
+    ledStrips?: number;
+  };
+  
+  // Truss
+  truss?: {
+    none?: number;
+    frontStraight?: number;
+    hangingRound?: number;
+    hangingSquare?: number;
+  };
+  
+  // Tilläggstjänster
+  extras?: {
+    powerOutlet?: number;
+    clothingRacks?: number;
+    speakers?: number;
+    wallShelves?: number;
+    baseplate?: number;
+    colorPainting?: number;
+  };
 }
 
 export interface Event {

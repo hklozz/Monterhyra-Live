@@ -25,15 +25,23 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
   const [brandingContactEmail, setBrandingContactEmail] = useState('');
   const [brandingContactPhone, setBrandingContactPhone] = useState('');
 
-  // Pricing form states
-  const [pricingBasePrice, setPricingBasePrice] = useState<number>(2500);
-  const [pricingWallPrice, setPricingWallPrice] = useState<number>(450);
-  const [pricingFloorPrice, setPricingFloorPrice] = useState<number>(350);
-  const [pricingCounterPrice, setPricingCounterPrice] = useState<number>(1200);
-  const [pricingTvPrice, setPricingTvPrice] = useState<number>(2500);
-  const [pricingPlantPrice, setPricingPlantPrice] = useState<number>(400);
-  const [pricingLightingPrice, setPricingLightingPrice] = useState<number>(800);
-  const [pricingSetupFee, setPricingSetupFee] = useState<number>(1500);
+  // Pricing form states - complete pricing structure
+  const [pricing, setPricing] = useState<EventPricing>({
+    floor: { basePricePerSqm: 450, minSize: 6 },
+    walls: { straight: 900, lShape: 900, uShape: 900, heightSurcharge: { 2.5: 0, 3.0: 230, 3.5: 440 } },
+    carpet: { none: 0, colored: 180, salsa: 240, patterned: 250 },
+    frames: { '1x2.5': 886 },
+    graphics: { none: 0, hyr: 880, forex: 1450, vepa: 775 },
+    furniture: { table: 650, chair: 450, stool: 650, sofa: 1500, armchair: 850, side_table: 350, podium: 850 },
+    counters: { perMeter: 800, lShape: 1000, lShapeMirrored: 1000 },
+    counterItems: { espressoMachine: 4500, flowerVase: 850, candyBowl: 500 },
+    tvs: { 43: 2700, 55: 3500, 70: 10000 },
+    storage: { perSqm: 380 },
+    plants: { small: 550, medium: 850, large: 1200 },
+    lighting: { ledStrips: 2000 },
+    truss: { none: 0, frontStraight: 400, hangingRound: 5500, hangingSquare: 5500 },
+    extras: { powerOutlet: 300, clothingRacks: 200, speakers: 3500, wallShelves: 350, baseplate: 450, colorPainting: 500 }
+  });
 
   // Exhibitor creation form
   const [newExhibitorCompany, setNewExhibitorCompany] = useState('');
@@ -286,14 +294,25 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
   // Load pricing when event is selected
   React.useEffect(() => {
     if (selectedEvent?.pricing) {
-      setPricingBasePrice(selectedEvent.pricing.basePrice ?? 2500);
-      setPricingWallPrice(selectedEvent.pricing.wallPrice ?? 450);
-      setPricingFloorPrice(selectedEvent.pricing.floorPrice ?? 350);
-      setPricingCounterPrice(selectedEvent.pricing.counterPrice ?? 1200);
-      setPricingTvPrice(selectedEvent.pricing.tvPrice ?? 2500);
-      setPricingPlantPrice(selectedEvent.pricing.plantPrice ?? 400);
-      setPricingLightingPrice(selectedEvent.pricing.lightingPrice ?? 800);
-      setPricingSetupFee(selectedEvent.pricing.setupFee ?? 1500);
+      setPricing(selectedEvent.pricing);
+    } else {
+      // Reset to defaults
+      setPricing({
+        floor: { basePricePerSqm: 450, minSize: 6 },
+        walls: { straight: 900, lShape: 900, uShape: 900, heightSurcharge: { 2.5: 0, 3.0: 230, 3.5: 440 } },
+        carpet: { none: 0, colored: 180, salsa: 240, patterned: 250 },
+        frames: { '1x2.5': 886 },
+        graphics: { none: 0, hyr: 880, forex: 1450, vepa: 775 },
+        furniture: { table: 650, chair: 450, stool: 650, sofa: 1500, armchair: 850, side_table: 350, podium: 850 },
+        counters: { perMeter: 800, lShape: 1000, lShapeMirrored: 1000 },
+        counterItems: { espressoMachine: 4500, flowerVase: 850, candyBowl: 500 },
+        tvs: { 43: 2700, 55: 3500, 70: 10000 },
+        storage: { perSqm: 380 },
+        plants: { small: 550, medium: 850, large: 1200 },
+        lighting: { ledStrips: 2000 },
+        truss: { none: 0, frontStraight: 400, hangingRound: 5500, hangingSquare: 5500 },
+        extras: { powerOutlet: 300, clothingRacks: 200, speakers: 3500, wallShelves: 350, baseplate: 450, colorPainting: 500 }
+      });
     }
   }, [selectedEvent]);
 
@@ -302,17 +321,6 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
       alert('Välj en event först');
       return;
     }
-
-    const pricing: EventPricing = {
-      basePrice: pricingBasePrice,
-      wallPrice: pricingWallPrice,
-      floorPrice: pricingFloorPrice,
-      counterPrice: pricingCounterPrice,
-      tvPrice: pricingTvPrice,
-      plantPrice: pricingPlantPrice,
-      lightingPrice: pricingLightingPrice,
-      setupFee: pricingSetupFee
-    };
 
     ExhibitorManager.updateEventPricing(selectedEvent.id, pricing);
     const updatedEvents = ExhibitorManager.getEvents();
@@ -1178,211 +1186,397 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
           {!selectedEvent ? (
             <p style={{ color: '#666' }}>Välj en event först för att ställa in prissättning</p>
           ) : (
-            <div style={{ maxWidth: '800px' }}>
+            <div style={{ maxWidth: '1000px' }}>
               <h3>💰 Prissättning för {selectedEvent.name}</h3>
               <p style={{ color: '#666', marginBottom: '20px' }}>
-                Anpassa priser specifikt för denna mässa. Om inget anges används standardpriser.
+                Anpassa alla priser specifikt för denna mässa. Dessa priser används istället för standardpriser när utställare designar sin monter.
               </p>
 
-              <div style={{ display: 'grid', gap: '20px' }}>
-                {/* Base Price */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
-                    Baspris per m² (monter)
-                  </label>
-                  <input
-                    type="number"
-                    value={pricingBasePrice}
-                    onChange={(e) => setPricingBasePrice(Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                  />
-                  <small style={{ color: '#666' }}>Standard: 2500 kr/m²</small>
-                </div>
-
-                {/* Wall & Floor Prices */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
-                      Väggpris per vägg
-                    </label>
-                    <input
-                      type="number"
-                      value={pricingWallPrice}
-                      onChange={(e) => setPricingWallPrice(Number(e.target.value))}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        fontSize: '14px'
-                      }}
-                    />
-                    <small style={{ color: '#666' }}>Standard: 450 kr</small>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
-                      Golvpris per m²
-                    </label>
-                    <input
-                      type="number"
-                      value={pricingFloorPrice}
-                      onChange={(e) => setPricingFloorPrice(Number(e.target.value))}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        fontSize: '14px'
-                      }}
-                    />
-                    <small style={{ color: '#666' }}>Standard: 350 kr/m²</small>
+              <div style={{ display: 'grid', gap: '24px' }}>
+                
+                {/* Golv */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>🏢 Golv</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Baspris per m²</label>
+                      <input type="number" value={pricing.floor?.basePricePerSqm ?? 450} 
+                        onChange={(e) => setPricing({...pricing, floor: {...pricing.floor, basePricePerSqm: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      <small style={{ color: '#666' }}>Std: 450 kr</small>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Min fakturerbar storlek (m²)</label>
+                      <input type="number" value={pricing.floor?.minSize ?? 6}
+                        onChange={(e) => setPricing({...pricing, floor: {...pricing.floor, minSize: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      <small style={{ color: '#666' }}>Std: 6 m²</small>
+                    </div>
                   </div>
                 </div>
 
-                {/* Furniture Prices */}
-                <div>
-                  <h4 style={{ marginBottom: '12px' }}>Möbler & Utrustning</h4>
+                {/* Väggar */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>🧱 Väggar</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Rak vägg (kr/lpm)</label>
+                      <input type="number" value={pricing.walls?.straight ?? 900}
+                        onChange={(e) => setPricing({...pricing, walls: {...pricing.walls, straight: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      <small style={{ color: '#666' }}>Std: 900 kr</small>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>L-form (kr/lpm)</label>
+                      <input type="number" value={pricing.walls?.lShape ?? 900}
+                        onChange={(e) => setPricing({...pricing, walls: {...pricing.walls, lShape: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      <small style={{ color: '#666' }}>Std: 900 kr</small>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>U-form (kr/lpm)</label>
+                      <input type="number" value={pricing.walls?.uShape ?? 900}
+                        onChange={(e) => setPricing({...pricing, walls: {...pricing.walls, uShape: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      <small style={{ color: '#666' }}>Std: 900 kr</small>
+                    </div>
+                  </div>
+                  <div>
+                    <strong style={{ display: 'block', marginBottom: '8px', fontSize: '13px' }}>Höjdtillägg (kr/lpm)</strong>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px' }}>2.5m</label>
+                        <input type="number" value={pricing.walls?.heightSurcharge?.[2.5] ?? 0}
+                          onChange={(e) => setPricing({...pricing, walls: {...pricing.walls, heightSurcharge: {...pricing.walls?.heightSurcharge, 2.5: Number(e.target.value)}}})}
+                          style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px' }} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px' }}>3.0m</label>
+                        <input type="number" value={pricing.walls?.heightSurcharge?.[3.0] ?? 230}
+                          onChange={(e) => setPricing({...pricing, walls: {...pricing.walls, heightSurcharge: {...pricing.walls?.heightSurcharge, 3.0: Number(e.target.value)}}})}
+                          style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px' }} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px' }}>3.5m</label>
+                        <input type="number" value={pricing.walls?.heightSurcharge?.[3.5] ?? 440}
+                          onChange={(e) => setPricing({...pricing, walls: {...pricing.walls, heightSurcharge: {...pricing.walls?.heightSurcharge, 3.5: Number(e.target.value)}}})}
+                          style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px' }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Matta */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>🎨 Matta (kr/m²)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Ingen</label>
+                      <input type="number" value={pricing.carpet?.none ?? 0}
+                        onChange={(e) => setPricing({...pricing, carpet: {...pricing.carpet, none: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Färgad (EXPO)</label>
+                      <input type="number" value={pricing.carpet?.colored ?? 180}
+                        onChange={(e) => setPricing({...pricing, carpet: {...pricing.carpet, colored: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>SALSA</label>
+                      <input type="number" value={pricing.carpet?.salsa ?? 240}
+                        onChange={(e) => setPricing({...pricing, carpet: {...pricing.carpet, salsa: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Rutmönster</label>
+                      <input type="number" value={pricing.carpet?.patterned ?? 250}
+                        onChange={(e) => setPricing({...pricing, carpet: {...pricing.carpet, patterned: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grafik */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>🖼️ Grafik & Tryck (kr/m²)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Ingen</label>
+                      <input type="number" value={pricing.graphics?.none ?? 0}
+                        onChange={(e) => setPricing({...pricing, graphics: {...pricing.graphics, none: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Hyr</label>
+                      <input type="number" value={pricing.graphics?.hyr ?? 880}
+                        onChange={(e) => setPricing({...pricing, graphics: {...pricing.graphics, hyr: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Forex</label>
+                      <input type="number" value={pricing.graphics?.forex ?? 1450}
+                        onChange={(e) => setPricing({...pricing, graphics: {...pricing.graphics, forex: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Vepa</label>
+                      <input type="number" value={pricing.graphics?.vepa ?? 775}
+                        onChange={(e) => setPricing({...pricing, graphics: {...pricing.graphics, vepa: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Möbler */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>🪑 Möbler (kr/st)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Barbord</label>
+                      <input type="number" value={pricing.furniture?.table ?? 650}
+                        onChange={(e) => setPricing({...pricing, furniture: {...pricing.furniture, table: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Barstol</label>
+                      <input type="number" value={pricing.furniture?.chair ?? 450}
+                        onChange={(e) => setPricing({...pricing, furniture: {...pricing.furniture, chair: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Pall</label>
+                      <input type="number" value={pricing.furniture?.stool ?? 650}
+                        onChange={(e) => setPricing({...pricing, furniture: {...pricing.furniture, stool: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Soffa</label>
+                      <input type="number" value={pricing.furniture?.sofa ?? 1500}
+                        onChange={(e) => setPricing({...pricing, furniture: {...pricing.furniture, sofa: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                     <div>
-                      <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>
-                        Disk
-                      </label>
-                      <input
-                        type="number"
-                        value={pricingCounterPrice}
-                        onChange={(e) => setPricingCounterPrice(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          padding: '8px',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          fontSize: '13px'
-                        }}
-                      />
-                      <small style={{ color: '#666', fontSize: '11px' }}>Std: 1200 kr</small>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Fåtölj</label>
+                      <input type="number" value={pricing.furniture?.armchair ?? 850}
+                        onChange={(e) => setPricing({...pricing, furniture: {...pricing.furniture, armchair: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
                     </div>
-
                     <div>
-                      <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>
-                        TV
-                      </label>
-                      <input
-                        type="number"
-                        value={pricingTvPrice}
-                        onChange={(e) => setPricingTvPrice(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          padding: '8px',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          fontSize: '13px'
-                        }}
-                      />
-                      <small style={{ color: '#666', fontSize: '11px' }}>Std: 2500 kr</small>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Sidobord</label>
+                      <input type="number" value={pricing.furniture?.side_table ?? 350}
+                        onChange={(e) => setPricing({...pricing, furniture: {...pricing.furniture, side_table: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
                     </div>
-
                     <div>
-                      <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>
-                        Växt
-                      </label>
-                      <input
-                        type="number"
-                        value={pricingPlantPrice}
-                        onChange={(e) => setPricingPlantPrice(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          padding: '8px',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          fontSize: '13px'
-                        }}
-                      />
-                      <small style={{ color: '#666', fontSize: '11px' }}>Std: 400 kr</small>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Podie</label>
+                      <input type="number" value={pricing.furniture?.podium ?? 850}
+                        onChange={(e) => setPricing({...pricing, furniture: {...pricing.furniture, podium: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
                     </div>
                   </div>
                 </div>
 
-                {/* Additional Fees */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
-                      Belysning
-                    </label>
-                    <input
-                      type="number"
-                      value={pricingLightingPrice}
-                      onChange={(e) => setPricingLightingPrice(Number(e.target.value))}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        fontSize: '14px'
-                      }}
-                    />
-                    <small style={{ color: '#666' }}>Standard: 800 kr</small>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
-                      Uppställningsavgift
-                    </label>
-                    <input
-                      type="number"
-                      value={pricingSetupFee}
-                      onChange={(e) => setPricingSetupFee(Number(e.target.value))}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        fontSize: '14px'
-                      }}
-                    />
-                    <small style={{ color: '#666' }}>Standard: 1500 kr</small>
+                {/* Diskar */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>🏪 Diskar</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Per löpmeter</label>
+                      <input type="number" value={pricing.counters?.perMeter ?? 800}
+                        onChange={(e) => setPricing({...pricing, counters: {...pricing.counters, perMeter: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      <small style={{ color: '#666' }}>Std: 800 kr/lpm</small>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>L-disk</label>
+                      <input type="number" value={pricing.counters?.lShape ?? 1000}
+                        onChange={(e) => setPricing({...pricing, counters: {...pricing.counters, lShape: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      <small style={{ color: '#666' }}>Std: 1000 kr</small>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>L-disk (spegelvänd)</label>
+                      <input type="number" value={pricing.counters?.lShapeMirrored ?? 1000}
+                        onChange={(e) => setPricing({...pricing, counters: {...pricing.counters, lShapeMirrored: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      <small style={{ color: '#666' }}>Std: 1000 kr</small>
+                    </div>
                   </div>
                 </div>
 
-                {/* Preview */}
-                <div style={{
-                  backgroundColor: '#f8f9fa',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  border: '1px solid #dee2e6'
-                }}>
-                  <h4 style={{ marginBottom: '12px' }}>Prisexempel (3m × 3m monter)</h4>
-                  <div style={{ fontSize: '13px', color: '#666' }}>
-                    <div>Monteryta (9m²): {(pricingBasePrice * 9).toLocaleString('sv-SE')} kr</div>
-                    <div>Väggar (4st): {(pricingWallPrice * 4).toLocaleString('sv-SE')} kr</div>
-                    <div>Golv (9m²): {(pricingFloorPrice * 9).toLocaleString('sv-SE')} kr</div>
-                    <div>+ Disk: {pricingCounterPrice.toLocaleString('sv-SE')} kr</div>
-                    <div>+ TV: {pricingTvPrice.toLocaleString('sv-SE')} kr</div>
-                    <div>+ Belysning: {pricingLightingPrice.toLocaleString('sv-SE')} kr</div>
-                    <div>+ Uppställning: {pricingSetupFee.toLocaleString('sv-SE')} kr</div>
-                    <div style={{ 
-                      marginTop: '8px', 
-                      paddingTop: '8px', 
-                      borderTop: '2px solid #dee2e6',
-                      fontWeight: 600,
-                      fontSize: '15px',
-                      color: '#000'
-                    }}>
-                      Totalt: {(
-                        pricingBasePrice * 9 + 
-                        pricingWallPrice * 4 + 
-                        pricingFloorPrice * 9 + 
-                        pricingCounterPrice + 
-                        pricingTvPrice + 
-                        pricingLightingPrice + 
-                        pricingSetupFee
-                      ).toLocaleString('sv-SE')} kr
+                {/* Disktillbehör */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>☕ Disktillbehör (kr/st)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Espressomaskin</label>
+                      <input type="number" value={pricing.counterItems?.espressoMachine ?? 4500}
+                        onChange={(e) => setPricing({...pricing, counterItems: {...pricing.counterItems, espressoMachine: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Blomvas</label>
+                      <input type="number" value={pricing.counterItems?.flowerVase ?? 850}
+                        onChange={(e) => setPricing({...pricing, counterItems: {...pricing.counterItems, flowerVase: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Godis skål</label>
+                      <input type="number" value={pricing.counterItems?.candyBowl ?? 500}
+                        onChange={(e) => setPricing({...pricing, counterItems: {...pricing.counterItems, candyBowl: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* TV-skärmar */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>📺 TV-skärmar (kr/st)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>43"</label>
+                      <input type="number" value={pricing.tvs?.[43] ?? 2700}
+                        onChange={(e) => setPricing({...pricing, tvs: {...pricing.tvs, 43: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>55"</label>
+                      <input type="number" value={pricing.tvs?.[55] ?? 3500}
+                        onChange={(e) => setPricing({...pricing, tvs: {...pricing.tvs, 55: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>70"</label>
+                      <input type="number" value={pricing.tvs?.[70] ?? 10000}
+                        onChange={(e) => setPricing({...pricing, tvs: {...pricing.tvs, 70: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Växter */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>🌿 Växter (kr/st)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Liten (&lt;1m)</label>
+                      <input type="number" value={pricing.plants?.small ?? 550}
+                        onChange={(e) => setPricing({...pricing, plants: {...pricing.plants, small: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Medium (1-2m)</label>
+                      <input type="number" value={pricing.plants?.medium ?? 850}
+                        onChange={(e) => setPricing({...pricing, plants: {...pricing.plants, medium: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Stor (&gt;2m)</label>
+                      <input type="number" value={pricing.plants?.large ?? 1200}
+                        onChange={(e) => setPricing({...pricing, plants: {...pricing.plants, large: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Förråd, Belysning, Truss */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                    <h4>📦 Förråd</h4>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Per m²</label>
+                      <input type="number" value={pricing.storage?.perSqm ?? 380}
+                        onChange={(e) => setPricing({...pricing, storage: {...pricing.storage, perSqm: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                  
+                  <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                    <h4>💡 Belysning</h4>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>LED-strips (ca 5m)</label>
+                      <input type="number" value={pricing.lighting?.ledStrips ?? 2000}
+                        onChange={(e) => setPricing({...pricing, lighting: {...pricing.lighting, ledStrips: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Truss */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>🔧 Truss</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Ingen</label>
+                      <input type="number" value={pricing.truss?.none ?? 0}
+                        onChange={(e) => setPricing({...pricing, truss: {...pricing.truss, none: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Fram rak (kr/lpm)</label>
+                      <input type="number" value={pricing.truss?.frontStraight ?? 400}
+                        onChange={(e) => setPricing({...pricing, truss: {...pricing.truss, frontStraight: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Hängande rund</label>
+                      <input type="number" value={pricing.truss?.hangingRound ?? 5500}
+                        onChange={(e) => setPricing({...pricing, truss: {...pricing.truss, hangingRound: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Hängande fyrkantig</label>
+                      <input type="number" value={pricing.truss?.hangingSquare ?? 5500}
+                        onChange={(e) => setPricing({...pricing, truss: {...pricing.truss, hangingSquare: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tilläggstjänster */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>➕ Tilläggstjänster (kr/st)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Extra el-uttag</label>
+                      <input type="number" value={pricing.extras?.powerOutlet ?? 300}
+                        onChange={(e) => setPricing({...pricing, extras: {...pricing.extras, powerOutlet: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Klädhängare</label>
+                      <input type="number" value={pricing.extras?.clothingRacks ?? 200}
+                        onChange={(e) => setPricing({...pricing, extras: {...pricing.extras, clothingRacks: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Högtalare</label>
+                      <input type="number" value={pricing.extras?.speakers ?? 3500}
+                        onChange={(e) => setPricing({...pricing, extras: {...pricing.extras, speakers: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Väggskiva</label>
+                      <input type="number" value={pricing.extras?.wallShelves ?? 350}
+                        onChange={(e) => setPricing({...pricing, extras: {...pricing.extras, wallShelves: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Basplatta</label>
+                      <input type="number" value={pricing.extras?.baseplate ?? 450}
+                        onChange={(e) => setPricing({...pricing, extras: {...pricing.extras, baseplate: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Färgmålning (kr/m²)</label>
+                      <input type="number" value={pricing.extras?.colorPainting ?? 500}
+                        onChange={(e) => setPricing({...pricing, extras: {...pricing.extras, colorPainting: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
                     </div>
                   </div>
                 </div>
@@ -1391,18 +1585,18 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
                 <button
                   onClick={handleSavePricing}
                   style={{
-                    padding: '12px 24px',
+                    padding: '16px 32px',
                     backgroundColor: '#10b981',
                     color: '#fff',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     cursor: 'pointer',
                     fontWeight: 600,
-                    fontSize: '14px',
+                    fontSize: '16px',
                     width: '100%'
                   }}
                 >
-                  💾 Spara Prissättning
+                  💾 Spara alla priser för {selectedEvent.name}
                 </button>
               </div>
             </div>
