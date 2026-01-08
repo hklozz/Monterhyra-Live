@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { ExhibitorManager } from './ExhibitorManager';
-import type { Event, Exhibitor, MonterSize, EventBranding } from './ExhibitorManager';
+import type { Event, Exhibitor, MonterSize, EventBranding, EventPricing } from './ExhibitorManager';
 
 interface ExhibitorAdminProps {
   onClose?: () => void;
 }
 
 export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<'events' | 'exhibitors' | 'branding' | 'data'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'exhibitors' | 'branding' | 'pricing' | 'data'>('events');
   const [events, setEvents] = useState<Event[]>(ExhibitorManager.getEvents());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(events.length > 0 ? events[0] : null);
   
@@ -24,6 +24,16 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
   const [brandingSecondaryColor, setBrandingSecondaryColor] = useState('#2c3e50');
   const [brandingContactEmail, setBrandingContactEmail] = useState('');
   const [brandingContactPhone, setBrandingContactPhone] = useState('');
+
+  // Pricing form states
+  const [pricingBasePrice, setPricingBasePrice] = useState<number>(2500);
+  const [pricingWallPrice, setPricingWallPrice] = useState<number>(450);
+  const [pricingFloorPrice, setPricingFloorPrice] = useState<number>(350);
+  const [pricingCounterPrice, setPricingCounterPrice] = useState<number>(1200);
+  const [pricingTvPrice, setPricingTvPrice] = useState<number>(2500);
+  const [pricingPlantPrice, setPricingPlantPrice] = useState<number>(400);
+  const [pricingLightingPrice, setPricingLightingPrice] = useState<number>(800);
+  const [pricingSetupFee, setPricingSetupFee] = useState<number>(1500);
 
   // Exhibitor creation form
   const [newExhibitorCompany, setNewExhibitorCompany] = useState('');
@@ -273,6 +283,44 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
     }
   }, [selectedEvent]);
 
+  // Load pricing when event is selected
+  React.useEffect(() => {
+    if (selectedEvent?.pricing) {
+      setPricingBasePrice(selectedEvent.pricing.basePrice ?? 2500);
+      setPricingWallPrice(selectedEvent.pricing.wallPrice ?? 450);
+      setPricingFloorPrice(selectedEvent.pricing.floorPrice ?? 350);
+      setPricingCounterPrice(selectedEvent.pricing.counterPrice ?? 1200);
+      setPricingTvPrice(selectedEvent.pricing.tvPrice ?? 2500);
+      setPricingPlantPrice(selectedEvent.pricing.plantPrice ?? 400);
+      setPricingLightingPrice(selectedEvent.pricing.lightingPrice ?? 800);
+      setPricingSetupFee(selectedEvent.pricing.setupFee ?? 1500);
+    }
+  }, [selectedEvent]);
+
+  const handleSavePricing = () => {
+    if (!selectedEvent) {
+      alert('Välj en event först');
+      return;
+    }
+
+    const pricing: EventPricing = {
+      basePrice: pricingBasePrice,
+      wallPrice: pricingWallPrice,
+      floorPrice: pricingFloorPrice,
+      counterPrice: pricingCounterPrice,
+      tvPrice: pricingTvPrice,
+      plantPrice: pricingPlantPrice,
+      lightingPrice: pricingLightingPrice,
+      setupFee: pricingSetupFee
+    };
+
+    ExhibitorManager.updateEventPricing(selectedEvent.id, pricing);
+    const updatedEvents = ExhibitorManager.getEvents();
+    setEvents(updatedEvents);
+    setSelectedEvent(ExhibitorManager.getEvent(selectedEvent.id) || null);
+    alert('Prissättning sparad!');
+  };
+
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -367,6 +415,21 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
           }}
         >
           🎨 White Label
+        </button>
+        <button
+          onClick={() => setActiveTab('pricing')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            borderBottom: activeTab === 'pricing' ? '3px solid #3b82f6' : 'none',
+            backgroundColor: activeTab === 'pricing' ? '#f0f9ff' : 'transparent',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '16px',
+            color: activeTab === 'pricing' ? '#3b82f6' : '#666'
+          }}
+        >
+          💰 Prissättning
         </button>
       </div>
 
@@ -1104,6 +1167,244 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
               >
                 💾 Spara White Label Branding
               </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Pricing Tab */}
+      {activeTab === 'pricing' && (
+        <div>
+          {!selectedEvent ? (
+            <p style={{ color: '#666' }}>Välj en event först för att ställa in prissättning</p>
+          ) : (
+            <div style={{ maxWidth: '800px' }}>
+              <h3>💰 Prissättning för {selectedEvent.name}</h3>
+              <p style={{ color: '#666', marginBottom: '20px' }}>
+                Anpassa priser specifikt för denna mässa. Om inget anges används standardpriser.
+              </p>
+
+              <div style={{ display: 'grid', gap: '20px' }}>
+                {/* Base Price */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+                    Baspris per m² (monter)
+                  </label>
+                  <input
+                    type="number"
+                    value={pricingBasePrice}
+                    onChange={(e) => setPricingBasePrice(Number(e.target.value))}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                  <small style={{ color: '#666' }}>Standard: 2500 kr/m²</small>
+                </div>
+
+                {/* Wall & Floor Prices */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+                      Väggpris per vägg
+                    </label>
+                    <input
+                      type="number"
+                      value={pricingWallPrice}
+                      onChange={(e) => setPricingWallPrice(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}
+                    />
+                    <small style={{ color: '#666' }}>Standard: 450 kr</small>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+                      Golvpris per m²
+                    </label>
+                    <input
+                      type="number"
+                      value={pricingFloorPrice}
+                      onChange={(e) => setPricingFloorPrice(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}
+                    />
+                    <small style={{ color: '#666' }}>Standard: 350 kr/m²</small>
+                  </div>
+                </div>
+
+                {/* Furniture Prices */}
+                <div>
+                  <h4 style={{ marginBottom: '12px' }}>Möbler & Utrustning</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>
+                        Disk
+                      </label>
+                      <input
+                        type="number"
+                        value={pricingCounterPrice}
+                        onChange={(e) => setPricingCounterPrice(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          fontSize: '13px'
+                        }}
+                      />
+                      <small style={{ color: '#666', fontSize: '11px' }}>Std: 1200 kr</small>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>
+                        TV
+                      </label>
+                      <input
+                        type="number"
+                        value={pricingTvPrice}
+                        onChange={(e) => setPricingTvPrice(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          fontSize: '13px'
+                        }}
+                      />
+                      <small style={{ color: '#666', fontSize: '11px' }}>Std: 2500 kr</small>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>
+                        Växt
+                      </label>
+                      <input
+                        type="number"
+                        value={pricingPlantPrice}
+                        onChange={(e) => setPricingPlantPrice(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          fontSize: '13px'
+                        }}
+                      />
+                      <small style={{ color: '#666', fontSize: '11px' }}>Std: 400 kr</small>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Fees */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+                      Belysning
+                    </label>
+                    <input
+                      type="number"
+                      value={pricingLightingPrice}
+                      onChange={(e) => setPricingLightingPrice(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}
+                    />
+                    <small style={{ color: '#666' }}>Standard: 800 kr</small>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+                      Uppställningsavgift
+                    </label>
+                    <input
+                      type="number"
+                      value={pricingSetupFee}
+                      onChange={(e) => setPricingSetupFee(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}
+                    />
+                    <small style={{ color: '#666' }}>Standard: 1500 kr</small>
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  border: '1px solid #dee2e6'
+                }}>
+                  <h4 style={{ marginBottom: '12px' }}>Prisexempel (3m × 3m monter)</h4>
+                  <div style={{ fontSize: '13px', color: '#666' }}>
+                    <div>Monteryta (9m²): {(pricingBasePrice * 9).toLocaleString('sv-SE')} kr</div>
+                    <div>Väggar (4st): {(pricingWallPrice * 4).toLocaleString('sv-SE')} kr</div>
+                    <div>Golv (9m²): {(pricingFloorPrice * 9).toLocaleString('sv-SE')} kr</div>
+                    <div>+ Disk: {pricingCounterPrice.toLocaleString('sv-SE')} kr</div>
+                    <div>+ TV: {pricingTvPrice.toLocaleString('sv-SE')} kr</div>
+                    <div>+ Belysning: {pricingLightingPrice.toLocaleString('sv-SE')} kr</div>
+                    <div>+ Uppställning: {pricingSetupFee.toLocaleString('sv-SE')} kr</div>
+                    <div style={{ 
+                      marginTop: '8px', 
+                      paddingTop: '8px', 
+                      borderTop: '2px solid #dee2e6',
+                      fontWeight: 600,
+                      fontSize: '15px',
+                      color: '#000'
+                    }}>
+                      Totalt: {(
+                        pricingBasePrice * 9 + 
+                        pricingWallPrice * 4 + 
+                        pricingFloorPrice * 9 + 
+                        pricingCounterPrice + 
+                        pricingTvPrice + 
+                        pricingLightingPrice + 
+                        pricingSetupFee
+                      ).toLocaleString('sv-SE')} kr
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <button
+                  onClick={handleSavePricing}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    width: '100%'
+                  }}
+                >
+                  💾 Spara Prissättning
+                </button>
+              </div>
             </div>
           )}
         </div>

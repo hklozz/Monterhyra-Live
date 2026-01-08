@@ -43,6 +43,27 @@ export interface EventBranding {
   emailTemplate?: string;
 }
 
+export interface EventPricing {
+  // Per square meter prices
+  basePrice?: number; // Base price per m²
+  
+  // Component prices (can override defaults)
+  wallPrice?: number;
+  floorPrice?: number;
+  
+  // Furniture prices
+  counterPrice?: number;
+  tvPrice?: number;
+  plantPrice?: number;
+  
+  // Additional fees
+  lightingPrice?: number;
+  setupFee?: number;
+  
+  // Custom pricing rules
+  customPrices?: Record<string, number>;
+}
+
 export interface Event {
   id: string;
   name: string;
@@ -53,6 +74,7 @@ export interface Event {
   exhibitors: Exhibitor[];
   createdAt: Date;
   branding?: EventBranding; // White label branding per event
+  pricing?: EventPricing; // Custom pricing per event
 }
 
 // Default dimensions for each monterSize
@@ -281,6 +303,31 @@ class ExhibitorManagerClass {
     const exhibitor = this.getExhibitor(exhibitorId);
     if (exhibitor) {
       return this.getEventBranding(exhibitor.eventId);
+    }
+    return undefined;
+  }
+
+  // Pricing methods
+  updateEventPricing(eventId: string, pricing: EventPricing): Event | undefined {
+    const event = this.getEvent(eventId);
+    if (event) {
+      event.pricing = { ...event.pricing, ...pricing };
+      this.saveToLocalStorage();
+      return event;
+    }
+    return undefined;
+  }
+
+  getEventPricing(eventId: string): EventPricing | undefined {
+    const event = this.getEvent(eventId);
+    return event?.pricing;
+  }
+
+  // Get pricing for an exhibitor (via their event)
+  getExhibitorPricing(exhibitorId: string): EventPricing | undefined {
+    const exhibitor = this.getExhibitor(exhibitorId);
+    if (exhibitor) {
+      return this.getEventPricing(exhibitor.eventId);
     }
     return undefined;
   }
