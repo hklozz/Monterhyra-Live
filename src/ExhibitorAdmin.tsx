@@ -7,7 +7,7 @@ interface ExhibitorAdminProps {
 }
 
 export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<'events' | 'exhibitors' | 'branding'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'exhibitors' | 'branding' | 'data'>('events');
   const [events, setEvents] = useState<Event[]>(ExhibitorManager.getEvents());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(events.length > 0 ? events[0] : null);
   
@@ -185,11 +185,79 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (max 200kb)
+      if (file.size > 200 * 1024) {
+        alert('Bilden är för stor! Max 200kb. Försök med en mindre bild eller komprimera den.');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setBrandingLogo(reader.result as string);
+        const img = new Image();
+        img.onload = () => {
+          // Compress image if needed
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Resize if too large (max 400px width)
+          const maxWidth = 400;
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert to base64 with compression
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          setBrandingLogo(compressedBase64);
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleExportData = () => {
+    const data = {
+      events: ExhibitorManager.getEvents(),
+      exportDate: new Date().toISOString(),
+      version: '1.0'
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `monterhyra-data-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target?.result as string);
+          if (data.events && Array.isArray(data.events)) {
+            // Import all events
+            localStorage.setItem('exhibitorManager_events', JSON.stringify(data.events));
+            const updatedEvents = ExhibitorManager.getEvents();
+            setEvents(updatedEvents);
+            alert(`Importerade ${data.events.length} events!`);
+          } else {
+            alert('Ogiltig data-fil');
+          }
+        } catch (error) {
+          alert('Kunde inte läsa filen: ' + error);
+        }
+      };
+      reader.readAsText(file);
     }
   };
 
@@ -209,11 +277,48 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1>🎪 Exhibitor Portal - Admin</h1>
-        {onClose && (
-          <button onClick={onClose} style={{ padding: '8px 16px', cursor: 'pointer', fontSize: '14px' }}>
-            Stäng
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={handleExportData}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#10b981',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 600
+            }}
+          >
+            📥 Exportera Data
           </button>
-        )}
+          <label
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#3b82f6',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 600
+            }}
+          >
+            📤 Importera Data
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleImportData}
+              style={{ display: 'none' }}
+            />
+          </label>
+          {onClose && (
+            <button onClick={onClose} style={{ padding: '8px 16px', cursor: 'pointer', fontSize: '14px' }}>
+              Stäng
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -341,8 +446,69 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                      <div>
-                        <h4 style={{ margin: '0 0 8px 0' }}>{event.name}</h4>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                          <h4 style={{ margin: 0 }}>{event.name}</h4>
+                          {event.branding && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              {event.branding.logo && (
+                                <img 
+                                  src={event.branding.logo} 
+                                  alt="Event logo"
+                                  style={{ 
+                                    height: '24px', 
+                                    maxWidth: '60px',
+                                    objectFit: 'contain',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '4px',
+                                    padding: '2px',
+                                    backgroundColor: '#fff'
+                                  }} 
+                                />
+                              )}
+                              {(event.branding.primaryColor || event.branding.secondaryColor) && (
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  {event.branding.primaryColor && (
+                                    <div 
+                                      style={{ 
+                                        width: '20px', 
+                                        height: '20px', 
+                                        backgroundColor: event.branding.primaryColor,
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '3px'
+                                      }} 
+                                      title={`Primary: ${event.branding.primaryColor}`}
+                                    />
+                                  )}
+                                  {event.branding.secondaryColor && (
+                                    <div 
+                                      style={{ 
+                                        width: '20px', 
+                                        height: '20px', 
+                                        backgroundColor: event.branding.secondaryColor,
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '3px'
+                                      }}
+                                      title={`Secondary: ${event.branding.secondaryColor}`}
+                                    />
+                                  )}
+                                </div>
+                              )}
+                              {event.branding.companyName && (
+                                <span style={{ 
+                                  fontSize: '12px', 
+                                  color: '#059669',
+                                  backgroundColor: '#d1fae5',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontWeight: 600
+                                }}>
+                                  🏷️ {event.branding.companyName}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                         <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#666' }}>
                           📍 {event.startDate} - {event.endDate}
                         </p>
