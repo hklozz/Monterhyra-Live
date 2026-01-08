@@ -89,7 +89,7 @@ interface Order {
   printOnly?: boolean;
 }
 
-const AdminPortal: React.FC = () => {
+const AdminPortal: React.FC<{ onOpenExhibitorAdmin?: () => void }> = ({ onOpenExhibitorAdmin }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -977,8 +977,71 @@ const AdminPortal: React.FC = () => {
           alignItems: 'center',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {selectedOrder && (
+          {/* Left 50% - Beställningar button */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'flex-start',
+            paddingRight: '10px'
+          }}>
+            <button
+              onClick={() => {
+                setSelectedOrder(null);
+                setIsEditing(false);
+                setEditedOrder(null);
+              }}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#3498db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '15px',
+                fontWeight: '600',
+                width: '100%'
+              }}
+            >
+              📋 Beställningar
+            </button>
+          </div>
+
+          {/* Right 50% - Mässa button */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            paddingLeft: '10px'
+          }}>
+            <button
+              onClick={() => onOpenExhibitorAdmin?.()}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#27ae60',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '15px',
+                fontWeight: '600',
+                width: '100%'
+              }}
+            >
+              🏢 Mässa
+            </button>
+          </div>
+        </div>
+
+        {/* Order details header */}
+        {selectedOrder && (
+          <div style={{
+            backgroundColor: 'white',
+            padding: '16px 20px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button
                 onClick={() => {
                   setSelectedOrder(null);
@@ -998,8 +1061,6 @@ const AdminPortal: React.FC = () => {
               >
                 ← Tillbaka till lista
               </button>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div>
                 <h1 style={{
                   fontSize: '24px',
@@ -1007,19 +1068,19 @@ const AdminPortal: React.FC = () => {
                   color: '#2c3e50',
                   margin: '0 0 4px 0'
                 }}>
-                  {selectedOrder ? `Beställning #${selectedOrder.id}` : 'Admin Portal'}
+                  Beställning #{selectedOrder.id}
                 </h1>
                 <p style={{
                   color: '#666',
                   margin: 0,
                   fontSize: '14px'
                 }}>
-                  {selectedOrder ? `Skapad: ${formatDate(selectedOrder.timestamp)}` : `${orders.length} beställningar totalt`}
+                  Skapad: {formatDate(selectedOrder.timestamp)}
                 </p>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Overview List eller Detail View */}
         {!selectedOrder ? (

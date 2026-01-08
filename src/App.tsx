@@ -22,6 +22,8 @@ import type { StorageWallDesign } from './StoragePDFGenerator';
 import { OrderManager } from './OrderManager';
 import type { CustomerInfo, OrderData } from './OrderManager';
 import AdminPortal from './AdminPortal';
+import { ExhibitorAdmin } from './ExhibitorAdmin';
+import { ExhibitorPortal } from './ExhibitorPortal';
 import ErrorBoundary from './ErrorBoundary';
 
 // Custom Dropdown Component for visual elements
@@ -2689,7 +2691,15 @@ export default function App() {
   
   // Admin Portal state
   const [showAdminPortal, setShowAdminPortal] = useState(false);
+  const [showExhibitorAdmin, setShowExhibitorAdmin] = useState(false);
+  const [showExhibitorPortal, setShowExhibitorPortal] = useState(false);
   
+  // Exhibitor Mode - when accessed via invite link
+  const [isExhibitorMode, setIsExhibitorMode] = useState(false);
+  const [exhibitorData, setExhibitorData] = useState<any>(null);
+  const [exhibitorToken, setExhibitorToken] = useState<string | null>(null);
+  
+  // Check for exhibitor invite link on component mount
   // Collapsed state for live packlists - standardmässigt minimerade
   const [floatingPacklistCollapsed, setFloatingPacklistCollapsed] = useState(true);
   // const [compactPacklistCollapsed, setCompactPacklistCollapsed] = useState(true); // Unused - commented out
@@ -2816,6 +2826,9 @@ export default function App() {
   
   // ⏰ REGISTRERINGS-TIMER: Visa formulär efter 60 sekunder
   useEffect(() => {
+    // Skip timer i exhibitor-mode
+    if (isExhibitorMode) return;
+    
     // Starta timer som visar registreringsmodalen efter 60 sekunder
     const timer = setTimeout(() => {
       if (!isRegistered) {
@@ -2832,6 +2845,52 @@ export default function App() {
       clearTimeout(timer);
     };
   }, [isRegistered]);
+  
+  // Check for exhibitor invite link on component mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const inviteToken = params.get('invite');
+    
+    if (inviteToken) {
+      // Exhibitor mode - load exhibitor data and set dimensions
+      import('./ExhibitorManager').then(({ ExhibitorManager }) => {
+        const exhibitor = ExhibitorManager.getExhibitorByToken(inviteToken);
+        
+        if (exhibitor) {
+          setIsExhibitorMode(true);
+          setExhibitorData(exhibitor);
+          setExhibitorToken(inviteToken);
+          
+          // Set locked dimensions from exhibitor data
+          const { width, depth, height } = exhibitor.monterDimensions;
+          setCustomFloorWidth(width);
+          setCustomFloorDepth(depth);
+          setWallHeight(height);
+          
+          // Set straight wall as default for exhibitors
+          setWallShape('straight');
+          
+          // Set straight wall as default for exhibitors
+          setWallShape('straight');
+          
+          // Find matching floor size or use custom
+          const matchingFloorIndex = FLOOR_SIZES.findIndex(
+            floor => floor.width === width && floor.depth === depth
+          );
+          
+          if (matchingFloorIndex !== -1) {
+            setFloorIndex(matchingFloorIndex);
+          } else {
+            // Use custom size
+            setFloorIndex(FLOOR_SIZES.length - 1); // Assuming last is custom
+          }
+          
+          // Don't show the old exhibitor portal
+          setShowExhibitorPortal(false);
+        }
+      });
+    }
+  }, []);
   
   // Återställ markers när man byter tv-storlek eller antal
   // React.useEffect(() => { setTvMarkersVisible(true); }, [tvIndex, tvCount]);
@@ -3254,7 +3313,7 @@ export default function App() {
             overflowY: 'auto',
             background: '#fafafa'
           }}>
-            {mobileStep === 0 && (
+            {mobileStep === 0 && !isExhibitorMode && (
               <div>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Välj monterstorlek</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -3887,58 +3946,101 @@ export default function App() {
             margin: 0,
             color: 'white',
             textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-          }}>🏗️ Monterval</h2>
+          }}>🏗️ {isExhibitorMode && exhibitorData ? `Monterdesign - ${exhibitorData.companyName}` : 'Monterval'}</h2>
         </div>
+        
+        {/* Exhibitor Info Box */}
+        {isExhibitorMode && exhibitorData && (
+          <div style={{
+            background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+            padding: '16px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            color: 'white',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{
+              margin: '0 0 12px 0',
+              fontSize: '15px',
+              fontWeight: '700',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              🏢 {exhibitorData.companyName}
+            </h3>
+            <div style={{
+              fontSize: '13px',
+              lineHeight: '1.6',
+              opacity: 0.95
+            }}>
+              <p style={{ margin: '0 0 8px 0' }}>
+                📏 <strong>Låst monterstorlek:</strong><br/>
+                {exhibitorData.monterDimensions.width}m × {exhibitorData.monterDimensions.depth}m × {exhibitorData.monterDimensions.height}m höjd
+              </p>
+              {exhibitorData.contactPerson && (
+                <p style={{ margin: '0' }}>
+                  👤 <strong>Kontakt:</strong> {exhibitorData.contactPerson}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+        
         <div style={{ marginTop: '16px' }}>
-          <label style={{ 
-            fontWeight: 600, 
-            fontSize: '14px',
-            color: '#2c3e50',
-            marginBottom: '8px',
-            display: 'block'
-          }}>Monterstorlek:</label>
-          
-          <CustomDropdown
-            options={FLOOR_SIZES.filter(floor => floor.custom).map((floor, _index) => ({ ...floor, value: FLOOR_SIZES.length - 1 }))}
-            value={floorIndex ?? ''}
-            onChange={(value) => setFloorIndex(value === '' ? null : Number(value))}
-            placeholder="Anpassad storlek"
-            renderOption={(option) => (
-              <>
-                {option.image ? (
-                  <img 
-                    src={option.image} 
-                    alt={option.label}
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      objectFit: 'contain',
-                      marginRight: '8px'
-                    }}
-                  />
-                ) : (
-                  <span style={{ 
-                    display: 'inline-block',
-                    width: '24px',
-                    height: '24px',
-                    marginRight: '8px',
-                    textAlign: 'center',
-                    lineHeight: '24px',
-                    fontSize: '12px',
-                    color: '#999'
-                  }}>
-                    {option.value === '' ? '—' : '📐'}
-                  </span>
+          {!isExhibitorMode && (
+            <>
+              <label style={{ 
+                fontWeight: 600, 
+                fontSize: '14px',
+                color: '#2c3e50',
+                marginBottom: '8px',
+                display: 'block'
+              }}>Monterstorlek:</label>
+              
+              <CustomDropdown
+                options={FLOOR_SIZES.filter(floor => floor.custom).map((floor, _index) => ({ ...floor, value: FLOOR_SIZES.length - 1 }))}
+                value={floorIndex ?? ''}
+                onChange={(value) => setFloorIndex(value === '' ? null : Number(value))}
+                placeholder="Anpassad storlek"
+                renderOption={(option) => (
+                  <>
+                    {option.image ? (
+                      <img 
+                        src={option.image} 
+                        alt={option.label}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          objectFit: 'contain',
+                          marginRight: '8px'
+                        }}
+                      />
+                    ) : (
+                      <span style={{ 
+                        display: 'inline-block',
+                        width: '24px',
+                        height: '24px',
+                        marginRight: '8px',
+                        textAlign: 'center',
+                        lineHeight: '24px',
+                        fontSize: '12px',
+                        color: '#999'
+                      }}>
+                        {option.value === '' ? '—' : '📐'}
+                      </span>
+                    )}
+                    {option.label}
+                  </>
                 )}
-                {option.label}
-              </>
-            )}
-            style={{ width: '100%' }}
-          />
+                style={{ width: '100%' }}
+              />
+            </>
+          )}
         </div>
         
         {/* Anpassad storlek input-fält */}
-        {floorIndex !== null && FLOOR_SIZES[floorIndex]?.custom && (
+        {!isExhibitorMode && floorIndex !== null && FLOOR_SIZES[floorIndex]?.custom && (
           <div style={{marginTop: '10px'}}>
             {/* Bredd och djup fält */}
             <div style={{
@@ -5478,8 +5580,7 @@ export default function App() {
 
   {/* Prisberäkning */}
   <div id="price-summary" style={{ 
-          position: 'sticky',
-          bottom: 0,
+          ...(isExhibitorMode ? {} : { position: 'sticky', bottom: 0 }),
           backgroundColor: '#fff',
           borderTop: '2px solid #007acc',
           padding: '16px',
@@ -5593,6 +5694,8 @@ export default function App() {
                 </div>
                 {/* Beställ-knapp */}
                 <div style={{ marginTop: 10, marginBottom: 6 }}>
+                  {/* PDF-knapp - dölj i exhibitor-mode */}
+                  {!isExhibitorMode && (
                   <button
                     onClick={async () => {
                       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -5920,6 +6023,7 @@ export default function App() {
                   >
                     📄 PDF
                   </button>
+                  )}
                   
                   {/* Ny Beställ-knapp som skickar e-post med EmailJS */}
                   <button
@@ -10692,8 +10796,8 @@ Monterhyra Beställningssystem
         </div>
       </div>
 
-      {/* 📝 REGISTRERINGS-MODAL - Visas efter 1 minut */}
-      {showRegistrationModal && (
+      {/* 📝 REGISTRERINGS-MODAL - Visas efter 1 minut (ej i exhibitor-mode) */}
+      {!isExhibitorMode && showRegistrationModal && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -11264,7 +11368,10 @@ Monterhyra Beställningssystem
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch'
         }}>
-          <AdminPortal />
+          <AdminPortal onOpenExhibitorAdmin={() => {
+            setShowAdminPortal(false);
+            setShowExhibitorAdmin(true);
+          }} />
           <div style={{
             position: 'fixed',
             top: 20,
@@ -11311,31 +11418,78 @@ Monterhyra Beställningssystem
         </div>
       )}
 
-      {/* Admin-knapp längst ner */}
-      <button
-        onClick={() => setShowAdminPortal(true)}
-        style={{
+      {/* ExhibitorAdmin view */}
+      {showExhibitorAdmin && (
+        <div style={{
           position: 'fixed',
-          bottom: 20,
-          right: 20,
-          padding: '12px 24px',
-          backgroundColor: '#2c3e50',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}
-        title="Öppna admin-portal för beställningar"
-      >
-        🔐 Admin
-      </button>
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 10000,
+          backgroundColor: 'white',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch'
+        }}>
+          <ExhibitorAdmin onClose={() => setShowExhibitorAdmin(false)} />
+          <div style={{
+            position: 'fixed',
+            top: 20,
+            right: 20,
+            zIndex: 10001
+          }}>
+            <button
+              onClick={() => setShowExhibitorAdmin(false)}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#95a5a6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              ✕ Stäng
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ExhibitorPortal view - Utställarens egna sida */}
+      {showExhibitorPortal && (
+        <ExhibitorPortal onClose={() => setShowExhibitorPortal(false)} />
+      )}
+
+      {/* Admin-knapp längst ner */}
+      {!isExhibitorMode && (
+        <button
+          onClick={() => setShowAdminPortal(true)}
+          style={{
+            position: 'fixed',
+            bottom: 20,
+            right: 20,
+            padding: '12px 24px',
+            backgroundColor: '#2c3e50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+          title="Öppna admin-portal för beställningar"
+        >
+          🔐 Admin
+        </button>
+      )}
 
     </div>
   );
