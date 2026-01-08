@@ -2697,7 +2697,7 @@ export default function App() {
   // Exhibitor Mode - when accessed via invite link
   const [isExhibitorMode, setIsExhibitorMode] = useState(false);
   const [exhibitorData, setExhibitorData] = useState<any>(null);
-  const [exhibitorToken, setExhibitorToken] = useState<string | null>(null);
+  const [exhibitorBranding, setExhibitorBranding] = useState<any>(null);
   
   // Check for exhibitor invite link on component mount
   // Collapsed state for live packlists - standardmässigt minimerade
@@ -2859,16 +2859,24 @@ export default function App() {
         if (exhibitor) {
           setIsExhibitorMode(true);
           setExhibitorData(exhibitor);
-          setExhibitorToken(inviteToken);
+          
+          // Load branding for this exhibitor's event
+          const branding = ExhibitorManager.getExhibitorBranding(exhibitor.id);
+          setExhibitorBranding(branding);
+          
+          // Apply branding colors to document if available
+          if (branding?.primaryColor) {
+            document.documentElement.style.setProperty('--exhibitor-primary', branding.primaryColor);
+          }
+          if (branding?.secondaryColor) {
+            document.documentElement.style.setProperty('--exhibitor-secondary', branding.secondaryColor);
+          }
           
           // Set locked dimensions from exhibitor data
           const { width, depth, height } = exhibitor.monterDimensions;
           setCustomFloorWidth(width);
           setCustomFloorDepth(depth);
           setWallHeight(height);
-          
-          // Set straight wall as default for exhibitors
-          setWallShape('straight');
           
           // Set straight wall as default for exhibitors
           setWallShape('straight');
@@ -3934,12 +3942,29 @@ export default function App() {
         <div style={{
           position: 'sticky',
           top: 0,
-          background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
+          background: exhibitorBranding?.primaryColor && exhibitorBranding?.secondaryColor 
+            ? `linear-gradient(135deg, ${exhibitorBranding.primaryColor} 0%, ${exhibitorBranding.secondaryColor} 100%)`
+            : 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
           margin: '-24px -24px 24px -24px',
           padding: '20px 24px',
           borderRadius: '0 0 12px 12px',
           zIndex: 10
         }}>
+          {exhibitorBranding?.logo && (
+            <img 
+              src={exhibitorBranding.logo} 
+              alt="Logo" 
+              style={{
+                maxWidth: '150px',
+                maxHeight: '50px',
+                marginBottom: '12px',
+                display: 'block',
+                backgroundColor: 'rgba(255,255,255,0.95)',
+                padding: '6px 12px',
+                borderRadius: '6px'
+              }}
+            />
+          )}
           <h2 style={{
             fontWeight: 700, 
             fontSize: window.innerWidth <= 768 ? '18px' : '20px', 
@@ -3952,7 +3977,9 @@ export default function App() {
         {/* Exhibitor Info Box */}
         {isExhibitorMode && exhibitorData && (
           <div style={{
-            background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+            background: exhibitorBranding?.primaryColor 
+              ? `linear-gradient(135deg, ${exhibitorBranding.primaryColor} 0%, ${exhibitorBranding.secondaryColor || exhibitorBranding.primaryColor} 100%)`
+              : 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
             padding: '16px',
             borderRadius: '8px',
             marginBottom: '20px',
@@ -3978,6 +4005,21 @@ export default function App() {
                 📏 <strong>Låst monterstorlek:</strong><br/>
                 {exhibitorData.monterDimensions.width}m × {exhibitorData.monterDimensions.depth}m × {exhibitorData.monterDimensions.height}m höjd
               </p>
+              {exhibitorBranding?.companyName && (
+                <p style={{ margin: '0 0 8px 0' }}>
+                  🏷️ <strong>Arrangör:</strong> {exhibitorBranding.companyName}
+                </p>
+              )}
+              {exhibitorBranding?.contactEmail && (
+                <p style={{ margin: '0 0 8px 0' }}>
+                  📧 {exhibitorBranding.contactEmail}
+                </p>
+              )}
+              {exhibitorBranding?.contactPhone && (
+                <p style={{ margin: '0' }}>
+                  📞 {exhibitorBranding.contactPhone}
+                </p>
+              )}
               {exhibitorData.contactPerson && (
                 <p style={{ margin: '0' }}>
                   👤 <strong>Kontakt:</strong> {exhibitorData.contactPerson}

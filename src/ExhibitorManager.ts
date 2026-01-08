@@ -32,6 +32,17 @@ export interface Exhibitor {
   };
 }
 
+export interface EventBranding {
+  logo?: string; // URL or base64 image
+  primaryColor?: string;
+  secondaryColor?: string;
+  companyName?: string; // White label company name
+  contactEmail?: string;
+  contactPhone?: string;
+  customDomain?: string;
+  emailTemplate?: string;
+}
+
 export interface Event {
   id: string;
   name: string;
@@ -41,6 +52,7 @@ export interface Event {
   location?: string;
   exhibitors: Exhibitor[];
   createdAt: Date;
+  branding?: EventBranding; // White label branding per event
 }
 
 // Default dimensions for each monterSize
@@ -83,7 +95,13 @@ class ExhibitorManagerClass {
   }
 
   // Event methods
-  createEvent(name: string, description?: string, startDate?: string, endDate?: string): Event {
+  createEvent(
+    name: string, 
+    description?: string, 
+    startDate?: string, 
+    endDate?: string,
+    branding?: EventBranding
+  ): Event {
     const event: Event = {
       id: `event-${Date.now()}`,
       name,
@@ -92,6 +110,11 @@ class ExhibitorManagerClass {
       endDate,
       exhibitors: [],
       createdAt: new Date(),
+      branding: branding || {
+        companyName: 'Monterhyra',
+        primaryColor: '#3498db',
+        secondaryColor: '#2c3e50'
+      }
     };
     this.events.push(event);
     this.saveToLocalStorage();
@@ -235,6 +258,31 @@ class ExhibitorManagerClass {
   getBoothConfig(exhibitorId: string) {
     const exhibitor = this.getExhibitor(exhibitorId);
     return exhibitor?.boothConfig;
+  }
+
+  // Branding methods
+  updateEventBranding(eventId: string, branding: EventBranding): Event | undefined {
+    const event = this.getEvent(eventId);
+    if (event) {
+      event.branding = { ...event.branding, ...branding };
+      this.saveToLocalStorage();
+      return event;
+    }
+    return undefined;
+  }
+
+  getEventBranding(eventId: string): EventBranding | undefined {
+    const event = this.getEvent(eventId);
+    return event?.branding;
+  }
+
+  // Get branding for an exhibitor (via their event)
+  getExhibitorBranding(exhibitorId: string): EventBranding | undefined {
+    const exhibitor = this.getExhibitor(exhibitorId);
+    if (exhibitor) {
+      return this.getEventBranding(exhibitor.eventId);
+    }
+    return undefined;
   }
 }
 

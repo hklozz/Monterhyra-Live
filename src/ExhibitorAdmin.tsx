@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { ExhibitorManager } from './ExhibitorManager';
-import type { Event, Exhibitor, MonterSize } from './ExhibitorManager';
+import type { Event, Exhibitor, MonterSize, EventBranding } from './ExhibitorManager';
 
 interface ExhibitorAdminProps {
   onClose?: () => void;
 }
 
 export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<'events' | 'exhibitors'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'exhibitors' | 'branding'>('events');
   const [events, setEvents] = useState<Event[]>(ExhibitorManager.getEvents());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(events.length > 0 ? events[0] : null);
   
@@ -16,6 +16,14 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
   const [newEventDesc, setNewEventDesc] = useState('');
   const [newEventStart, setNewEventStart] = useState('');
   const [newEventEnd, setNewEventEnd] = useState('');
+
+  // Branding form states
+  const [brandingLogo, setBrandingLogo] = useState('');
+  const [brandingCompanyName, setBrandingCompanyName] = useState('');
+  const [brandingPrimaryColor, setBrandingPrimaryColor] = useState('#3498db');
+  const [brandingSecondaryColor, setBrandingSecondaryColor] = useState('#2c3e50');
+  const [brandingContactEmail, setBrandingContactEmail] = useState('');
+  const [brandingContactPhone, setBrandingContactPhone] = useState('');
 
   // Exhibitor creation form
   const [newExhibitorCompany, setNewExhibitorCompany] = useState('');
@@ -152,6 +160,51 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
     alert('Invite-länk kopierad!');
   };
 
+  const handleSaveBranding = () => {
+    if (!selectedEvent) {
+      alert('Välj en event först');
+      return;
+    }
+
+    const branding: EventBranding = {
+      logo: brandingLogo,
+      companyName: brandingCompanyName,
+      primaryColor: brandingPrimaryColor,
+      secondaryColor: brandingSecondaryColor,
+      contactEmail: brandingContactEmail,
+      contactPhone: brandingContactPhone
+    };
+
+    ExhibitorManager.updateEventBranding(selectedEvent.id, branding);
+    const updatedEvents = ExhibitorManager.getEvents();
+    setEvents(updatedEvents);
+    setSelectedEvent(ExhibitorManager.getEvent(selectedEvent.id) || null);
+    alert('Branding sparad!');
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBrandingLogo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Load branding when event is selected
+  React.useEffect(() => {
+    if (selectedEvent?.branding) {
+      setBrandingLogo(selectedEvent.branding.logo || '');
+      setBrandingCompanyName(selectedEvent.branding.companyName || '');
+      setBrandingPrimaryColor(selectedEvent.branding.primaryColor || '#3498db');
+      setBrandingSecondaryColor(selectedEvent.branding.secondaryColor || '#2c3e50');
+      setBrandingContactEmail(selectedEvent.branding.contactEmail || '');
+      setBrandingContactPhone(selectedEvent.branding.contactPhone || '');
+    }
+  }, [selectedEvent]);
+
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -194,6 +247,21 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
           }}
         >
           🏢 Exhibitors
+        </button>
+        <button
+          onClick={() => setActiveTab('branding')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            borderBottom: activeTab === 'branding' ? '3px solid #3b82f6' : 'none',
+            backgroundColor: activeTab === 'branding' ? '#f0f9ff' : 'transparent',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '16px',
+            color: activeTab === 'branding' ? '#3b82f6' : '#666'
+          }}
+        >
+          🎨 White Label
         </button>
       </div>
 
@@ -567,6 +635,310 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
                 )}
               </div>
             </>
+          )}
+        </div>
+      )}
+
+      {/* White Label / Branding Tab */}
+      {activeTab === 'branding' && (
+        <div>
+          {!selectedEvent ? (
+            <p style={{ color: '#999' }}>Välj en event först</p>
+          ) : (
+            <div style={{
+              backgroundColor: '#f8f9fa',
+              padding: '24px',
+              borderRadius: '8px',
+              border: '1px solid #dee2e6'
+            }}>
+              <h3 style={{ marginTop: 0, marginBottom: '8px', fontSize: '18px', fontWeight: '700' }}>
+                🎨 White Label Branding - {selectedEvent.name}
+              </h3>
+              <p style={{ margin: '0 0 24px 0', fontSize: '13px', color: '#666' }}>
+                Anpassa utseende och branding för denna mässa. Utställare ser denna branding när de använder sina invite-länkar.
+              </p>
+
+              {/* Logo Upload */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  marginBottom: '8px',
+                  color: '#333'
+                }}>
+                  📸 Logotyp
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  style={{
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    width: '100%',
+                    marginBottom: '8px'
+                  }}
+                />
+                {brandingLogo && (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '12px',
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    border: '1px solid #e0e0e0',
+                    display: 'inline-block'
+                  }}>
+                    <img 
+                      src={brandingLogo} 
+                      alt="Logo preview" 
+                      style={{ 
+                        maxWidth: '200px', 
+                        maxHeight: '80px',
+                        display: 'block'
+                      }} 
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Company Name */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  marginBottom: '8px',
+                  color: '#333'
+                }}>
+                  🏢 White Label Företagsnamn
+                </label>
+                <input
+                  type="text"
+                  placeholder="T.ex. Stockholm Expo AB"
+                  value={brandingCompanyName}
+                  onChange={(e) => setBrandingCompanyName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#666' }}>
+                  Detta namn visas istället för "Monterhyra" för utställare
+                </p>
+              </div>
+
+              {/* Colors */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '16px',
+                marginBottom: '20px'
+              }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: '#333'
+                  }}>
+                    🎨 Primärfärg
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="color"
+                      value={brandingPrimaryColor}
+                      onChange={(e) => setBrandingPrimaryColor(e.target.value)}
+                      style={{
+                        width: '60px',
+                        height: '40px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={brandingPrimaryColor}
+                      onChange={(e) => setBrandingPrimaryColor(e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        fontSize: '13px',
+                        fontFamily: 'monospace'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: '#333'
+                  }}>
+                    🎨 Sekundärfärg
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="color"
+                      value={brandingSecondaryColor}
+                      onChange={(e) => setBrandingSecondaryColor(e.target.value)}
+                      style={{
+                        width: '60px',
+                        height: '40px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={brandingSecondaryColor}
+                      onChange={(e) => setBrandingSecondaryColor(e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        fontSize: '13px',
+                        fontFamily: 'monospace'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Info */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '16px',
+                marginBottom: '24px'
+              }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: '#333'
+                  }}>
+                    📧 Kontakt E-post
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="info@företag.se"
+                    value={brandingContactEmail}
+                    onChange={(e) => setBrandingContactEmail(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: '#333'
+                  }}>
+                    📞 Kontakt Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="08-123 456 78"
+                    value={brandingContactPhone}
+                    onChange={(e) => setBrandingContactPhone(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div style={{
+                backgroundColor: 'white',
+                padding: '20px',
+                borderRadius: '8px',
+                border: '2px solid #e0e0e0',
+                marginBottom: '20px'
+              }}>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: '700', color: '#666' }}>
+                  👁️ Förhandsvisning
+                </h4>
+                <div style={{
+                  background: `linear-gradient(135deg, ${brandingPrimaryColor} 0%, ${brandingSecondaryColor} 100%)`,
+                  padding: '20px',
+                  borderRadius: '8px',
+                  color: 'white',
+                  marginBottom: '12px'
+                }}>
+                  {brandingLogo && (
+                    <img 
+                      src={brandingLogo} 
+                      alt="Logo" 
+                      style={{ 
+                        maxWidth: '150px', 
+                        maxHeight: '60px',
+                        marginBottom: '12px',
+                        display: 'block',
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        padding: '8px',
+                        borderRadius: '4px'
+                      }} 
+                    />
+                  )}
+                  <h2 style={{ margin: '0 0 8px 0', fontSize: '20px' }}>
+                    {brandingCompanyName || 'Monterhyra'}
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '13px', opacity: 0.9 }}>
+                    {brandingContactEmail && `📧 ${brandingContactEmail}`}
+                    {brandingContactEmail && brandingContactPhone && ' • '}
+                    {brandingContactPhone && `📞 ${brandingContactPhone}`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <button
+                onClick={handleSaveBranding}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  width: '100%'
+                }}
+              >
+                💾 Spara White Label Branding
+              </button>
+            </div>
           )}
         </div>
       )}
