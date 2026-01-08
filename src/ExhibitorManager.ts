@@ -130,6 +130,7 @@ export interface EventPricing {
   // Belysning
   lighting?: {
     ledStrips?: number;
+    samLed?: number; // SAM-LED lampor per styck
   };
   
   // Truss
@@ -148,6 +149,17 @@ export interface EventPricing {
     wallShelves?: number;
     baseplate?: number;
     colorPainting?: number;
+  };
+  
+  // Personal & Service
+  services?: {
+    hourlyRate?: number; // Timpris för personal (750 kr default)
+    sketchFeeSmall?: number; // Skissavgift för små montrar ≤25m² (5000 kr default)
+    sketchFeeLarge?: number; // Skissavgift för stora montrar >25m² (10000 kr default)
+    projectManagementPercent?: number; // Projektledning i % (15% default)
+    consumablesSmall?: number; // Förbrukningsmaterial ≤25m² (750 kr default)
+    consumablesMedium?: number; // Förbrukningsmaterial 25-64m² (1350 kr default)
+    consumablesLarge?: number; // Förbrukningsmaterial >64m² (2000 kr default)
   };
 }
 

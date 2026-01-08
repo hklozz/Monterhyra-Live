@@ -38,9 +38,10 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
     tvs: { 43: 2700, 55: 3500, 70: 10000 },
     storage: { perSqm: 380 },
     plants: { small: 550, medium: 850, large: 1200 },
-    lighting: { ledStrips: 2000 },
+    lighting: { ledStrips: 2000, samLed: 300 },
     truss: { none: 0, frontStraight: 400, hangingRound: 5500, hangingSquare: 5500 },
-    extras: { powerOutlet: 300, clothingRacks: 200, speakers: 3500, wallShelves: 350, baseplate: 450, colorPainting: 500 }
+    extras: { powerOutlet: 300, clothingRacks: 200, speakers: 3500, wallShelves: 350, baseplate: 450, colorPainting: 500 },
+    services: { hourlyRate: 750, sketchFeeSmall: 5000, sketchFeeLarge: 10000, projectManagementPercent: 15, consumablesSmall: 750, consumablesMedium: 1350, consumablesLarge: 2000 }
   });
 
   // Exhibitor creation form
@@ -309,9 +310,10 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
         tvs: { 43: 2700, 55: 3500, 70: 10000 },
         storage: { perSqm: 380 },
         plants: { small: 550, medium: 850, large: 1200 },
-        lighting: { ledStrips: 2000 },
+        lighting: { ledStrips: 2000, samLed: 300 },
         truss: { none: 0, frontStraight: 400, hangingRound: 5500, hangingSquare: 5500 },
-        extras: { powerOutlet: 300, clothingRacks: 200, speakers: 3500, wallShelves: 350, baseplate: 450, colorPainting: 500 }
+        extras: { powerOutlet: 300, clothingRacks: 200, speakers: 3500, wallShelves: 350, baseplate: 450, colorPainting: 500 },
+        services: { hourlyRate: 750, sketchFeeSmall: 5000, sketchFeeLarge: 10000, projectManagementPercent: 15, consumablesSmall: 750, consumablesMedium: 1350, consumablesLarge: 2000 }
       });
     }
   }, [selectedEvent]);
@@ -1496,11 +1498,19 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
                   
                   <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
                     <h4>💡 Belysning</h4>
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>LED-strips (ca 5m)</label>
-                      <input type="number" value={pricing.lighting?.ledStrips ?? 2000}
-                        onChange={(e) => setPricing({...pricing, lighting: {...pricing.lighting, ledStrips: Number(e.target.value)}})}
-                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>LED-strips (ca 5m)</label>
+                        <input type="number" value={pricing.lighting?.ledStrips ?? 2000}
+                          onChange={(e) => setPricing({...pricing, lighting: {...pricing.lighting, ledStrips: Number(e.target.value)}})}
+                          style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>SAM-LED lampor (kr/st)</label>
+                        <input type="number" value={pricing.lighting?.samLed ?? 300}
+                          onChange={(e) => setPricing({...pricing, lighting: {...pricing.lighting, samLed: Number(e.target.value)}})}
+                          style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1576,6 +1586,57 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
                       <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Färgmålning (kr/m²)</label>
                       <input type="number" value={pricing.extras?.colorPainting ?? 500}
                         onChange={(e) => setPricing({...pricing, extras: {...pricing.extras, colorPainting: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Personal & Service */}
+                <div style={{ backgroundColor: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
+                  <h4>👷 Personal & Service</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Timpris personal (kr/timme)</label>
+                      <input type="number" value={pricing.services?.hourlyRate ?? 750}
+                        onChange={(e) => setPricing({...pricing, services: {...pricing.services, hourlyRate: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Skissavgift liten (&lt;25m²)</label>
+                      <input type="number" value={pricing.services?.sketchFeeSmall ?? 5000}
+                        onChange={(e) => setPricing({...pricing, services: {...pricing.services, sketchFeeSmall: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Skissavgift stor (&gt;25m²)</label>
+                      <input type="number" value={pricing.services?.sketchFeeLarge ?? 10000}
+                        onChange={(e) => setPricing({...pricing, services: {...pricing.services, sketchFeeLarge: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Projektledning (%)</label>
+                      <input type="number" value={pricing.services?.projectManagementPercent ?? 15}
+                        onChange={(e) => setPricing({...pricing, services: {...pricing.services, projectManagementPercent: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Förbrukning liten (&lt;25m²)</label>
+                      <input type="number" value={pricing.services?.consumablesSmall ?? 750}
+                        onChange={(e) => setPricing({...pricing, services: {...pricing.services, consumablesSmall: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Förbrukning medium (25-64m²)</label>
+                      <input type="number" value={pricing.services?.consumablesMedium ?? 1350}
+                        onChange={(e) => setPricing({...pricing, services: {...pricing.services, consumablesMedium: Number(e.target.value)}})}
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px' }}>Förbrukning stor (&gt;64m²)</label>
+                      <input type="number" value={pricing.services?.consumablesLarge ?? 2000}
+                        onChange={(e) => setPricing({...pricing, services: {...pricing.services, consumablesLarge: Number(e.target.value)}})}
                         style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
                     </div>
                   </div>
