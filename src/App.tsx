@@ -2852,9 +2852,13 @@ export default function App() {
     const inviteToken = params.get('invite');
     
     if (inviteToken) {
+      console.log('🔍 Invite token detected:', inviteToken);
+      
       // Exhibitor mode - load exhibitor data and set dimensions
       import('./ExhibitorManager').then(({ ExhibitorManager }) => {
         const exhibitor = ExhibitorManager.getExhibitorByToken(inviteToken);
+        
+        console.log('👤 Found exhibitor:', exhibitor);
         
         if (exhibitor) {
           setIsExhibitorMode(true);
@@ -2862,6 +2866,7 @@ export default function App() {
           
           // Load branding for this exhibitor's event
           const branding = ExhibitorManager.getExhibitorBranding(exhibitor.id);
+          console.log('🎨 Loaded branding:', branding);
           setExhibitorBranding(branding);
           
           // Apply branding colors to document if available
@@ -10787,8 +10792,8 @@ Monterhyra Beställningssystem
           opacity: 0.15
         }}>
           <img 
-            src="/Loggo/Monterhyra Logotyp.png" 
-            alt="Monterhyra" 
+            src={exhibitorBranding?.logo || "/Loggo/Monterhyra Logotyp.png"} 
+            alt={exhibitorBranding?.companyName || "Monterhyra"} 
             style={{
               width: '150px',
               height: 'auto',
@@ -10867,8 +10872,8 @@ Monterhyra Beställningssystem
               marginBottom: '30px'
             }}>
               <img 
-                src="/Loggo/Monterhyra Logotyp.png" 
-                alt="Monterhyra" 
+                src={exhibitorBranding?.logo || "/Loggo/Monterhyra Logotyp.png"} 
+                alt={exhibitorBranding?.companyName || "Monterhyra"} 
                 style={{ height: '60px', marginBottom: '20px' }}
               />
               <h2 style={{ 
