@@ -8853,6 +8853,11 @@ Monterhyra Beställningssystem
                   const counterHeight = 0.9; // 90cm hög disk
                   const counterThickness = 0.05; // 5cm tjock skiva
                   
+                  // Skippa rendering om ingen disk eller ogiltiga dimensioner
+                  if (!counterConfig || (counterConfig.width === 0 && counterConfig.depth === 0 && !counterConfig.type)) {
+                    return null;
+                  }
+                  
                   if (counterConfig.type === 'L') {
                     // L-formad disk: 1,5m rakt fram + 1m åt höger
                     return (
@@ -10027,6 +10032,11 @@ Monterhyra Beställningssystem
                 {/* Möbler - visa alla placerade möbler */}
                 {furniture.map(furnitureItem => {
                   const furnitureConfig = FURNITURE_TYPES[furnitureItem.type];
+                  
+                  // Skippa rendering om möbelkonfiguration saknas eller är ogiltig
+                  if (!furnitureConfig) {
+                    return null;
+                  }
                   
                   return (
                     <group
