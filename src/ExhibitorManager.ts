@@ -270,8 +270,12 @@ class ExhibitorManagerClass {
     const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
     const dimensions = monterDimensions || DEFAULT_DIMENSIONS[monterSize];
     
-    // Use window.location.origin to get the current origin dynamically
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5176';
+    // Use production URL for Vercel or fallback to current origin
+    const baseUrl = typeof window !== 'undefined' 
+      ? (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('monterhyra') 
+          ? window.location.origin 
+          : 'https://monterhyra-live.vercel.app')
+      : 'https://monterhyra-live.vercel.app';
     
     const exhibitor: Exhibitor = {
       id: `exhibitor-${Date.now()}`,
@@ -342,7 +346,11 @@ class ExhibitorManagerClass {
       // If dimensions were updated, regenerate the invite link
       if (updates.monterDimensions) {
         const dims = updates.monterDimensions;
-        const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5176';
+        const baseUrl = typeof window !== 'undefined' 
+          ? (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('monterhyra') 
+              ? window.location.origin 
+              : 'https://monterhyra-live.vercel.app')
+          : 'https://monterhyra-live.vercel.app';
         exhibitor.inviteLink = `${baseUrl}/?invite=${exhibitor.token}&width=${dims.width}&depth=${dims.depth}&height=${dims.height}`;
       }
       
