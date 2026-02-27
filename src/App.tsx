@@ -2449,7 +2449,22 @@ function SceneExporter({ orderData }: { orderData: OrderData }) {
 }
 
 export default function App() {
-  // 🛡️ SÄKERHETSVARIABLER
+  // � MOBILE DETECTION
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobileWarning, setShowMobileWarning] = useState(true);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // �🛡️ SÄKERHETSVARIABLER
   const [devToolsUnlocked, setDevToolsUnlocked] = useState(false);
   const DEV_ACCESS_CODE = "MONTER2025"; // Hemlig kod för utvecklarverktyg
   
@@ -2710,6 +2725,153 @@ export default function App() {
   
   // Mässmiljö toggle
   const [showExhibitionHall, setShowExhibitionHall] = useState(false);
+  
+  // 💾 LOCALSTORAGE SAVE FUNCTIONALITY
+  // Antal gånger designen har laddats från localStorage
+  const [designLoadCount, setDesignLoadCount] = useState(0);
+  const MAX_DESIGN_LOADS = 3; // Maximalt 3 laddningar innan beställning krävs
+  
+  // Spara design till LocalStorage
+  const saveDesignToLocalStorage = () => {
+    try {
+      const designData = {
+        floorIndex,
+        customFloorWidth,
+        customFloorDepth,
+        carpetIndex,
+        wallShape,
+        wallHeight,
+        graphic,
+        showLights,
+        uploadedImage,
+        uploadedImageLeft,
+        uploadedImageRight,
+        forexImageBack,
+        forexImageLeft,
+        forexImageRight,
+        counters,
+        tvs,
+        storages,
+        plants,
+        furniture,
+        wallShelves,
+        speakers,
+        showClothingRacks,
+        showEspressoMachine,
+        showFlowerVase,
+        showCandyBowl,
+        counterPanelColor,
+        counterFrontImage,
+        storageColor,
+        storageGraphic,
+        storageUploadedImage,
+        storageWallSelections,
+        savedAt: new Date().toISOString()
+      };
+      
+      // Generera unikt session ID om det inte finns
+      let sessionId = localStorage.getItem('monterhyra_session_id');
+      if (!sessionId) {
+        sessionId = `design_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('monterhyra_session_id', sessionId);
+      }
+      
+      localStorage.setItem(`monterhyra_design_${sessionId}`, JSON.stringify(designData));
+      alert('✅ Design sparad! Du kan ladda den igen senare från denna webbläsare.');
+      
+      return sessionId;
+    } catch (error) {
+      console.error('Fel vid sparande:', error);
+      alert('❌ Kunde inte spara designen. Kontrollera att din webbläsare tillåter LocalStorage.');
+      return null;
+    }
+  };
+  
+  // Ladda design från LocalStorage
+  const loadDesignFromLocalStorage = () => {
+    try {
+      const sessionId = localStorage.getItem('monterhyra_session_id');
+      if (!sessionId) {
+        alert('⚠️ Ingen sparad design hittades.');
+        return false;
+      }
+      
+      // Hämta antal laddningar
+      const loadCountKey = `monterhyra_load_count_${sessionId}`;
+      const currentLoadCount = parseInt(localStorage.getItem(loadCountKey) || '0');
+      
+      // Kontrollera om max antal laddningar har nåtts
+      if (currentLoadCount >= MAX_DESIGN_LOADS) {
+        alert(`🚫 Du har laddat denna design ${MAX_DESIGN_LOADS} gånger.\n\nFör att fortsätta använda den, vänligen genomför en beställning.\n\nKontakta oss på info@monterhyra.se om du har frågor.`);
+        return false;
+      }
+      
+      const savedData = localStorage.getItem(`monterhyra_design_${sessionId}`);
+      if (!savedData) {
+        alert('⚠️ Ingen sparad design hittades.');
+        return false;
+      }
+      
+      const designData = JSON.parse(savedData);
+      
+      // Återställ alla state-variabler
+      setFloorIndex(designData.floorIndex);
+      setCustomFloorWidth(designData.customFloorWidth);
+      setCustomFloorDepth(designData.customFloorDepth);
+      setCarpetIndex(designData.carpetIndex);
+      setWallShape(designData.wallShape);
+      setWallHeight(designData.wallHeight);
+      setGraphic(designData.graphic);
+      setShowLights(designData.showLights);
+      setUploadedImage(designData.uploadedImage);
+      setUploadedImageLeft(designData.uploadedImageLeft);
+      setUploadedImageRight(designData.uploadedImageRight);
+      setForexImageBack(designData.forexImageBack);
+      setForexImageLeft(designData.forexImageLeft);
+      setForexImageRight(designData.forexImageRight);
+      setCounters(designData.counters || []);
+      setTvs(designData.tvs || []);
+      setStorages(designData.storages || []);
+      setPlants(designData.plants || []);
+      setFurniture(designData.furniture || []);
+      setWallShelves(designData.wallShelves || []);
+      setSpeakers(designData.speakers || []);
+      setShowClothingRacks(designData.showClothingRacks || false);
+      setShowEspressoMachine(designData.showEspressoMachine || false);
+      setShowFlowerVase(designData.showFlowerVase || false);
+      setShowCandyBowl(designData.showCandyBowl || false);
+      setCounterPanelColor(designData.counterPanelColor || '#ffffff');
+      setCounterFrontImage(designData.counterFrontImage);
+      setStorageColor(designData.storageColor || '#BFBFBF');
+      setStorageGraphic(designData.storageGraphic || 'none');
+      setStorageUploadedImage(designData.storageUploadedImage);
+      setStorageWallSelections(designData.storageWallSelections || { back: false, left: false, right: false, front: false });
+      
+      // Öka laddningsräknare
+      const newLoadCount = currentLoadCount + 1;
+      localStorage.setItem(loadCountKey, newLoadCount.toString());
+      setDesignLoadCount(newLoadCount);
+      
+      const remainingLoads = MAX_DESIGN_LOADS - newLoadCount;
+      alert(`✅ Design laddad!\n\n${remainingLoads > 0 ? `⚠️ Du har ${remainingLoads} laddning(ar) kvar innan beställning krävs.` : '🚫 Detta var din sista gratis laddning. Nästa gång måste du beställa.'}`);
+      
+      return true;
+    } catch (error) {
+      console.error('Fel vid laddning:', error);
+      alert('❌ Kunde inte ladda designen. Kontrollera att din webbläsare tillåter LocalStorage.');
+      return false;
+    }
+  };
+  
+  // Ladda design automatiskt vid första besök (om den finns)
+  useEffect(() => {
+    const sessionId = localStorage.getItem('monterhyra_session_id');
+    if (sessionId) {
+      const loadCountKey = `monterhyra_load_count_${sessionId}`;
+      const currentLoadCount = parseInt(localStorage.getItem(loadCountKey) || '0');
+      setDesignLoadCount(currentLoadCount);
+    }
+  }, []);
   
   // Mässhalls-montrar state  
   const [exhibitionBooths] = useState<Record<string, string>>({
@@ -4030,6 +4192,99 @@ export default function App() {
                   👤 <strong>Kontakt:</strong> {exhibitorData.contactPerson}
                 </p>
               )}
+            </div>
+          </div>
+        )}
+        
+        {/* 💾 SPARA/LADDA-KNAPPAR */}
+        {!isExhibitorMode && (
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '16px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{
+              color: 'white',
+              fontSize: '13px',
+              fontWeight: '600',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              💾 Spara din design
+              {designLoadCount > 0 && (
+                <span style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  fontSize: '11px',
+                  fontWeight: '500'
+                }}>
+                  {designLoadCount}/{MAX_DESIGN_LOADS} laddningar
+                </span>
+              )}
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '8px'
+            }}>
+              <button
+                onClick={saveDesignToLocalStorage}
+                disabled={floorIndex === null}
+                style={{
+                  padding: '10px 12px',
+                  background: floorIndex === null ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.9)',
+                  color: floorIndex === null ? 'rgba(255,255,255,0.5)' : '#667eea',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: floorIndex === null ? 'not-allowed' : 'pointer',
+                  boxShadow: floorIndex === null ? 'none' : '0 2px 4px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px'
+                }}
+                title={floorIndex === null ? 'Välj en monterstorlek först' : 'Spara design i webbläsaren'}
+              >
+                💾 Spara
+              </button>
+              <button
+                onClick={loadDesignFromLocalStorage}
+                style={{
+                  padding: '10px 12px',
+                  background: 'rgba(255,255,255,0.9)',
+                  color: '#667eea',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px'
+                }}
+                title="Ladda sparad design"
+              >
+                📂 Ladda
+              </button>
+            </div>
+            <div style={{
+              marginTop: '8px',
+              fontSize: '11px',
+              color: 'rgba(255,255,255,0.8)',
+              lineHeight: '1.4'
+            }}>
+              ⚠️ Sparas lokalt i din webbläsare. Max {MAX_DESIGN_LOADS} laddningar innan beställning krävs.
             </div>
           </div>
         )}
@@ -11546,6 +11801,97 @@ Monterhyra Beställningssystem
         >
           🔐 Admin
         </button>
+      )}
+
+      {/* 📱 MOBILE WARNING OVERLAY - Rekommenderar desktop */}
+      {isMobile && showMobileWarning && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.95)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            maxWidth: '400px',
+            textAlign: 'center',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{
+              fontSize: '64px',
+              marginBottom: '16px'
+            }}>
+              🖥️
+            </div>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              marginBottom: '12px',
+              color: '#333'
+            }}>
+              Bäst på Dator
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              color: '#666',
+              marginBottom: '24px',
+              lineHeight: '1.5'
+            }}>
+              Vår 3D-designer fungerar bäst på desktop/laptop för att ge dig den bästa upplevelsen.
+            </p>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              <button
+                onClick={() => {
+                  const currentUrl = window.location.href;
+                  const subject = 'Monter Designer - Öppna på dator';
+                  const body = `Hej!\n\nÖppna denna länk på din dator för att designa din monter:\n${currentUrl}\n\nMed vänliga hälsningar,\nMonterhyra`;
+                  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                }}
+                style={{
+                  padding: '14px 24px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+                }}
+              >
+                📧 Maila länk till mig
+              </button>
+              <button
+                onClick={() => setShowMobileWarning(false)}
+                style={{
+                  padding: '14px 24px',
+                  background: '#f5f5f5',
+                  color: '#666',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Fortsätt ändå
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
