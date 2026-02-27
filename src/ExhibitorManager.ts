@@ -170,6 +170,7 @@ export interface Event {
   startDate?: string;
   endDate?: string;
   location?: string;
+  password?: string; // Event Admin login password
   exhibitors: Exhibitor[];
   createdAt: Date;
   branding?: EventBranding; // White label branding per event
@@ -221,14 +222,19 @@ class ExhibitorManagerClass {
     description?: string, 
     startDate?: string, 
     endDate?: string,
-    branding?: EventBranding
+    branding?: EventBranding,
+    password?: string
   ): Event {
+    // Generate random password if not provided
+    const eventPassword = password || Math.random().toString(36).substring(2, 10).toUpperCase();
+    
     const event: Event = {
       id: `event-${Date.now()}`,
       name,
       description,
       startDate,
       endDate,
+      password: eventPassword,
       exhibitors: [],
       createdAt: new Date(),
       branding: branding || {

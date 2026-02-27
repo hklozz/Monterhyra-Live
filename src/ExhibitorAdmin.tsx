@@ -586,20 +586,38 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose, onOpenE
                         <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#666' }}>
                           📍 {event.startDate} - {event.endDate}
                         </p>
-                        <p style={{ margin: '0', fontSize: '13px', color: '#666' }}>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#666' }}>
                           👥 {event.exhibitors.length} exhibitors
                         </p>
+                        {event.password && (
+                          <p style={{ 
+                            margin: '0', 
+                            fontSize: '12px', 
+                            color: '#059669',
+                            backgroundColor: '#d1fae5',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontWeight: 600,
+                            display: 'inline-block'
+                          }}>
+                            🔑 Lösenord: {event.password}
+                          </p>
+                        )}
                       </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        {onOpenEventAdmin && (
+                      <div style={{ display: 'flex', gap: '8px', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              onOpenEventAdmin(event.id);
+                              const baseUrl = window.location.origin;
+                              const adminUrl = `${baseUrl}/app.html?eventAdmin=${event.id}`;
+                              const message = `Event Admin Portal\n\nURL: ${adminUrl}\nLösenord: ${event.password}\n\nLogga in för att administrera ditt event.`;
+                              navigator.clipboard.writeText(message);
+                              alert('Event Admin-länk och lösenord kopierat!');
                             }}
                             style={{
                               padding: '6px 12px',
-                              backgroundColor: '#667eea',
+                              backgroundColor: '#10b981',
                               color: '#fff',
                               border: 'none',
                               borderRadius: '4px',
@@ -608,26 +626,46 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose, onOpenE
                               fontWeight: '600'
                             }}
                           >
-                            🏢 Event Admin
+                            📋 Kopiera inlogg
                           </button>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteEvent(event.id);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#ef4444',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '12px'
-                          }}
-                        >
-                          🗑️ Radera
-                        </button>
+                          {onOpenEventAdmin && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenEventAdmin(event.id);
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                backgroundColor: '#667eea',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: '600'
+                              }}
+                            >
+                              🏢 Event Admin
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteEvent(event.id);
+                            }}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#ef4444',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px'
+                            }}
+                          >
+                            🗑️ Radera
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

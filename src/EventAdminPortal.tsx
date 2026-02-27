@@ -38,10 +38,44 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
   });
   const [activeTab, setActiveTab] = useState<'dashboard' | 'exhibitors' | 'orders' | 'settings'>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Login state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
-    loadEventData();
+    // Check if already authenticated for this event in this session
+    const sessionAuth = sessionStorage.getItem(`event_auth_${eventId}`);
+    if (sessionAuth === 'true') {
+      setIsAuthenticated(true);
+      loadEventData();
+    }
   }, [eventId]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadEventData();
+    }
+  }, [eventId, isAuthenticated]);
+
+  const handleLogin = () => {
+    const eventData = ExhibitorManager.getEvent(eventId);
+    if (!eventData) {
+      setLoginError('Event hittades inte');
+      return;
+    }
+
+    if (passwordInput === eventData.password) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem(`event_auth_${eventId}`, 'true');
+      setLoginError('');
+      loadEventData();
+    } else {
+      setLoginError('Felaktigt lösenord');
+      setPasswordInput('');
+    }
+  };
 
   const loadEventData = () => {
     // Ladda event-data
@@ -128,6 +162,135 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
       maximumFractionDigits: 0
     }).format(amount);
   };
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000
+      }}>
+        <div style={{
+          background: 'white',
+          padding: '48px',
+          borderRadius: '16px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          maxWidth: '400px',
+          width: '90%'
+        }}>
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '32px'
+          }}>
+            <div style={{
+              fontSize: '48px',
+              marginBottom: '16px'
+            }}>
+              🏢
+            </div>
+            <h2 style={{
+              margin: '0 0 8px 0',
+              fontSize: '24px',
+              color: '#2c3e50'
+            }}>
+              Event Admin Portal
+            </h2>
+            <p style={{
+              margin: 0,
+              color: '#666',
+              fontSize: '14px'
+            }}>
+              Logga in för att administrera ditt event
+            </p>
+          </div>
+          
+          <div style={{
+            marginBottom: '24px'
+          }}>
+            <label style={{
+              display: 'block',
+              fontWeight: '600',
+              marginBottom: '8px',
+              fontSize: '14px',
+              color: '#2c3e50'
+            }}>
+              Lösenord
+            </label>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              placeholder="Ange ditt event-lösenord"
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: loginError ? '2px solid #e74c3c' : '1px solid #e0e0e0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                boxSizing: 'border-box'
+              }}
+            />
+            {loginError && (
+              <div style={{
+                marginTop: '8px',
+                color: '#e74c3c',
+                fontSize: '13px',
+                fontWeight: '500'
+              }}>
+                ⚠️ {loginError}
+              </div>
+            )}
+          </div>
+          
+          <button
+            onClick={handleLogin}
+            style={{
+              width: '100%',
+              padding: '14px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '16px',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+            }}
+          >
+            🔓 Logga in
+          </button>
+          
+          <button
+            onClick={onClose}
+            style={{
+              width: '100%',
+              padding: '14px',
+              background: '#f5f5f5',
+              color: '#666',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Avbryt
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!event) {
     return (
