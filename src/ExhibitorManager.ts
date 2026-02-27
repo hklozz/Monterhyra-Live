@@ -316,6 +316,10 @@ class ExhibitorManagerClass {
     return this.exhibitors;
   }
 
+  getExhibitorsByEvent(eventId: string): Exhibitor[] {
+    return this.exhibitors.filter(e => e.eventId === eventId);
+  }
+
   getExhibitor(exhibitorId: string): Exhibitor | undefined {
     return this.exhibitors.find(e => e.id === exhibitorId);
   }

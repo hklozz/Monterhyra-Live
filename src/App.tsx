@@ -24,6 +24,7 @@ import type { CustomerInfo, OrderData } from './OrderManager';
 import AdminPortal from './AdminPortal';
 import { ExhibitorAdmin } from './ExhibitorAdmin';
 import { ExhibitorPortal } from './ExhibitorPortal';
+import EventAdminPortal from './EventAdminPortal';
 import ErrorBoundary from './ErrorBoundary';
 
 // Custom Dropdown Component for visual elements
@@ -2708,6 +2709,8 @@ export default function App() {
   const [showAdminPortal, setShowAdminPortal] = useState(false);
   const [showExhibitorAdmin, setShowExhibitorAdmin] = useState(false);
   const [showExhibitorPortal, setShowExhibitorPortal] = useState(false);
+  const [showEventAdminPortal, setShowEventAdminPortal] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
   
   // Exhibitor Mode - when accessed via invite link
   const [isExhibitorMode, setIsExhibitorMode] = useState(false);
@@ -3012,6 +3015,22 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const inviteToken = params.get('invite');
+    const eventAdminId = params.get('eventAdmin');
+    
+    // Check for Event Admin access
+    if (eventAdminId) {
+      console.log('🏢 Event Admin access detected:', eventAdminId);
+      import('./ExhibitorManager').then(({ ExhibitorManager }) => {
+        const event = ExhibitorManager.getEvent(eventAdminId);
+        if (event) {
+          setSelectedEventId(eventAdminId);
+          setShowEventAdminPortal(true);
+        } else {
+          console.warn('Event not found:', eventAdminId);
+        }
+      });
+      return; // Don't process invite token if eventAdmin is present
+    }
     
     if (inviteToken) {
       console.log('🔍 Invite token detected:', inviteToken);
@@ -11744,7 +11763,14 @@ Monterhyra Beställningssystem
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch'
         }}>
-          <ExhibitorAdmin onClose={() => setShowExhibitorAdmin(false)} />
+          <ExhibitorAdmin 
+            onClose={() => setShowExhibitorAdmin(false)}
+            onOpenEventAdmin={(eventId: string) => {
+              setSelectedEventId(eventId);
+              setShowEventAdminPortal(true);
+              setShowExhibitorAdmin(false);
+            }}
+          />
           <div style={{
             position: 'fixed',
             top: 20,
@@ -11773,6 +11799,17 @@ Monterhyra Beställningssystem
       {/* ExhibitorPortal view - Utställarens egna sida */}
       {showExhibitorPortal && (
         <ExhibitorPortal onClose={() => setShowExhibitorPortal(false)} />
+      )}
+
+      {/* EventAdminPortal - Mässarrangörens admin */}
+      {showEventAdminPortal && selectedEventId && (
+        <EventAdminPortal 
+          eventId={selectedEventId} 
+          onClose={() => {
+            setShowEventAdminPortal(false);
+            setSelectedEventId('');
+          }} 
+        />
       )}
 
       {/* Admin-knapp längst ner */}

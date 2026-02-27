@@ -4,9 +4,10 @@ import type { Event, Exhibitor, MonterSize, EventBranding, EventPricing } from '
 
 interface ExhibitorAdminProps {
   onClose?: () => void;
+  onOpenEventAdmin?: (eventId: string) => void;
 }
 
-export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
+export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose, onOpenEventAdmin }) => {
   const [activeTab, setActiveTab] = useState<'events' | 'exhibitors' | 'branding' | 'pricing' | 'data'>('events');
   const [events, setEvents] = useState<Event[]>(ExhibitorManager.getEvents());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(events.length > 0 ? events[0] : null);
@@ -589,23 +590,45 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose }) => {
                           👥 {event.exhibitors.length} exhibitors
                         </p>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteEvent(event.id);
-                        }}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#ef4444',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}
-                      >
-                        🗑️ Radera
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {onOpenEventAdmin && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenEventAdmin(event.id);
+                            }}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#667eea',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '600'
+                            }}
+                          >
+                            🏢 Event Admin
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteEvent(event.id);
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#ef4444',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          🗑️ Radera
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
