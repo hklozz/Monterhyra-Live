@@ -67,7 +67,10 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
         return;
       }
 
-      if (passwordInput === eventData.password) {
+      // Tillåt både event-specifikt lösenord och master-lösenord
+      const validPassword = passwordInput === eventData.password || passwordInput === 'monterhyra2026';
+      
+      if (validPassword) {
         setIsAuthenticated(true);
         sessionStorage.setItem(`event_auth_${eventId}`, 'true');
         setLoginError('');

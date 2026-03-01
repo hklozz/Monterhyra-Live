@@ -106,6 +106,9 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose, onOpenE
     setNewEventDesc('');
     setNewEventStart('');
     setNewEventEnd('');
+    
+    // Visa lösenordet för användaren
+    alert(`✅ Event skapades!\n\nEvent: ${event.name}\n\n🔐 Lösenord för EventAdminPortal:\n${event.password}\n\n(Spara detta lösenord!)`);
   };
 
   const handleAddExhibitor = () => {

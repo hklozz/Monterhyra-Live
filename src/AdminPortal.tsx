@@ -284,7 +284,7 @@ const AdminPortal: React.FC<{ onOpenExhibitorAdmin?: () => void }> = ({ onOpenEx
   // Kolla om admin redan är inloggad
   React.useEffect(() => {
     const adminSession = localStorage.getItem('adminSession');
-    if (adminSession === 'monterhyra2024') {
+    if (adminSession === 'monterhyra2026') {
       setIsLoggedIn(true);
       loadOrders();
     }
@@ -308,10 +308,10 @@ const AdminPortal: React.FC<{ onOpenExhibitorAdmin?: () => void }> = ({ onOpenEx
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'monterhyra2024') {
+    if (password === 'monterhyra2026') {
       setIsLoggedIn(true);
       setLoginError('');
-      localStorage.setItem('adminSession', 'monterhyra2024');
+      localStorage.setItem('adminSession', 'monterhyra2026');
       loadOrders();
     } else {
       setLoginError('Felaktigt lösenord');
