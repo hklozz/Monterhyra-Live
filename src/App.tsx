@@ -11882,7 +11882,16 @@ Monterhyra Beställningssystem
       {/* Admin-knapp längst ner */}
       {!isExhibitorMode && (
         <button
-          onClick={() => setShowAdminPortal(true)}
+          onClick={() => {
+            const password = prompt('Ange admin-lösenord:');
+            // TODO: Byt ut detta lösenord till något säkert i production
+            // Bättre lösning: Använd Supabase Auth
+            if (password === 'monterhyra2026') {
+              setShowAdminPortal(true);
+            } else if (password !== null) {
+              alert('Fel lösenord!');
+            }
+          }}
           style={{
             position: 'fixed',
             bottom: 20,
