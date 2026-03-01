@@ -5,10 +5,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { ExhibitorManager } from './ExhibitorManager';
-import type { Event, Exhibitor } from './ExhibitorManager';
-import { OrderManager } from './OrderManager';
-import type { Order } from './OrderManager';
+import { ExhibitorService } from './services/ExhibitorService';
+import type { Event, Exhibitor } from './services/ExhibitorService';
+import { OrderService } from './services/OrderService';
+import type { Order } from './services/OrderService';
 
 interface EventAdminPortalProps {
   eventId: string;
@@ -59,80 +59,96 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
     }
   }, [eventId, isAuthenticated]);
 
-  const handleLogin = () => {
-    const eventData = ExhibitorManager.getEvent(eventId);
-    if (!eventData) {
-      setLoginError('Event hittades inte');
-      return;
-    }
+  const handleLogin = async () => {
+    try {
+      const eventData = await ExhibitorService.getEvent(eventId);
+      if (!eventData) {
+        setLoginError('Event hittades inte');
+        return;
+      }
 
-    if (passwordInput === eventData.password) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem(`event_auth_${eventId}`, 'true');
-      setLoginError('');
-      loadEventData();
-    } else {
-      setLoginError('Felaktigt lösenord');
-      setPasswordInput('');
+      if (passwordInput === eventData.password) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem(`event_auth_${eventId}`, 'true');
+        setLoginError('');
+        loadEventData();
+      } else {
+        setLoginError('Felaktigt lösenord');
+        setPasswordInput('');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError('Ett fel uppstod vid inloggning');
     }
   };
 
-  const loadEventData = () => {
-    // Ladda event-data
-    const eventData = ExhibitorManager.getEvent(eventId);
-    setEvent(eventData || null);
+  const loadEventData = async () => {
+    try {
+      // Ladda event-data från Supabase
+      const eventData = await ExhibitorService.getEvent(eventId);
+      setEvent(eventData || null);
 
-    // Ladda utställare för detta event
-    const eventExhibitors = ExhibitorManager.getExhibitorsByEvent(eventId);
-    setExhibitors(eventExhibitors);
+      // Ladda utställare för detta event
+      const eventExhibitors = await ExhibitorService.getExhibitorsByEvent(eventId);
+      setExhibitors(eventExhibitors);
 
-    // Ladda orders från utställare i detta event
-    const allOrders = OrderManager.getOrders();
-    const eventOrders = allOrders.filter(order => {
-      // Matcha orders mot utställare baserat på email eller företagsnamn
-      const exhibitorEmails = eventExhibitors.map(e => e.email.toLowerCase());
-      const exhibitorCompanies = eventExhibitors.map(e => e.companyName.toLowerCase());
+      // Ladda orders från utställare i detta event
+      const exhibitorIds = eventExhibitors.map(e => e.id);
+      const allOrders = await OrderService.getAllOrders();
       
-      const orderEmail = order.customerInfo?.email?.toLowerCase() || '';
-      const orderCompany = order.customerInfo?.company?.toLowerCase() || '';
-      
-      return exhibitorEmails.includes(orderEmail) || 
-             exhibitorCompanies.includes(orderCompany);
-    });
-    setOrders(eventOrders);
+      // Filtrera orders som tillhör detta events utställare
+      const eventOrders = allOrders.filter(order => 
+        order.exhibitorId && exhibitorIds.includes(order.exhibitorId)
+      );
+      setOrders(eventOrders);
 
-    // Beräkna statistik
-    const totalRevenue = eventOrders.reduce((sum, order) => sum + (order.orderData?.totalPrice || 0), 0);
-    const completedBooths = eventOrders.length;
-    const pendingBooths = eventExhibitors.length - completedBooths;
+      // Beräkna statistik
+      const totalRevenue = eventOrders.reduce((sum, order) => {
+        const price = order.pricingData?.totalPrice || order.boothData?.totalPrice || 0;
+        return sum + price;
+      }, 0);
+      const completedBooths = eventOrders.length;
+      const pendingBooths = eventExhibitors.length - completedBooths;
 
-    setStats({
-      totalExhibitors: eventExhibitors.length,
-      totalOrders: eventOrders.length,
-      totalRevenue,
-      averageOrderValue: eventOrders.length > 0 ? totalRevenue / eventOrders.length : 0,
-      completedBooths,
-      pendingBooths
-    });
+      setStats({
+        totalExhibitors: eventExhibitors.length,
+        totalOrders: eventOrders.length,
+        totalRevenue,
+        averageOrderValue: eventOrders.length > 0 ? totalRevenue / eventOrders.length : 0,
+        completedBooths,
+        pendingBooths
+      });
+
+      // Real-time prenumeration på nya orders
+      const unsubscribe = OrderService.subscribeToOrders((newOrder) => {
+        if (newOrder.exhibitorId && exhibitorIds.includes(newOrder.exhibitorId)) {
+          console.log('✅ Ny order mottagen i real-time!', newOrder.orderNumber);
+          loadEventData(); // Reload data when new order arrives
+        }
+      });
+
+      // Cleanup subscription on unmount
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error loading event data:', error);
+    }
   };
 
   const exportToExcel = () => {
     // Skapa CSV-data
-    const headers = ['Företag', 'Kontakt', 'Email', 'Telefon', 'Monterstorlek', 'Status', 'Pris (SEK)'];
+    const headers = ['Företag', 'Kontakt', 'Email', 'Telefon', 'Status', 'Ordernummer', 'Pris (SEK)'];
     const rows = exhibitors.map(exhibitor => {
-      const order = orders.find(o => 
-        o.customerInfo?.email?.toLowerCase() === exhibitor.email.toLowerCase() ||
-        o.customerInfo?.company?.toLowerCase() === exhibitor.companyName.toLowerCase()
-      );
+      const order = orders.find(o => o.exhibitorId === exhibitor.id);
+      const price = order ? (order.pricingData?.totalPrice || order.boothData?.totalPrice || 0) : 0;
       
       return [
-        exhibitor.companyName,
-        exhibitor.contactPerson || exhibitor.name,
+        exhibitor.company || '-',
+        exhibitor.name,
         exhibitor.email,
         exhibitor.phone || '-',
-        `${exhibitor.monterDimensions.width}×${exhibitor.monterDimensions.depth}m`,
         order ? 'Beställt' : 'Väntar',
-        order ? order.orderData?.totalPrice?.toLocaleString('sv-SE') : '-'
+        order ? order.orderNumber : '-',
+        price > 0 ? price.toLocaleString('sv-SE') : '-'
       ];
     });
 
@@ -147,10 +163,9 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
   const filteredExhibitors = exhibitors.filter(exhibitor => {
     const search = searchTerm.toLowerCase();
     return (
-      exhibitor.companyName.toLowerCase().includes(search) ||
+      (exhibitor.company || '').toLowerCase().includes(search) ||
       exhibitor.name.toLowerCase().includes(search) ||
-      exhibitor.email.toLowerCase().includes(search) ||
-      (exhibitor.contactPerson?.toLowerCase() || '').includes(search)
+      exhibitor.email.toLowerCase().includes(search)
     );
   });
 
@@ -521,10 +536,10 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                     >
                       <div>
                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>
-                          {order.customerInfo?.company || 'Okänt företag'}
+                          {order.customerCompany || order.customerName}
                         </div>
                         <div style={{ fontSize: '13px', color: '#666' }}>
-                          {order.customerInfo?.name} • {new Date(order.timestamp).toLocaleDateString('sv-SE')}
+                          {order.orderNumber} • {new Date(order.createdAt).toLocaleDateString('sv-SE')}
                         </div>
                       </div>
                       <div style={{
@@ -532,7 +547,7 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                         color: '#2ecc71',
                         fontSize: '18px'
                       }}>
-                        {formatCurrency(order.orderData?.totalPrice || 0)}
+                        {formatCurrency(order.pricingData?.totalPrice || order.boothData?.totalPrice || 0)}
                       </div>
                     </div>
                   ))}
@@ -621,17 +636,15 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                     </tr>
                   ) : (
                     filteredExhibitors.map((exhibitor) => {
-                      const hasOrder = orders.some(o => 
-                        o.customerInfo?.email?.toLowerCase() === exhibitor.email.toLowerCase() ||
-                        o.customerInfo?.company?.toLowerCase() === exhibitor.companyName.toLowerCase()
-                      );
+                      const hasOrder = orders.some(o => o.exhibitorId === exhibitor.id);
+                      const exhibitorOrder = orders.find(o => o.exhibitorId === exhibitor.id);
                       
                       return (
                         <tr key={exhibitor.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
                           <td style={tableCellStyle}>
-                            <div style={{ fontWeight: '600' }}>{exhibitor.companyName}</div>
+                            <div style={{ fontWeight: '600' }}>{exhibitor.company || exhibitor.name}</div>
                           </td>
-                          <td style={tableCellStyle}>{exhibitor.contactPerson || exhibitor.name}</td>
+                          <td style={tableCellStyle}>{exhibitor.name}</td>
                           <td style={tableCellStyle}>
                             <a href={`mailto:${exhibitor.email}`} style={{ color: '#667eea' }}>
                               {exhibitor.email}
@@ -639,11 +652,16 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                           </td>
                           <td style={tableCellStyle}>{exhibitor.phone || '-'}</td>
                           <td style={tableCellStyle}>
-                            {exhibitor.monterDimensions.width}×{exhibitor.monterDimensions.depth}m
-                            <br />
-                            <span style={{ fontSize: '12px', color: '#999' }}>
-                              {exhibitor.monterDimensions.height}m höjd
-                            </span>
+                            {exhibitorOrder ? (
+                              <div>
+                                <div style={{ fontSize: '14px', fontWeight: '600' }}>
+                                  {exhibitorOrder.orderNumber}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#999' }}>
+                                  {formatCurrency(exhibitorOrder.pricingData?.totalPrice || exhibitorOrder.boothData?.totalPrice || 0)}
+                                </div>
+                              </div>
+                            ) : '-'}
                           </td>
                           <td style={tableCellStyle}>
                             <span style={{
@@ -660,7 +678,8 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                           <td style={tableCellStyle}>
                             <button
                               onClick={() => {
-                                navigator.clipboard.writeText(exhibitor.inviteLink);
+                                const inviteUrl = `https://monterhyra-live.vercel.app/app.html?exhibitor=${exhibitor.id}`;
+                                navigator.clipboard.writeText(inviteUrl);
                                 alert('Inbjudningslänk kopierad!');
                               }}
                               style={{
@@ -726,13 +745,13 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                     }}>
                       <div>
                         <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
-                          {order.customerInfo?.company || 'Okänt företag'}
+                          {order.customerCompany || order.customerName}
                         </div>
                         <div style={{ fontSize: '13px', color: '#666' }}>
-                          {order.customerInfo?.name} • {order.customerInfo?.email}
+                          {order.customerName} • {order.customerEmail}
                         </div>
                         <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
-                          Beställd: {new Date(order.timestamp).toLocaleDateString('sv-SE', {
+                          Ordernummer: {order.orderNumber} • {new Date(order.createdAt).toLocaleDateString('sv-SE', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
@@ -746,7 +765,7 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                         fontSize: '24px',
                         color: '#2ecc71'
                       }}>
-                        {formatCurrency(order.orderData?.totalPrice || 0)}
+                        {formatCurrency(order.pricingData?.totalPrice || order.boothData?.totalPrice || 0)}
                       </div>
                     </div>
                     <div style={{
@@ -759,15 +778,15 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                     }}>
                       <div>
                         <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Eventdatum</div>
-                        <div style={{ fontWeight: '600' }}>{order.customerInfo?.eventDate || '-'}</div>
+                        <div style={{ fontWeight: '600' }}>{order.pricingData?.eventDate || '-'}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Leveransadress</div>
-                        <div style={{ fontWeight: '600' }}>{order.customerInfo?.deliveryAddress || '-'}</div>
+                        <div style={{ fontWeight: '600' }}>{order.pricingData?.deliveryAddress || '-'}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Telefon</div>
-                        <div style={{ fontWeight: '600' }}>{order.customerInfo?.phone || '-'}</div>
+                        <div style={{ fontWeight: '600' }}>{order.customerPhone || '-'}</div>
                       </div>
                     </div>
                   </div>

@@ -19,8 +19,8 @@ import VepaPDFGenerator from './VepaPDFGenerator';
 import ForexPDFGenerator from './ForexPDFGenerator';
 import StoragePDFGenerator from './StoragePDFGenerator';
 import type { StorageWallDesign } from './StoragePDFGenerator';
-import { OrderManager } from './OrderManager';
-import type { CustomerInfo, OrderData } from './OrderManager';
+import { OrderService } from './services/OrderService';
+import type { CustomerInfo, OrderData } from './services/OrderService';
 import AdminPortal from './AdminPortal';
 import { ExhibitorAdmin } from './ExhibitorAdmin';
 import { ExhibitorPortal } from './ExhibitorPortal';
@@ -6371,12 +6371,11 @@ export default function App() {
                           pdf.setTextColor(0, 0, 0);
                         };
                         
-                        try {
-                          // Försök att fånga tre olika vyer av montern (samma som PDF-knappen)
-                          if (captureRef.current && captureRef.current.captureViews) {
-                            try {
-                              // Få tre olika kameravyer från CaptureHelper
-                              const views = captureRef.current.captureViews(1200, 800);
+                        // Försök att fånga tre olika vyer av montern (samma som PDF-knappen)
+                        if (captureRef.current && captureRef.current.captureViews) {
+                          try {
+                            // Få tre olika kameravyer från CaptureHelper
+                            const views = captureRef.current.captureViews(1200, 800);
                               
                               // Sida 1: Ovanifrån-vy med kontaktinfo
                               if (views[0]) {
@@ -6487,10 +6486,49 @@ export default function App() {
                                 pdf.text('3D-vy av montern', 15, imageYPos + imageHeight + 5);
                               }
                             }
+                          } else {
+                            // Om captureRef inte är tillgänglig, använd canvas direkt
+                            if (canvasEl) {
+                              const imgData = canvasEl.toDataURL('image/jpeg', 0.7);
+                              
+                              pdf.setFontSize(16);
+                              pdf.setTextColor(40, 62, 80);
+                              pdf.text('MONTEROFFERT', 15, 25);
+                              
+                              pdf.setFontSize(10);
+                              pdf.setTextColor(0, 0, 0);
+                              let yPos = 35;
+                              
+                              if (registrationData.name) {
+                                pdf.text(`Kontaktperson: ${registrationData.name}`, 15, yPos);
+                                yPos += 5;
+                              }
+                              if (registrationData.company) {
+                                pdf.text(`Företag: ${registrationData.company}`, 15, yPos);
+                                yPos += 5;
+                              }
+                              if (registrationData.email) {
+                                pdf.text(`E-post: ${registrationData.email}`, 15, yPos);
+                                yPos += 5;
+                              }
+                              if (registrationData.phone) {
+                                pdf.text(`Telefon: ${registrationData.phone}`, 15, yPos);
+                                yPos += 5;
+                              }
+                              
+                              pdf.setDrawColor(200, 200, 200);
+                              pdf.line(15, yPos + 3, 195, yPos + 3);
+                              
+                              const imageYPos = yPos + 10;
+                              const imageHeight = 100;
+                              pdf.addImage(imgData, 'JPEG', 15, imageYPos, 180, imageHeight);
+                              pdf.setFontSize(10);
+                              pdf.text('3D-vy av montern', 15, imageYPos + imageHeight + 5);
+                            }
                           }
-                          
-                          // Sida 4: Prissammanställning (samma som PDF-knappen)
-                          pdf.addPage();
+                        
+                        // Sida 4: Prissammanställning (samma som PDF-knappen)
+                        pdf.addPage();
                           
                           const materialCost = calculatePrice();
                           const laborCosts = calculateLaborCosts();
@@ -7180,40 +7218,12 @@ Monterhyra Beställningssystem
                               storagePDFs: storagePDFs
                             };
                             
-                            // Spara beställningen med alla PDFer
-                            const orderId = await OrderManager.saveOrder(customerInfo, orderData, pdfFiles);
-                            console.log('✅ Beställning sparad med ID:', orderId);
-                            console.log('📦 Beställningsdata:', { customerInfo, orderData, fileCount: wallPDFs.length + storagePDFs.length + 1 });
-                          } catch (adminError) {
-                            console.error('⚠️ Kunde inte spara till admin-portal:', adminError);
-                            console.error('Detaljerat fel:', {
-                              message: (adminError as any).message,
-                              stack: (adminError as any).stack
-                            });
-
-                            // Diagnostisera localStorage
-                            console.log('🔍 Diagnostiserar localStorage efter fel...');
-                            // @ts-ignore - OrderManager har metoden
-                            if (typeof OrderManager.diagnoseStorage === 'function') {
-                              OrderManager.diagnoseStorage();
-                            }
-
-                            alert(`⚠️ Varning: Beställningen kunde inte sparas i admin-portalen.\n\nFel: ${(adminError as any).message}\n\nMailet skickades ändå. Kontakta support om problemet kvarstår.`);
-                            // Fortsätt ändå, mailet är viktigast
+                            alert('✅ Beställning skickad!\n\n📧 Mail skickat till dig och oss');
+                          } catch (saveError) {
+                            console.error('Fel vid sparande till admin-portal:', saveError);
+                            alert('✅ Beställning skickad!\n\n⚠️ PDF kunde inte sparas till admin-portal, men e-post har skickats.');
                           }
-                          
-                          alert(`✅ Beställning skickad!\n\n� Mail skickat\n\n💾 PDF och alla tryckfiler sparade i admin-portalen\n\n� Logga in på admin-portalen för att ladda ner ZIP-fil`);
-                          
-                        } catch (error) {
-                          console.error('Fel vid beställning:', error);
-                          const err = error as any;
-                          console.error('Error details:', {
-                            message: err.message,
-                            stack: err.stack,
-                            name: err.name
-                          });
-                          alert(`❌ Ett fel uppstod vid sändning av beställningen: ${err.message || 'Okänt fel'}\n\nKontrollera konsolen för mer detaljer.`);
-                        }
+                            
                       } catch (error) {
                         console.error('Fel vid beställning:', error);
                         const err = error as any;
@@ -7222,7 +7232,7 @@ Monterhyra Beställningssystem
                           stack: err.stack,
                           name: err.name
                         });
-                        alert(`Ett fel uppstod vid sändning av beställningen: ${err.message || 'Okänt fel'}`);
+                        alert(`❌ Ett fel uppstod vid sändning av beställningen: ${err.message || 'Okänt fel'}\n\nKontrollera konsolen för mer detaljer.`);
                       }
                     }}
                     style={{
