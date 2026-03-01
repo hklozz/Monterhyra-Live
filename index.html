@@ -74,7 +74,7 @@
       "@type": "Product",
       "name": "Monteruthyrning för Mässor och Event",
       "image": "https://monterhyra-live.vercel.app/booth-example.jpg",
-      "description": "Komplett monteruthyrning med 3D-design, BeMatrix-system, möbler, belysning och grafik. Perfekt för mässor och event.",
+      "description": "Komplett monteruthyrning med 3D-design, professionellt montagesystem, möbler, belysning och grafik. Perfekt för mässor och event.",
       "brand": {
         "@type": "Brand",
         "name": "Monterhyra"
@@ -511,38 +511,42 @@
         
         /* How It Works Animation Section */
         .how-it-works {
-            padding: 80px 20px;
-            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
-            overflow: hidden;
+            padding: 100px 20px 80px;
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            overflow: visible;
         }
         
         .steps-animation {
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 20px;
+            align-items: stretch;
+            gap: 30px;
             margin-top: 60px;
             flex-wrap: nowrap;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
             overflow-x: auto;
         }
         
         .step-card {
             background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 70px 20px 30px;
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(100,116,139,0.08);
             text-align: center;
-            min-width: 180px;
+            min-width: 160px;
+            flex: 1;
             max-width: 200px;
-            flex-shrink: 0;
-            animation: fadeInUp 0.6s ease-out both;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
+            border: 2px solid transparent;
         }
         
         .step-card:hover {
-            transform: translateY(-10px) scale(1.05);
-            box-shadow: 0 15px 40px rgba(59,130,246,0.3);
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(100,116,139,0.15);
+            border-color: rgba(99,102,241,0.2);
         }
         
         @keyframes fadeInUp {
@@ -558,155 +562,265 @@
         
         .step-number {
             position: absolute;
-            top: -15px;
+            top: 15px;
             left: 50%;
             transform: translateX(-50%);
-            width: 35px;
-            height: 35px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 10px rgba(102,126,234,0.4);
+            font-weight: 700;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.4);
+            z-index: 10;
         }
         
         .step-icon {
-            font-size: 3rem;
-            margin: 20px 0 15px;
-            animation: bounce 2s ease-in-out infinite;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            display: none;
         }
         
         .step-card h3 {
-            font-size: 1.2rem;
-            color: var(--secondary);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1e293b;
             margin-bottom: 10px;
+            letter-spacing: -0.01em;
         }
         
         .step-card p {
-            color: var(--text-light);
-            font-size: 0.9rem;
+            color: #64748b;
+            font-size: 0.85rem;
             margin-bottom: 15px;
+            line-height: 1.4;
         }
         
         .step-visual {
-            height: 80px;
+            height: 90px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-top: 15px;
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 10px;
         }
         
-        /* Animated visuals */
+        /* Animated visuals with better designs */
+        /* 3D grid animation för storlek */
         .floor-animation {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            border-radius: 8px;
-            animation: pulse 2s ease-in-out infinite;
+            width: 80px;
+            height: 80px;
+            position: relative;
+            perspective: 400px;
         }
         
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-        
-        .wall-animation {
-            width: 50px;
-            height: 70px;
-            background: linear-gradient(to bottom, #f8f9fa 0%, #e5e7eb 100%);
-            border-radius: 4px;
-            border: 3px solid #3b82f6;
-            animation: buildUp 2s ease-in-out infinite;
-        }
-        
-        @keyframes buildUp {
-            0% { height: 0; opacity: 0; }
-            50% { height: 70px; opacity: 1; }
-            100% { height: 70px; opacity: 1; }
-        }
-        
-        .furniture-animation {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .furniture-animation::before,
-        .furniture-animation::after {
+        .floor-animation::before {
             content: '';
-            width: 25px;
-            height: 25px;
-            background: #f59e0b;
-            border-radius: 50%;
-            animation: fadeIn 2s ease-in-out infinite;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, #3b82f6 1px, transparent 1px),
+                linear-gradient(180deg, #3b82f6 1px, transparent 1px);
+            background-size: 20px 20px;
+            transform: rotateX(60deg) rotateZ(45deg);
+            animation: gridPulse 3s ease-in-out infinite;
+            opacity: 0.6;
         }
         
+        .floor-animation::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 3px solid #3b82f6;
+            border-radius: 4px;
+            animation: boxExpand 3s ease-in-out infinite;
+        }
+        
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        
+        @keyframes boxExpand {
+            0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.3; }
+            50% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        /* Steg 2: Realistiska väggpaneler i 3D */
+        .wall-animation {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            perspective: 600px;
+        }
+        
+        /* 3D-golv */
+        .wall-animation::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) rotateX(60deg);
+            width: 70px;
+            height: 30px;
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+            border: 1px solid #4b5563;
+            opacity: 0.6;
+        }
+        
+        /* Tre väggpaneler som växer upp */
+        .wall-animation::after {
+            content: '';
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 65px;
+            height: 0;
+            background: linear-gradient(to right, #f3f4f6 0%, #e5e7eb 20%, #d1d5db 21%, #e5e7eb 40%, #f3f4f6 41%, #e5e7eb 60%, #d1d5db 61%, #e5e7eb 80%, #f3f4f6 81%, #e5e7eb 100%);
+            box-shadow: 
+                inset 0 0 0 1px #d1d5db,
+                0 4px 12px rgba(0,0,0,0.1);
+            animation: wallPanelsGrow 4s ease-in-out infinite;
+        }
+        
+        @keyframes wallPanelsGrow {
+            0% { height: 0; opacity: 0; }
+            40% { height: 0; opacity: 0; }
+            70% { height: 50px; opacity: 1; }
+            100% { height: 50px; opacity: 1; }
+        }
+        
+        /* Steg 3: Möbler på golvet framför väggarna */
+        .furniture-animation {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            perspective: 600px;
+        }
+        
+        /* 3D-golv */
+        .furniture-animation::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) rotateX(60deg);
+            width: 70px;
+            height: 30px;
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+            border: 1px solid #4b5563;
+            opacity: 0.6;
+        }
+        
+        /* Möbel framför väggarna */
         .furniture-animation::after {
-            animation-delay: 0.5s;
-        }
-        
-        @keyframes fadeIn {
-            0%, 100% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1); }
-        }
-        
-        .price-animation {
+            content: '🪑';
+            position: absolute;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 2rem;
-            font-weight: bold;
-            color: #10b981;
-            animation: countUp 2s ease-in-out infinite;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
+            animation: furnitureAppear 5s ease-in-out infinite;
+        }
+        
+        /* Väggar i bakgrunden */
+        .furniture-animation {
+            background: linear-gradient(to right, #f3f4f6 0%, #e5e7eb 20%, #d1d5db 21%, #e5e7eb 40%, #f3f4f6 41%, #e5e7eb 60%, #d1d5db 61%, #e5e7eb 80%, #f3f4f6 81%, #e5e7eb 100%);
+            background-position: center 15px;
+            background-size: 65px 50px;
+            background-repeat: no-repeat;
+            box-shadow: inset 0 15px 0 0 transparent, inset 0 65px 12px -50px rgba(0,0,0,0.1);
+        }
+        
+        @keyframes furnitureAppear {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(0.5); }
+            60% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(0.5); }
+            75% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        }
+        
+        /* Modern pris-räknare animation */
+        .price-animation {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .price-animation::before {
             content: '10.400';
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #059669;
+            letter-spacing: -0.02em;
+            animation: priceCount 4s ease-in-out infinite;
         }
         
         .price-animation::after {
-            content: ' kr';
-            font-size: 1rem;
-            color: var(--text-light);
+            content: 'kr';
+            position: absolute;
+            bottom: 25px;
+            right: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
         }
         
-        @keyframes countUp {
-            0% { opacity: 0; transform: scale(0.5); }
-            50% { opacity: 1; transform: scale(1.1); }
+        @keyframes priceCount {
+            0% { opacity: 0.4; transform: scale(0.95); }
+            15% { opacity: 1; transform: scale(1.05); }
+            30% { opacity: 1; transform: scale(1); }
             100% { opacity: 1; transform: scale(1); }
         }
         
+        /* Modern beställnings-animation */
         .order-animation {
             width: 60px;
             height: 60px;
-            background: #10b981;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2rem;
-            animation: checkmark 2s ease-in-out infinite;
+            position: relative;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
         }
         
         .order-animation::before {
-            content: '✓';
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 25%;
+            border-left: 4px solid white;
+            border-bottom: 4px solid white;
+            transform: translate(-60%, -70%) rotate(-45deg);
+            animation: checkDraw 3s ease-in-out infinite;
         }
         
-        @keyframes checkmark {
-            0% { transform: scale(0) rotate(0deg); }
-            50% { transform: scale(1.2) rotate(360deg); }
-            100% { transform: scale(1) rotate(360deg); }
+        @keyframes checkDraw {
+            0% { width: 0; height: 0; opacity: 0; }
+            40% { width: 0; height: 0; opacity: 0; }
+            60% { width: 50%; height: 25%; opacity: 1; }
+            100% { width: 50%; height: 25%; opacity: 1; }
         }
         
         .step-arrow {
             font-size: 2rem;
-            color: var(--primary);
+            color: #c7d2fe;
+            align-self: center;
+            flex-shrink: 0;
             animation: slideRight 1.5s ease-in-out infinite;
         }
         
@@ -733,11 +847,24 @@
             }
             
             .steps-animation {
+                flex-direction: column;
+                align-items: center;
                 gap: 30px;
             }
             
             .step-card {
-                max-width: 100%;
+                max-width: 320px;
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .steps-animation {
+                gap: 15px;
+            }
+            
+            .step-arrow {
+                font-size: 2rem;
             }
         }
     </style>
@@ -750,7 +877,7 @@
             <h1>Designa Din Mässmonter Online - Få Direkt Pris</h1>
             <p>Sveriges modernaste 3D-verktyg för monteruthyrning. Bygg din perfekta monter på några minuter och beställ direkt.</p>
             <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 12px 20px; border-radius: 12px; margin: 20px auto; max-width: 500px; border: 1px solid rgba(255,255,255,0.3);">
-                <strong>🎉 Beta-lansering:</strong> 10% rabatt för de första 50 kunderna!
+                <strong>🎉 Beta-lansering:</strong> 10% rabatt för de första kunderna!
             </div>
             <div class="cta-buttons">
                 <a href="/app.html" class="btn btn-primary">🎨 Starta Din Design</a>
@@ -766,7 +893,7 @@
             <p class="section-subtitle">Enkel steg-för-steg process med direktpris</p>
             
             <div class="steps-animation">
-                <div class="step-card" style="animation-delay: 0.1s">
+                <div class="step-card">
                     <div class="step-number">1</div>
                     <div class="step-icon">📐</div>
                     <h3>Välj Storlek</h3>
@@ -778,7 +905,7 @@
                 
                 <div class="step-arrow">→</div>
                 
-                <div class="step-card" style="animation-delay: 0.2s">
+                <div class="step-card">
                     <div class="step-number">2</div>
                     <div class="step-icon">🧱</div>
                     <h3>Bygg Väggar</h3>
@@ -790,7 +917,7 @@
                 
                 <div class="step-arrow">→</div>
                 
-                <div class="step-card" style="animation-delay: 0.3s">
+                <div class="step-card">
                     <div class="step-number">3</div>
                     <div class="step-icon">🪑</div>
                     <h3>Lägg Till Inredning</h3>
@@ -802,7 +929,7 @@
                 
                 <div class="step-arrow">→</div>
                 
-                <div class="step-card" style="animation-delay: 0.4s">
+                <div class="step-card">
                     <div class="step-number">4</div>
                     <div class="step-icon">💰</div>
                     <h3>Få Direktpris</h3>
@@ -814,7 +941,7 @@
                 
                 <div class="step-arrow">→</div>
                 
-                <div class="step-card" style="animation-delay: 0.5s">
+                <div class="step-card">
                     <div class="step-number">5</div>
                     <div class="step-icon">✅</div>
                     <h3>Beställ</h3>
@@ -825,8 +952,9 @@
                 </div>
             </div>
             
-            <div style="text-align: center; margin-top: 40px;">
-                <a href="/app.html" class="btn btn-primary" style="font-size: 1.2rem;">🎨 Testa Själv Nu - Gratis!</a>
+            <div style="text-align: center; margin-top: 50px;">
+                <a href="/app.html" class="btn btn-primary" style="font-size: 1.3rem; padding: 18px 40px; box-shadow: 0 8px 24px rgba(99,102,241,0.35);">🎨 Testa Själv Nu - Gratis!</a>
+                <p style="margin-top: 15px; color: #64748b; font-size: 0.95rem;">Ingen registrering krävs • Se direkt pris medan du designar</p>
             </div>
         </div>
     </section>
@@ -865,7 +993,7 @@
                 <div class="feature-card">
                     <div class="feature-icon">🎯</div>
                     <h3>Moderna Monstersystem</h3>
-                    <p>Vi använder branschledande BeMatrix-system - ett miljövänligt och återanvändbart monterlösning som är både stabilt och snyggt.</p>
+                    <p>Vi använder branschledande professionella montagesystem - miljövänliga och återanvändbara lösningar som är både stabila och snygga.</p>
                 </div>
                 
                 <div class="feature-card">
@@ -958,7 +1086,7 @@
                 </div>
                 <div class="seo-box">
                     <h4>2. Designa Väggar</h4>
-                    <p>Välj mellan raka väggar, L-form eller U-form. BeMatrix-system garanterar professionell kvalitet.</p>
+                    <p>Välj mellan raka väggar, L-form eller U-form. Professionella montagesystem garanterar högsta kvalitet.</p>
                 </div>
                 <div class="seo-box">
                     <h4>3. Lägg Till Inredning</h4>
