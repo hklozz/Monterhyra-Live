@@ -3225,6 +3225,7 @@ export default function App() {
     // Möbler
     furniture.forEach(furnitureItem => {
       const furnitureConfig = FURNITURE_TYPES[furnitureItem.type];
+      if (!furnitureConfig) return; // Säkerhetskontroll
       if (furnitureConfig.label === 'Barbord') totalPrice += 850;
       else if (furnitureConfig.label === 'Barstol') totalPrice += 550;
       else if (furnitureConfig.label === 'Mysig pall') totalPrice += 600;
