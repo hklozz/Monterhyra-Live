@@ -3131,18 +3131,18 @@ export default function App() {
     
     // Matta/golvpriser (145 kr per kvm för färg, 180 kr för EXPO, 240 kr för SALSA, 255 kr för rutor)
     const floorArea = Math.round((floorDimensions.width * 100) * (floorDimensions.depth * 100)) / 10000; // alltid två decimaler
-    if (carpetIndex > 0) { // Alla mattor utom "Ingen matta"
+    if (carpetIndex > 0 && CARPET_COLORS[carpetIndex]) { // Alla mattor utom "Ingen matta"
       const selectedCarpet = CARPET_COLORS[carpetIndex];
-      if (selectedCarpet.color && selectedCarpet.color.startsWith('checkerboard-')) {
+      if (selectedCarpet && selectedCarpet.color && selectedCarpet.color.startsWith('checkerboard-')) {
         // Rutmönster - 255 kr per kvm
         totalPrice += floorArea * 255;
-      } else if (selectedCarpet.name.startsWith('EXPO')) {
+      } else if (selectedCarpet && selectedCarpet.name && selectedCarpet.name.startsWith('EXPO')) {
         // EXPO färger - 180 kr per kvm
         totalPrice += floorArea * 180;
-      } else if (selectedCarpet.name.startsWith('SALSA')) {
+      } else if (selectedCarpet && selectedCarpet.name && selectedCarpet.name.startsWith('SALSA')) {
         // SALSA färger - 240 kr per kvm (180 + 60)
         totalPrice += floorArea * 240;
-      } else {
+      } else if (selectedCarpet && selectedCarpet.color) {
         // Vanliga färgmattor - 145 kr per kvm
         totalPrice += floorArea * 145;
       }
@@ -3247,14 +3247,16 @@ export default function App() {
     
     // Truss
     const selectedTruss = TRUSS_TYPES[selectedTrussType];
-    if (selectedTruss.type === 'front-straight') {
-      totalPrice += floorDimensions.width * 370; // 370 kr per meter
-    } else if (selectedTruss.type === 'hanging-round' && 'diameter' in selectedTruss) {
-      const circumference = Math.PI * selectedTruss.diameter;
-      totalPrice += circumference * 370;
-    } else if (selectedTruss.type === 'hanging-square' && 'width' in selectedTruss) {
-      const perimeter = (selectedTruss.width * 2) + (selectedTruss.depth * 2);
-      totalPrice += perimeter * 370;
+    if (selectedTruss && selectedTruss.type !== 'none') {
+      if (selectedTruss.type === 'front-straight') {
+        totalPrice += floorDimensions.width * 370; // 370 kr per meter
+      } else if (selectedTruss.type === 'hanging-round' && 'diameter' in selectedTruss) {
+        const circumference = Math.PI * selectedTruss.diameter;
+        totalPrice += circumference * 370;
+      } else if (selectedTruss.type === 'hanging-square' && 'width' in selectedTruss) {
+        const perimeter = (selectedTruss.width * 2) + (selectedTruss.depth * 2);
+        totalPrice += perimeter * 370;
+      }
     }
     
     // Väggdekorationer
@@ -3432,7 +3434,7 @@ export default function App() {
     
     // Truss-tillägg: +6h (3×2h för 2 personer, eller 2×3h för 3 personer)
     const selectedTruss = TRUSS_TYPES[selectedTrussType];
-    if (selectedTruss.type !== 'none') {
+    if (selectedTruss && selectedTruss.type !== 'none') {
       totalBuildHours += 6;
     }
     
@@ -3736,12 +3738,14 @@ export default function App() {
           // show SAM-led as number of vertical brackets (one per bracket) only when lights are enabled
           if (visibleBrackets > 0 && showLights) totals['SAM-led'] = visibleBrackets;
           // add carpet info as misc entry when selected
-          if (carpetIndex !== 0) {
+          if (carpetIndex !== 0 && CARPET_COLORS[carpetIndex]) {
             const selectedCarpet = CARPET_COLORS[carpetIndex];
-            const floorConfig = floorIndex !== null ? FLOOR_SIZES[floorIndex] : null;
-            const floorW = floorConfig?.custom ? customFloorWidth : (floorConfig ? floorConfig.width : 0);
-            const floorD = floorConfig?.custom ? customFloorDepth : (floorConfig ? floorConfig.depth : 0);
-            (totals as any)['Matta'] = `${floorW}×${floorD} ${selectedCarpet.name}`;
+            if (selectedCarpet && selectedCarpet.name) {
+              const floorConfig = floorIndex !== null ? FLOOR_SIZES[floorIndex] : null;
+              const floorW = floorConfig?.custom ? customFloorWidth : (floorConfig ? floorConfig.width : 0);
+              const floorD = floorConfig?.custom ? customFloorDepth : (floorConfig ? floorConfig.depth : 0);
+              (totals as any)['Matta'] = `${floorW}×${floorD} ${selectedCarpet.name}`;
+            }
           }
           // add chosen graphic label to totals (e.g. Hyr grafik, Eget tryck (forex), Eget tryck (vepa))
           if (graphic && graphic !== 'none') {
@@ -3946,29 +3950,31 @@ export default function App() {
           // Truss BOM for live totals based on selected truss type
           try {
             const sel = TRUSS_TYPES[selectedTrussType];
-            if (sel.type === 'hanging-square') {
-              // Truss fyrkant: 2m truss x4, vajer x4, trusslampa x4
-              (totals as any)['Truss 2m'] = ((totals as any)['Truss 2m'] || 0) + 4;
-              (totals as any)['Vajer upphängning'] = ((totals as any)['Vajer upphängning'] || 0) + 4;
-              (totals as any)['Trusslampa'] = ((totals as any)['Trusslampa'] || 0) + 4;
-            } else if (sel.type === 'hanging-round') {
-              // Rund truss: 90deg segments x4, vajer x4, trusslampa x6
-              (totals as any)['Truss rund 90grader'] = ((totals as any)['Truss rund 90grader'] || 0) + 4;
-              (totals as any)['Vajer upphängning'] = ((totals as any)['Vajer upphängning'] || 0) + 4;
-              (totals as any)['Trusslampa'] = ((totals as any)['Trusslampa'] || 0) + 6;
-            } else if (sel.type === 'front-straight') {
-              // Framkant truss: split into 2m + 1m segments to cover front width
-              const frontWidth = floorIndex !== null ? (FLOOR_SIZES[floorIndex].custom ? customFloorWidth : FLOOR_SIZES[floorIndex].width) : 0;
-              // prefer 2m segments as many as possible, remainder as 1m
-              const twoMeterCount = Math.floor(frontWidth / 2);
-              const remainder = frontWidth - (twoMeterCount * 2);
-              const oneMeterCount = Math.round(remainder); // either 0 or 1 usually
-              if (twoMeterCount > 0) (totals as any)['Truss 2m'] = ((totals as any)['Truss 2m'] || 0) + twoMeterCount;
-              if (oneMeterCount > 0) (totals as any)['Truss 1m'] = ((totals as any)['Truss 1m'] || 0) + oneMeterCount;
-              (totals as any)['Vajer upphängning'] = ((totals as any)['Vajer upphängning'] || 0) + 4;
-              // trusslampor: 1 per meter
-              const lampCount = Math.round(frontWidth);
-              if (lampCount > 0) (totals as any)['Trusslampa'] = ((totals as any)['Trusslampa'] || 0) + lampCount;
+            if (sel && sel.type !== 'none') {
+              if (sel.type === 'hanging-square') {
+                // Truss fyrkant: 2m truss x4, vajer x4, trusslampa x4
+                (totals as any)['Truss 2m'] = ((totals as any)['Truss 2m'] || 0) + 4;
+                (totals as any)['Vajer upphängning'] = ((totals as any)['Vajer upphängning'] || 0) + 4;
+                (totals as any)['Trusslampa'] = ((totals as any)['Trusslampa'] || 0) + 4;
+              } else if (sel.type === 'hanging-round') {
+                // Rund truss: 90deg segments x4, vajer x4, trusslampa x6
+                (totals as any)['Truss rund 90grader'] = ((totals as any)['Truss rund 90grader'] || 0) + 4;
+                (totals as any)['Vajer upphängning'] = ((totals as any)['Vajer upphängning'] || 0) + 4;
+                (totals as any)['Trusslampa'] = ((totals as any)['Trusslampa'] || 0) + 6;
+              } else if (sel.type === 'front-straight') {
+                // Framkant truss: split into 2m + 1m segments to cover front width
+                const frontWidth = floorIndex !== null ? (FLOOR_SIZES[floorIndex].custom ? customFloorWidth : FLOOR_SIZES[floorIndex].width) : 0;
+                // prefer 2m segments as many as possible, remainder as 1m
+                const twoMeterCount = Math.floor(frontWidth / 2);
+                const remainder = frontWidth - (twoMeterCount * 2);
+                const oneMeterCount = Math.round(remainder); // either 0 or 1 usually
+                if (twoMeterCount > 0) (totals as any)['Truss 2m'] = ((totals as any)['Truss 2m'] || 0) + twoMeterCount;
+                if (oneMeterCount > 0) (totals as any)['Truss 1m'] = ((totals as any)['Truss 1m'] || 0) + oneMeterCount;
+                (totals as any)['Vajer upphängning'] = ((totals as any)['Vajer upphängning'] || 0) + 4;
+                // trusslampor: 1 per meter
+                const lampCount = Math.round(frontWidth);
+                if (lampCount > 0) (totals as any)['Trusslampa'] = ((totals as any)['Trusslampa'] || 0) + lampCount;
+              }
             }
           } catch (e) {
             // ignore
@@ -4211,99 +4217,6 @@ export default function App() {
                   👤 <strong>Kontakt:</strong> {exhibitorData.contactPerson}
                 </p>
               )}
-            </div>
-          </div>
-        )}
-        
-        {/* 💾 SPARA/LADDA-KNAPPAR */}
-        {!isExhibitorMode && (
-          <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            padding: '16px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{
-              color: 'white',
-              fontSize: '13px',
-              fontWeight: '600',
-              marginBottom: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              💾 Spara din design
-              {designLoadCount > 0 && (
-                <span style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  fontWeight: '500'
-                }}>
-                  {designLoadCount}/{MAX_DESIGN_LOADS} laddningar
-                </span>
-              )}
-            </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '8px'
-            }}>
-              <button
-                onClick={saveDesignToLocalStorage}
-                disabled={floorIndex === null}
-                style={{
-                  padding: '10px 12px',
-                  background: floorIndex === null ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.9)',
-                  color: floorIndex === null ? 'rgba(255,255,255,0.5)' : '#667eea',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  cursor: floorIndex === null ? 'not-allowed' : 'pointer',
-                  boxShadow: floorIndex === null ? 'none' : '0 2px 4px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px'
-                }}
-                title={floorIndex === null ? 'Välj en monterstorlek först' : 'Spara design i webbläsaren'}
-              >
-                💾 Spara
-              </button>
-              <button
-                onClick={loadDesignFromLocalStorage}
-                style={{
-                  padding: '10px 12px',
-                  background: 'rgba(255,255,255,0.9)',
-                  color: '#667eea',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px'
-                }}
-                title="Ladda sparad design"
-              >
-                📂 Ladda
-              </button>
-            </div>
-            <div style={{
-              marginTop: '8px',
-              fontSize: '11px',
-              color: 'rgba(255,255,255,0.8)',
-              lineHeight: '1.4'
-            }}>
-              ⚠️ Sparas lokalt i din webbläsare. Max {MAX_DESIGN_LOADS} laddningar innan beställning krävs.
             </div>
           </div>
         )}
@@ -6854,9 +6767,11 @@ Monterhyra Beställningssystem
                               }
                               
                               // Matta
-                              if (carpetIndex !== 0) {
+                              if (carpetIndex !== 0 && CARPET_COLORS[carpetIndex]) {
                                 const selectedCarpet = CARPET_COLORS[carpetIndex];
-                                (packlistaData.totals as any)['Matta'] = `${floorW}×${floorD} ${selectedCarpet.name}`;
+                                if (selectedCarpet && selectedCarpet.name) {
+                                  (packlistaData.totals as any)['Matta'] = `${floorW}×${floorD} ${selectedCarpet.name}`;
+                                }
                               }
                               
                               // Väggyhyllor och högtalare
@@ -7003,26 +6918,28 @@ Monterhyra Beställningssystem
                               }
                               
                               // Truss-delar
-                              if (selectedTrussType > 0) {
+                              if (selectedTrussType > 0 && TRUSS_TYPES[selectedTrussType]) {
                                 const sel = TRUSS_TYPES[selectedTrussType];
-                                if (sel.type === 'hanging-square') {
-                                  (packlistaData.totals as any)['Truss 2m'] = ((packlistaData.totals as any)['Truss 2m'] || 0) + 4;
-                                  (packlistaData.totals as any)['Vajer upphängning'] = ((packlistaData.totals as any)['Vajer upphängning'] || 0) + 4;
-                                  (packlistaData.totals as any)['Trusslampa'] = ((packlistaData.totals as any)['Trusslampa'] || 0) + 4;
-                                } else if (sel.type === 'hanging-round') {
-                                  (packlistaData.totals as any)['Truss rund 90grader'] = ((packlistaData.totals as any)['Truss rund 90grader'] || 0) + 4;
-                                  (packlistaData.totals as any)['Vajer upphängning'] = ((packlistaData.totals as any)['Vajer upphängning'] || 0) + 4;
-                                  (packlistaData.totals as any)['Trusslampa'] = ((packlistaData.totals as any)['Trusslampa'] || 0) + 6;
-                                } else if (sel.type === 'front-straight') {
-                                  const frontWidth = floorIndex !== null ? (FLOOR_SIZES[floorIndex].custom ? customFloorWidth : FLOOR_SIZES[floorIndex].width) : 0;
-                                  const twoMeterCount = Math.floor(frontWidth / 2);
-                                  const remainder = frontWidth - (twoMeterCount * 2);
-                                  const oneMeterCount = Math.round(remainder);
-                                  if (twoMeterCount > 0) (packlistaData.totals as any)['Truss 2m'] = ((packlistaData.totals as any)['Truss 2m'] || 0) + twoMeterCount;
-                                  if (oneMeterCount > 0) (packlistaData.totals as any)['Truss 1m'] = ((packlistaData.totals as any)['Truss 1m'] || 0) + oneMeterCount;
-                                  (packlistaData.totals as any)['Vajer upphängning'] = ((packlistaData.totals as any)['Vajer upphängning'] || 0) + 4;
-                                  const lampCount = Math.round(frontWidth);
-                                  if (lampCount > 0) (packlistaData.totals as any)['Trusslampa'] = ((packlistaData.totals as any)['Trusslampa'] || 0) + lampCount;
+                                if (sel && sel.type !== 'none') {
+                                  if (sel.type === 'hanging-square') {
+                                    (packlistaData.totals as any)['Truss 2m'] = ((packlistaData.totals as any)['Truss 2m'] || 0) + 4;
+                                    (packlistaData.totals as any)['Vajer upphängning'] = ((packlistaData.totals as any)['Vajer upphängning'] || 0) + 4;
+                                    (packlistaData.totals as any)['Trusslampa'] = ((packlistaData.totals as any)['Trusslampa'] || 0) + 4;
+                                  } else if (sel.type === 'hanging-round') {
+                                    (packlistaData.totals as any)['Truss rund 90grader'] = ((packlistaData.totals as any)['Truss rund 90grader'] || 0) + 4;
+                                    (packlistaData.totals as any)['Vajer upphängning'] = ((packlistaData.totals as any)['Vajer upphängning'] || 0) + 4;
+                                    (packlistaData.totals as any)['Trusslampa'] = ((packlistaData.totals as any)['Trusslampa'] || 0) + 6;
+                                  } else if (sel.type === 'front-straight') {
+                                    const frontWidth = floorIndex !== null ? (FLOOR_SIZES[floorIndex].custom ? customFloorWidth : FLOOR_SIZES[floorIndex].width) : 0;
+                                    const twoMeterCount = Math.floor(frontWidth / 2);
+                                    const remainder = frontWidth - (twoMeterCount * 2);
+                                    const oneMeterCount = Math.round(remainder);
+                                    if (twoMeterCount > 0) (packlistaData.totals as any)['Truss 2m'] = ((packlistaData.totals as any)['Truss 2m'] || 0) + twoMeterCount;
+                                    if (oneMeterCount > 0) (packlistaData.totals as any)['Truss 1m'] = ((packlistaData.totals as any)['Truss 1m'] || 0) + oneMeterCount;
+                                    (packlistaData.totals as any)['Vajer upphängning'] = ((packlistaData.totals as any)['Vajer upphängning'] || 0) + 4;
+                                    const lampCount = Math.round(frontWidth);
+                                    if (lampCount > 0) (packlistaData.totals as any)['Trusslampa'] = ((packlistaData.totals as any)['Trusslampa'] || 0) + lampCount;
+                                  }
                                 }
                               }
                             } catch (e) {
@@ -7301,6 +7218,81 @@ Monterhyra Beställningssystem
     background: '#f0f0f0',
     display: 'block'
   }}>
+        
+        {/* 💾 FLOATING SPARA/LADDA-KNAPPAR */}
+        {!isExhibitorMode && window.innerWidth > 768 && (
+          <div style={{ position: 'fixed', left: '340px', top: '20px', zIndex: 999, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Spara-knapp */}
+            <button
+              onClick={saveDesignToLocalStorage}
+              disabled={floorIndex === null}
+              style={{
+                width: '56px',
+                height: '56px',
+                background: floorIndex === null ? 'rgba(102,126,234,0.4)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                fontSize: '24px',
+                cursor: floorIndex === null ? 'not-allowed' : 'pointer',
+                boxShadow: floorIndex === null ? 'none' : '0 4px 16px rgba(102,126,234,0.4)',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transform: floorIndex === null ? 'scale(0.95)' : 'scale(1)',
+                opacity: floorIndex === null ? 0.5 : 1
+              }}
+              title={floorIndex === null ? 'Välj en monterstorlek först' : 'Spara design i webbläsaren'}
+              onMouseEnter={(e) => {
+                if (floorIndex !== null) {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.boxShadow = '0 6px 24px rgba(102,126,234,0.5)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (floorIndex !== null) {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(102,126,234,0.4)';
+                }
+              }}
+            >
+              💾
+            </button>
+            
+            {/* Ladda-knapp */}
+            <button
+              onClick={loadDesignFromLocalStorage}
+              style={{
+                width: '56px',
+                height: '56px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                fontSize: '24px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(102,126,234,0.4)',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Ladda sparad design"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.boxShadow = '0 6px 24px rgba(102,126,234,0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(102,126,234,0.4)';
+              }}
+            >
+              📂
+            </button>
+          </div>
+        )}
+        
         {floorIndex === null ? (
           // Visa instruktioner när ingen monterstorlek är vald
           <div style={{
@@ -7718,7 +7710,7 @@ Monterhyra Beställningssystem
               depth={floorDimensions.depth} 
             />
             
-            {carpetIndex !== 0 && CARPET_COLORS[carpetIndex].color && (
+            {carpetIndex !== 0 && CARPET_COLORS[carpetIndex] && CARPET_COLORS[carpetIndex].color && (
               <Carpet width={floorDimensions.width} depth={floorDimensions.depth} color={CARPET_COLORS[carpetIndex].color as string} />
             )}
             
@@ -8912,8 +8904,10 @@ Monterhyra Beställningssystem
                 {renderLights('right')}
                 
                 {/* Truss-strukturer */}
-                {selectedTrussType > 0 && (() => {
+                {selectedTrussType > 0 && TRUSS_TYPES[selectedTrussType] && (() => {
                   const trussConfig = TRUSS_TYPES[selectedTrussType];
+                  if (!trussConfig || trussConfig.type === 'none') return null;
+                  
                   // Använd rätt golvdimensioner baserat på floorIndex och customFloorWidth/customFloorDepth
                   const floorConfig = floorIndex !== null ? FLOOR_SIZES[floorIndex] : null;
                   const currentFloorSize = {
