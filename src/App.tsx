@@ -4,7 +4,7 @@
  * Unauthorized copying or distribution is strictly prohibited.
  */
 
-import React, { useState, useMemo, useRef, useImperativeHandle, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useImperativeHandle, useEffect, lazy, Suspense } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import emailjs from '@emailjs/browser';
@@ -21,11 +21,13 @@ import StoragePDFGenerator from './StoragePDFGenerator';
 import type { StorageWallDesign } from './StoragePDFGenerator';
 // import { OrderService } from './services/OrderService';
 import type { CustomerInfo, OrderData } from './services/OrderService';
-import AdminPortal from './AdminPortal';
-import { ExhibitorAdmin } from './ExhibitorAdmin';
-import { ExhibitorPortal } from './ExhibitorPortal';
-import EventAdminPortal from './EventAdminPortal';
 import ErrorBoundary from './ErrorBoundary';
+
+// Lazy load admin components for better initial load performance
+const AdminPortal = lazy(() => import('./AdminPortal'));
+const ExhibitorAdmin = lazy(() => import('./ExhibitorAdmin').then(m => ({ default: m.ExhibitorAdmin })));
+const ExhibitorPortal = lazy(() => import('./ExhibitorPortal').then(m => ({ default: m.ExhibitorPortal })));
+const EventAdminPortal = lazy(() => import('./EventAdminPortal'));
 
 // Custom Dropdown Component for visual elements
 const CustomDropdown = ({ 
@@ -11712,10 +11714,23 @@ Monterhyra Beställningssystem
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch'
         }}>
-          <AdminPortal onOpenExhibitorAdmin={() => {
-            setShowAdminPortal(false);
-            setShowExhibitorAdmin(true);
-          }} />
+          <Suspense fallback={
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100vh',
+              fontSize: '18px',
+              color: '#666'
+            }}>
+              Laddar admin...
+            </div>
+          }>
+            <AdminPortal onOpenExhibitorAdmin={() => {
+              setShowAdminPortal(false);
+              setShowExhibitorAdmin(true);
+            }} />
+          </Suspense>
           <div style={{
             position: 'fixed',
             top: 20,
@@ -11776,14 +11791,27 @@ Monterhyra Beställningssystem
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch'
         }}>
-          <ExhibitorAdmin 
-            onClose={() => setShowExhibitorAdmin(false)}
-            onOpenEventAdmin={(eventId: string) => {
-              setSelectedEventId(eventId);
-              setShowEventAdminPortal(true);
-              setShowExhibitorAdmin(false);
-            }}
-          />
+          <Suspense fallback={
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100vh',
+              fontSize: '18px',
+              color: '#666'
+            }}>
+              Laddar utställaradmin...
+            </div>
+          }>
+            <ExhibitorAdmin 
+              onClose={() => setShowExhibitorAdmin(false)}
+              onOpenEventAdmin={(eventId: string) => {
+                setSelectedEventId(eventId);
+                setShowEventAdminPortal(true);
+                setShowExhibitorAdmin(false);
+              }}
+            />
+          </Suspense>
           <div style={{
             position: 'fixed',
             top: 20,
@@ -11811,18 +11839,44 @@ Monterhyra Beställningssystem
 
       {/* ExhibitorPortal view - Utställarens egna sida */}
       {showExhibitorPortal && (
-        <ExhibitorPortal onClose={() => setShowExhibitorPortal(false)} />
+        <Suspense fallback={
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+            fontSize: '18px',
+            color: '#666'
+          }}>
+            Laddar utställarportal...
+          </div>
+        }>
+          <ExhibitorPortal onClose={() => setShowExhibitorPortal(false)} />
+        </Suspense>
       )}
 
       {/* EventAdminPortal - Mässarrangörens admin */}
       {showEventAdminPortal && selectedEventId && (
-        <EventAdminPortal 
-          eventId={selectedEventId} 
-          onClose={() => {
-            setShowEventAdminPortal(false);
-            setSelectedEventId('');
-          }} 
-        />
+        <Suspense fallback={
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+            fontSize: '18px',
+            color: '#666'
+          }}>
+            Laddar eventadmin...
+          </div>
+        }>
+          <EventAdminPortal 
+            eventId={selectedEventId} 
+            onClose={() => {
+              setShowEventAdminPortal(false);
+              setSelectedEventId('');
+            }} 
+          />
+        </Suspense>
       )}
 
       {/* Admin-knapp längst ner */}

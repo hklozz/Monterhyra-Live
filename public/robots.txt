@@ -1,0 +1,17 @@
+# monterhyra.com - Robots.txt
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://monterhyra.com/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
+
+# Disallow admin areas
+Disallow: /admin
+Disallow: /api
+
+# Allow important pages
+Allow: /
+Allow: /app.html
