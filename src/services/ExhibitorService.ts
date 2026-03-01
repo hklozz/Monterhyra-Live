@@ -32,6 +32,8 @@ export interface Exhibitor {
   email: string;
   company?: string;
   phone?: string;
+  username?: string;
+  password?: string;
   boothData?: any;
   status: string;
   createdAt: string;
@@ -206,8 +208,14 @@ export class ExhibitorService {
       company?: string;
       phone?: string;
       boothData?: any;
+      username?: string;
+      password?: string;
     }
   ): Promise<Exhibitor> {
+    // Generera username och password om de inte finns
+    const username = options?.username || email.split('@')[0].toLowerCase();
+    const password = options?.password || Math.random().toString(36).substring(2, 10);
+
     const { data, error } = await supabase
       .from('exhibitors')
       .insert({
@@ -217,6 +225,8 @@ export class ExhibitorService {
         company: options?.company || null,
         phone: options?.phone || null,
         booth_data: options?.boothData || null,
+        username,
+        password,
         status: 'pending'
       })
       .select()
@@ -227,7 +237,7 @@ export class ExhibitorService {
       throw new Error(`Kunde inte skapa exhibitor: ${error.message}`);
     }
 
-    console.log('✅ Exhibitor skapad:', data.id);
+    console.log('✅ Exhibitor skapad:', data.id, 'Username:', username, 'Password:', password);
 
     return {
       id: data.id,
@@ -236,6 +246,8 @@ export class ExhibitorService {
       email: data.email,
       company: data.company,
       phone: data.phone,
+      username: data.username,
+      password: data.password,
       boothData: data.booth_data,
       status: data.status,
       createdAt: data.created_at
@@ -367,6 +379,84 @@ export class ExhibitorService {
     }
 
     console.log('✅ Exhibitor borttagen:', exhibitorId);
+  }
+
+  /**
+   * Uppdatera exhibitor credentials (username/password)
+   */
+  static async updateExhibitorCredentials(
+    exhibitorId: string,
+    username?: string,
+    password?: string
+  ): Promise<void> {
+    const updates: any = {};
+    if (username) updates.username = username;
+    if (password) updates.password = password;
+
+    const { error } = await supabase
+      .from('exhibitors')
+      .update(updates)
+      .eq('id', exhibitorId);
+
+    if (error) {
+      console.error('❌ Fel vid uppdatering av credentials:', error);
+      throw new Error(`Kunde inte uppdatera credentials: ${error.message}`);
+    }
+
+    console.log('✅ Credentials uppdaterade för exhibitor:', exhibitorId);
+  }
+
+  /**
+   * Verifiera exhibitor login
+   */
+  static async verifyExhibitorLogin(username: string, password: string): Promise<Exhibitor | null> {
+    const { data, error } = await supabase
+      .from('exhibitors')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password)
+      .single();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return {
+      id: data.id,
+      eventId: data.event_id,
+      name: data.name,
+      email: data.email,
+      company: data.company,
+      phone: data.phone,
+      username: data.username,
+      password: data.password,
+      boothData: data.booth_data,
+      status: data.status,
+      createdAt: data.created_at
+    };
+  }
+
+  /**
+   * Generera länk för exhibitor med förfyllda mått
+   */
+  static generateExhibitorLink(
+    exhibitor: Exhibitor,
+    baseUrl: string = 'https://monterhyra.com'
+  ): string {
+    const boothData = exhibitor.boothData || {};
+    const width = boothData.width || 3;
+    const depth = boothData.depth || 3;
+    const height = boothData.height || 2.5;
+
+    const params = new URLSearchParams({
+      eventId: exhibitor.eventId,
+      exhibitorId: exhibitor.id,
+      width: width.toString(),
+      depth: depth.toString(),
+      height: height.toString()
+    });
+
+    return `${baseUrl}/app.html?${params.toString()}`;
   }
 
   /**
