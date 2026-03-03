@@ -868,6 +868,19 @@
             }
         }
     </style>
+    
+    <!-- Redirect to app.html if URL parameters exist (exhibitor links) -->
+    <script>
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            // Check if this is an exhibitor link (has any of these parameters)
+            if (urlParams.has('eventId') || urlParams.has('exhibitorId') || urlParams.has('invite') || 
+                urlParams.has('width') || urlParams.has('depth') || urlParams.has('height')) {
+                // Redirect to app.html with all parameters preserved
+                window.location.href = '/app.html' + window.location.search;
+            }
+        })();
+    </script>
 </head>
 <body>
     <!-- Hero Section -->

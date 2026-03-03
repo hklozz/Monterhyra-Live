@@ -620,7 +620,8 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                     <th style={tableHeaderStyle}>Företag</th>
                     <th style={tableHeaderStyle}>Kontakt</th>
                     <th style={tableHeaderStyle}>Email</th>
-                    <th style={tableHeaderStyle}>Telefon</th>
+                    <th style={tableHeaderStyle}>Username</th>
+                    <th style={tableHeaderStyle}>Lösenord</th>
                     <th style={tableHeaderStyle}>Monterstorlek</th>
                     <th style={tableHeaderStyle}>Status</th>
                     <th style={tableHeaderStyle}>Åtgärder</th>
@@ -640,7 +641,10 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                   ) : (
                     filteredExhibitors.map((exhibitor) => {
                       const hasOrder = orders.some(o => o.exhibitorId === exhibitor.id);
-                      const exhibitorOrder = orders.find(o => o.exhibitorId === exhibitor.id);
+                      const boothSize = exhibitor.boothData ? `${exhibitor.boothData.width || 3}x${exhibitor.boothData.depth || 3}m (${exhibitor.boothData.height || 2.5}m)` : '3x3m (2.5m)';
+                      // Använd rätt bas-URL beroende på miljö
+                      const baseUrl = window.location.origin;
+                      const exhibitorLink = ExhibitorService.generateExhibitorLink(exhibitor, baseUrl);
                       
                       return (
                         <tr key={exhibitor.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
@@ -653,19 +657,24 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                               {exhibitor.email}
                             </a>
                           </td>
-                          <td style={tableCellStyle}>{exhibitor.phone || '-'}</td>
                           <td style={tableCellStyle}>
-                            {exhibitorOrder ? (
-                              <div>
-                                <div style={{ fontSize: '14px', fontWeight: '600' }}>
-                                  {exhibitorOrder.orderNumber}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#999' }}>
-                                  {formatCurrency(exhibitorOrder.pricingData?.totalPrice || exhibitorOrder.boothData?.totalPrice || 0)}
-                                </div>
-                              </div>
-                            ) : '-'}
+                            <div style={{ fontFamily: 'monospace', fontSize: '13px', color: '#059669' }}>
+                              {exhibitor.username || '-'}
+                            </div>
                           </td>
+                          <td style={tableCellStyle}>
+                            <div style={{ 
+                              fontFamily: 'monospace', 
+                              fontSize: '13px',
+                              background: '#f0fdf4',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              display: 'inline-block'
+                            }}>
+                              {exhibitor.password || '-'}
+                            </div>
+                          </td>
+                          <td style={tableCellStyle}>{boothSize}</td>
                           <td style={tableCellStyle}>
                             <span style={{
                               padding: '4px 12px',
@@ -679,25 +688,56 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                             </span>
                           </td>
                           <td style={tableCellStyle}>
-                            <button
-                              onClick={() => {
-                                const inviteUrl = `https://monterhyra-live.vercel.app/app.html?exhibitor=${exhibitor.id}`;
-                                navigator.clipboard.writeText(inviteUrl);
-                                alert('Inbjudningslänk kopierad!');
-                              }}
-                              style={{
-                                padding: '6px 12px',
-                                background: '#667eea',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                fontWeight: '600'
-                              }}
-                            >
-                              📋 Kopiera länk
-                            </button>
+                            <div style={{ display: 'flex', gap: '4px', flexDirection: 'column' }}>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(exhibitorLink);
+                                  alert(`Länk kopierad!\n\nUsername: ${exhibitor.username}\nLösenord: ${exhibitor.password}`);
+                                }}
+                                style={{
+                                  padding: '6px 12px',
+                                  background: '#667eea',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  fontWeight: '600'
+                                }}
+                              >
+                                📋 Kopiera länk
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const newUsername = prompt('Nytt username:', exhibitor.username);
+                                  const newPassword = prompt('Nytt lösenord:', exhibitor.password);
+                                  if (newUsername || newPassword) {
+                                    ExhibitorService.updateExhibitorCredentials(
+                                      exhibitor.id,
+                                      newUsername || undefined,
+                                      newPassword || undefined
+                                    ).then(() => {
+                                      alert('Credentials uppdaterade!');
+                                      loadEventData();
+                                    }).catch(err => {
+                                      alert('Fel: ' + err.message);
+                                    });
+                                  }
+                                }}
+                                style={{
+                                  padding: '6px 12px',
+                                  background: '#f59e0b',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  fontWeight: '600'
+                                }}
+                              >
+                                🔐 Ändra login
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );

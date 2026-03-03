@@ -2719,6 +2719,52 @@ export default function App() {
   const [exhibitorData, setExhibitorData] = useState<any>(null);
   const [exhibitorBranding, setExhibitorBranding] = useState<any>(null);
   
+  // 🔗 URL Parameters - Read exhibitor link parameters and pre-fill booth dimensions
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('eventId');
+    const exhibitorId = urlParams.get('exhibitorId');
+    const invite = urlParams.get('invite'); // Old format support
+    const width = urlParams.get('width');
+    const depth = urlParams.get('depth');
+    const height = urlParams.get('height');
+    
+    // Support both new format (eventId + exhibitorId) and old format (invite)
+    if ((eventId && exhibitorId) || invite) {
+      console.log('🔗 Exhibitor link detected:', { eventId, exhibitorId, invite, width, depth, height });
+      if (eventId) setSelectedEventId(eventId);
+      if (invite || exhibitorId) setIsExhibitorMode(true);
+      
+      // Pre-fill booth dimensions if provided
+      if (width) {
+        const widthNum = parseFloat(width);
+        if (!isNaN(widthNum) && widthNum > 0) {
+          setCustomFloorWidth(widthNum);
+          console.log(`📏 Pre-filled width: ${widthNum}m`);
+        }
+      }
+      
+      if (depth) {
+        const depthNum = parseFloat(depth);
+        if (!isNaN(depthNum) && depthNum > 0) {
+          setCustomFloorDepth(depthNum);
+          console.log(`📏 Pre-filled depth: ${depthNum}m`);
+        }
+      }
+      
+      if (height) {
+        const heightNum = parseFloat(height);
+        if (!isNaN(heightNum) && heightNum > 0) {
+          setWallHeight(heightNum);
+          console.log(`📏 Pre-filled height: ${heightNum}m`);
+        }
+      }
+      
+      // TODO: Add exhibitor authentication here
+      // For now, just set exhibitor mode to show booth configurator
+    }
+  }, []); // Run only once on mount
+  
   // Check for exhibitor invite link on component mount
   // Collapsed state for live packlists - standardmässigt minimerade
   const [floatingPacklistCollapsed, setFloatingPacklistCollapsed] = useState(true);

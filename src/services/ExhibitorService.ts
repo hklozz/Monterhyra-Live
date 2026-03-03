@@ -456,6 +456,7 @@ export class ExhibitorService {
       height: height.toString()
     });
 
+    // Använd alltid /app.html för monterredigeraren
     return `${baseUrl}/app.html?${params.toString()}`;
   }
 
