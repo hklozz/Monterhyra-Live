@@ -359,15 +359,6 @@ const AdminPortal: React.FC<{
     );
   };
 
-  // Kolla om admin redan är inloggad
-  React.useEffect(() => {
-    const adminSession = localStorage.getItem('adminSession');
-    if (adminSession === 'monterhyra2026') {
-      setIsLoggedIn(true);
-      loadOrders();
-    }
-  }, []);
-
   const loadOrders = () => {
     const savedOrders = localStorage.getItem('adminOrders');
     if (savedOrders) {
@@ -383,6 +374,15 @@ const AdminPortal: React.FC<{
       }
     }
   };
+
+  // Kolla om admin redan är inloggad
+  React.useEffect(() => {
+    const adminSession = localStorage.getItem('adminSession');
+    if (adminSession === 'monterhyra2026') {
+      setIsLoggedIn(true);
+      loadOrders();
+    }
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
