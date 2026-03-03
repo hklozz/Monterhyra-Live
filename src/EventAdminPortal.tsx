@@ -73,7 +73,7 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
     try {
       const eventData = await ExhibitorService.getEvent(eventId);
       if (!eventData) {
-        setLoginError('Event hittades inte');
+        setLoginError('Event hittades inte i databasen. Detta event måste skapas i Supabase först.');
         return;
       }
 
@@ -89,9 +89,9 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
         setLoginError('Felaktigt lösenord');
         setPasswordInput('');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      setLoginError('Ett fel uppstod vid inloggning');
+      setLoginError('Fel vid inloggning: ' + (error.message || 'Okänt fel'));
     }
   };
 
@@ -380,20 +380,39 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
           background: 'white',
           padding: '40px',
           borderRadius: '12px',
-          textAlign: 'center'
+          textAlign: 'center',
+          maxWidth: '500px'
         }}>
-          <h2>Event hittades inte</h2>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}>⚠️</div>
+          <h2 style={{ margin: '0 0 16px 0' }}>Event hittades inte</h2>
+          <p style={{ color: '#666', marginBottom: '24px' }}>
+            Detta event finns inte i Supabase-databasen. För att använda EventAdminPortal måste du först skapa eventet i Supabase.
+          </p>
+          <p style={{ 
+            background: '#f8f9fa', 
+            padding: '16px', 
+            borderRadius: '8px', 
+            fontSize: '13px',
+            color: '#666',
+            marginBottom: '24px',
+            textAlign: 'left'
+          }}>
+            <strong>Tips:</strong> Om du har event i "Exhibitor Manager" (gamla systemet med localStorage), 
+            behöver du antingen:<br/>
+            1. Skapa ett nytt event direkt i Supabase, eller<br/>
+            2. Migrera dina befintliga events till Supabase
+          </p>
           <button onClick={onClose} style={{
-            marginTop: '20px',
             padding: '12px 24px',
-            background: '#e74c3c',
+            background: '#667eea',
             color: 'white',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            fontSize: '14px'
           }}>
-            Stäng
+            ← Tillbaka
           </button>
         </div>
       </div>

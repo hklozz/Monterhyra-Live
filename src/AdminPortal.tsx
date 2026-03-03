@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { buildSceneFromOrderData } from './buildSceneFromOrderData';
 import { exportSceneToGLTF, exportSceneToThreeJSON } from './exportSceneToGLTF';
 import { OrderManager } from './OrderManager';
+import { ExhibitorService } from './services/ExhibitorService';
 import jsPDF from 'jspdf';
 
   // Rensa alla tryckfiler/ordrar
@@ -89,7 +90,10 @@ interface Order {
   printOnly?: boolean;
 }
 
-const AdminPortal: React.FC<{ onOpenExhibitorAdmin?: () => void }> = ({ onOpenExhibitorAdmin }) => {
+const AdminPortal: React.FC<{ 
+  onOpenExhibitorAdmin?: () => void;
+  onOpenEventAdmin?: (eventId: string) => void;
+}> = ({ onOpenExhibitorAdmin, onOpenEventAdmin }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -107,6 +111,36 @@ const AdminPortal: React.FC<{ onOpenExhibitorAdmin?: () => void }> = ({ onOpenEx
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedOrder, setEditedOrder] = useState<Order | null>(null);
+  
+  // Supabase Events state
+  const [showEventCreator, setShowEventCreator] = useState(false);
+  const [newEventName, setNewEventName] = useState('');
+  const [newEventPassword, setNewEventPassword] = useState('');
+  const [createdEvent, setCreatedEvent] = useState<any>(null);
+
+  const handleCreateSupabaseEvent = async () => {
+    if (!newEventName.trim()) {
+      alert('Ange eventnamn');
+      return;
+    }
+    
+    try {
+      const event = await ExhibitorService.createEvent(
+        newEventName,
+        undefined,
+        {
+          password: newEventPassword || undefined
+        }
+      );
+      
+      setCreatedEvent(event);
+      alert(`✅ Event skapat!\n\nEvent-ID: ${event.id}\nLösenord: ${event.password}\n\nDu kan nu öppna EventAdminPortal`);
+      setNewEventName('');
+      setNewEventPassword('');
+    } catch (error: any) {
+      alert('Fel: ' + error.message);
+    }
+  };
 
   // Generera och ladda ner en ny PDF för ordern (med bilder, pris, packlista, villkor)
   const generateOrderPDF = async () => {
@@ -989,6 +1023,7 @@ const AdminPortal: React.FC<{ onOpenExhibitorAdmin?: () => void }> = ({ onOpenEx
                 setSelectedOrder(null);
                 setIsEditing(false);
                 setEditedOrder(null);
+                setShowEventCreator(false);
               }}
               style={{
                 padding: '10px 20px',
@@ -1006,15 +1041,19 @@ const AdminPortal: React.FC<{ onOpenExhibitorAdmin?: () => void }> = ({ onOpenEx
             </button>
           </div>
 
-          {/* Right 50% - Mässa button */}
+          {/* Middle - Mässa button */}
           <div style={{
             flex: 1,
             display: 'flex',
-            justifyContent: 'flex-end',
-            paddingLeft: '10px'
+            justifyContent: 'center',
+            paddingLeft: '5px',
+            paddingRight: '5px'
           }}>
             <button
-              onClick={() => onOpenExhibitorAdmin?.()}
+              onClick={() => {
+                setShowEventCreator(false);
+                onOpenExhibitorAdmin?.();
+              }}
               style={{
                 padding: '10px 20px',
                 backgroundColor: '#27ae60',
@@ -1027,13 +1066,156 @@ const AdminPortal: React.FC<{ onOpenExhibitorAdmin?: () => void }> = ({ onOpenEx
                 width: '100%'
               }}
             >
-              🏢 Mässa
+              🏢 Mässa (Old)
+            </button>
+          </div>
+          
+          {/* Right - Supabase Events button */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            paddingLeft: '10px'
+          }}>
+            <button
+              onClick={() => {
+                setSelectedOrder(null);
+                setShowEventCreator(true);
+              }}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#9b59b6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '15px',
+                fontWeight: '600',
+                width: '100%'
+              }}
+            >
+              🗄️ Supabase Events
             </button>
           </div>
         </div>
 
+        {/* Supabase Event Creator */}
+        {showEventCreator && (
+          <div style={{
+            backgroundColor: 'white',
+            padding: '32px',
+            borderRadius: '12px',
+            marginBottom: '20px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <h2 style={{ marginTop: 0, marginBottom: '24px', fontSize: '24px', color: '#2c3e50' }}>
+              🗄️ Skapa Supabase Event
+            </h2>
+            
+            <div style={{ maxWidth: '600px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>
+                  Eventnamn *
+                </label>
+                <input
+                  type="text"
+                  value={newEventName}
+                  onChange={(e) => setNewEventName(e.target.value)}
+                  placeholder="Elmia 2026"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>
+                  Lösenord (valfritt - auto-genereras om tomt)
+                </label>
+                <input
+                  type="text"
+                  value={newEventPassword}
+                  onChange={(e) => setNewEventPassword(e.target.value)}
+                  placeholder="Lämna tom för auto-genererat"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              
+              <button
+                onClick={handleCreateSupabaseEvent}
+                style={{
+                  padding: '14px 28px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '16px',
+                  marginRight: '12px'
+                }}
+              >
+                ✓ Skapa Event
+              </button>
+              
+              {createdEvent && (
+                <>
+                  <button
+                    onClick={() => onOpenEventAdmin?.(createdEvent.id)}
+                    style={{
+                      padding: '14px 28px',
+                      background: '#2ecc71',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '16px'
+                    }}
+                  >
+                    🏢 Öppna EventAdminPortal
+                  </button>
+                  
+                  <div style={{
+                    marginTop: '24px',
+                    padding: '20px',
+                    background: '#f0fdf4',
+                    border: '2px solid #22c55e',
+                    borderRadius: '8px'
+                  }}>
+                    <h3 style={{ marginTop: 0, marginBottom: '12px', color: '#166534' }}>
+                      ✅ Event skapat!
+                    </h3>
+                    <p style={{ margin: '8px 0', fontFamily: 'monospace', fontSize: '13px' }}>
+                      <strong>Event-ID:</strong> {createdEvent.id}
+                    </p>
+                    <p style={{ margin: '8px 0', fontFamily: 'monospace', fontSize: '13px' }}>
+                      <strong>Namn:</strong> {createdEvent.name}
+                    </p>
+                    <p style={{ margin: '8px 0', fontFamily: 'monospace', fontSize: '13px' }}>
+                      <strong>Lösenord:</strong> <span style={{ background: '#fef3c7', padding: '4px 8px', borderRadius: '4px' }}>{createdEvent.password}</span>
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Order details header */}
-        {selectedOrder && (
+        {selectedOrder && !showEventCreator && (
           <div style={{
             backgroundColor: 'white',
             padding: '16px 20px',

@@ -11772,10 +11772,17 @@ Monterhyra Beställningssystem
               Laddar admin...
             </div>
           }>
-            <AdminPortal onOpenExhibitorAdmin={() => {
-              setShowAdminPortal(false);
-              setShowExhibitorAdmin(true);
-            }} />
+            <AdminPortal 
+              onOpenExhibitorAdmin={() => {
+                setShowAdminPortal(false);
+                setShowExhibitorAdmin(true);
+              }}
+              onOpenEventAdmin={(eventId) => {
+                setShowAdminPortal(false);
+                setSelectedEventId(eventId);
+                setShowEventAdminPortal(true);
+              }}
+            />
           </Suspense>
           <div style={{
             position: 'fixed',
