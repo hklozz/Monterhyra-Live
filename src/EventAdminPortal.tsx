@@ -152,12 +152,18 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
 
       // Ladda orders från utställare i detta event
       const exhibitorIds = eventExhibitors.map(e => e.id);
-      const allOrders = await OrderService.getAllOrders();
-      
-      // Filtrera orders som tillhör detta events utställare
-      const eventOrders = allOrders.filter(order => 
-        order.exhibitorId && exhibitorIds.includes(order.exhibitorId)
-      );
+      // Hämta orders direkt via event_id från Supabase
+      let eventOrders: Order[] = [];
+      try {
+        eventOrders = await OrderService.getOrdersByEvent(eventId);
+      } catch (e) {
+        // Fallback: hämta alla och filtrera på exhibitorId
+        const allOrders = await OrderService.getAllOrders();
+        eventOrders = allOrders.filter(order =>
+          (order.eventId && order.eventId === eventId) ||
+          (order.exhibitorId && exhibitorIds.includes(order.exhibitorId))
+        );
+      }
       setOrders(eventOrders);
 
       // Beräkna statistik

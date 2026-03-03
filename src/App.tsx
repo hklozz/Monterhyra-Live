@@ -3078,6 +3078,45 @@ export default function App() {
       return; // Don't process invite token if eventAdmin is present
     }
     
+    // Ny Supabase-baserad exhibitor-länk (?exhibitorId=UUID&eventId=UUID)
+    const exhibitorIdParam = params.get('exhibitorId');
+    const eventIdParam = params.get('eventId');
+    if (exhibitorIdParam && eventIdParam) {
+      console.log('🔍 Supabase exhibitor link detected:', exhibitorIdParam);
+      import('./services/ExhibitorService').then(({ ExhibitorService }) => {
+        ExhibitorService.getExhibitor(exhibitorIdParam).then(exhibitor => {
+          if (exhibitor) {
+            const boothData = exhibitor.boothData || {};
+            const width = boothData.width || 3;
+            const depth = boothData.depth || 3;
+            const height = boothData.height || 2.5;
+            setIsExhibitorMode(true);
+            setExhibitorData({
+              id: exhibitor.id,
+              eventId: exhibitor.eventId,
+              companyName: exhibitor.company || exhibitor.name,
+              contactPerson: exhibitor.name,
+              email: exhibitor.email,
+              monterDimensions: { width, depth, height }
+            });
+            setCustomFloorWidth(width);
+            setCustomFloorDepth(depth);
+            setWallHeight(height);
+            setWallShape('straight');
+            const matchingFloorIndex = FLOOR_SIZES.findIndex(
+              floor => floor.width === width && floor.depth === depth
+            );
+            setFloorIndex(matchingFloorIndex !== -1 ? matchingFloorIndex : FLOOR_SIZES.length - 1);
+            setShowExhibitorPortal(false);
+            console.log('✅ Exhibitor loaded from Supabase:', exhibitor.name);
+          } else {
+            console.warn('Exhibitor not found in Supabase:', exhibitorIdParam);
+          }
+        });
+      });
+      return;
+    }
+
     if (inviteToken) {
       console.log('🔍 Invite token detected:', inviteToken);
       
@@ -7205,7 +7244,9 @@ Monterhyra Beställningssystem
                               
                               const savedOrder = await OrderService.createOrder(
                                 customerInfo,
-                                orderData
+                                orderData,
+                                exhibitorData?.id || undefined,
+                                exhibitorData?.eventId || undefined
                               );
                               
                               console.log('✅ Beställning sparad i Supabase med ID:', savedOrder.id, 'Ordernummer:', savedOrder.orderNumber);
