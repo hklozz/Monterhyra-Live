@@ -12,6 +12,18 @@ export interface EventPricing {
   customPrices?: Record<string, number>;
 }
 
+export interface WhiteLabel {
+  logoUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  companyName?: string;
+  customDomain?: string;
+  favicon?: string;
+  footerText?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
 export interface Event {
   id: string;
   name: string;
@@ -22,6 +34,7 @@ export interface Event {
   password?: string;
   branding?: EventBranding;
   pricing?: EventPricing;
+  whiteLabel?: WhiteLabel;
   createdAt: string;
 }
 
@@ -53,6 +66,7 @@ export class ExhibitorService {
       password?: string;
       branding?: EventBranding;
       pricing?: EventPricing;
+      whiteLabel?: WhiteLabel;
     }
   ): Promise<Event> {
     // Auto-generera lösenord om inget angivet
@@ -68,7 +82,8 @@ export class ExhibitorService {
         location: options?.location || null,
         password: eventPassword,
         branding: options?.branding || null,
-        pricing: options?.pricing || null
+        pricing: options?.pricing || null,
+        white_label: options?.whiteLabel || null
       })
       .select()
       .single();
@@ -90,6 +105,7 @@ export class ExhibitorService {
       password: data.password,
       branding: data.branding,
       pricing: data.pricing,
+      whiteLabel: data.white_label,
       createdAt: data.created_at
     };
   }
@@ -118,6 +134,7 @@ export class ExhibitorService {
       password: row.password,
       branding: row.branding,
       pricing: row.pricing,
+      whiteLabel: row.white_label,
       createdAt: row.created_at
     }));
   }
@@ -150,6 +167,7 @@ export class ExhibitorService {
       password: data.password,
       branding: data.branding,
       pricing: data.pricing,
+      whiteLabel: data.white_label,
       createdAt: data.created_at
     };
   }
