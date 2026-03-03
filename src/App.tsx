@@ -3109,6 +3109,29 @@ export default function App() {
             setFloorIndex(matchingFloorIndex !== -1 ? matchingFloorIndex : FLOOR_SIZES.length - 1);
             setShowExhibitorPortal(false);
             console.log('✅ Exhibitor loaded from Supabase:', exhibitor.name);
+
+            // Ladda white label-branding från event
+            ExhibitorService.getEvent(exhibitor.eventId).then(eventData => {
+              if (eventData?.whiteLabel) {
+                const wl = eventData.whiteLabel;
+                setExhibitorBranding({
+                  primaryColor: wl.primaryColor || '#3498db',
+                  secondaryColor: wl.secondaryColor || '#2980b9',
+                  logo: wl.logoUrl || null,
+                  companyName: wl.companyName || eventData.name || '',
+                  contactEmail: wl.contactEmail || '',
+                  contactPhone: wl.contactPhone || '',
+                  footerText: wl.footerText || ''
+                });
+                if (wl.primaryColor) {
+                  document.documentElement.style.setProperty('--exhibitor-primary', wl.primaryColor);
+                }
+                if (wl.secondaryColor) {
+                  document.documentElement.style.setProperty('--exhibitor-secondary', wl.secondaryColor);
+                }
+                console.log('✅ White label branding laddad:', wl.companyName);
+              }
+            }).catch(e => console.warn('Kunde inte ladda event branding:', e));
           } else {
             console.warn('Exhibitor not found in Supabase:', exhibitorIdParam);
           }
