@@ -5,6 +5,8 @@ import { exportSceneToGLTF, exportSceneToThreeJSON } from './exportSceneToGLTF';
 import { OrderManager } from './OrderManager';
 import { ExhibitorService } from './services/ExhibitorService';
 import { OrderService } from './services/OrderService';
+import { PrintFileService } from './services/PrintFileService';
+import type { PrintFile } from './services/PrintFileService';
 import jsPDF from 'jspdf';
 
   // Rensa alla tryckfiler/ordrar
@@ -98,6 +100,7 @@ const AdminPortal: React.FC<{
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
+  const [printFiles, setPrintFiles] = useState<PrintFile[]>([]);
 
   // Filtrera ut autosparade tryckfiler från orderlistan
   const realOrders = orders.filter(order => {
@@ -362,9 +365,8 @@ const AdminPortal: React.FC<{
 
   const loadOrders = async () => {
     try {
-      // Hämta från Supabase
+      // Hämta beställningar från Supabase
       const supabaseOrders = await OrderService.getAllOrders();
-      // Konvertera Supabase-format till lokalt format
       const converted = supabaseOrders.map(o => ({
         id: o.id,
         timestamp: o.createdAt,
@@ -391,6 +393,11 @@ const AdminPortal: React.FC<{
       }));
       setOrders(converted);
       console.log('✅ Laddade', converted.length, 'beställningar från Supabase');
+
+      // Hämta tryckfiler från Supabase
+      const fetchedPrintFiles = await PrintFileService.getAllPrintFiles();
+      setPrintFiles(fetchedPrintFiles);
+      console.log('✅ Laddade', fetchedPrintFiles.length, 'tryckfiler från Supabase');
     } catch (err) {
       console.error('❌ Fel vid hämtning från Supabase, faller tillbaka till localStorage:', err);
       // Fallback till localStorage
@@ -1563,93 +1570,78 @@ const AdminPortal: React.FC<{
                 Här visas alla PDF-tryckfiler som är kopplade till ordrar. Klicka för att ladda ner.
               </div>
               <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                {(() => {
-                  // Hämta alla riktiga order-id:n
-                  const realOrderIds = new Set(realOrders.map(o => o.id));
-                  return orders.filter(order => {
-                    // Visa tryckfiler om deras id INTE finns bland riktiga ordrar
-                    const f = order.files;
-                    const isPrintFile = order.printOnly === true && !realOrderIds.has(order.id);
-                    return isPrintFile && (f && ((f.zipFile && f.zipFile.startsWith('data:application/pdf')) || (!f.zipFile && f.storedInIDB)));
-                  });
-                })().length === 0 ? (
+                {printFiles.length === 0 ? (
                   <div style={{ color: '#aaa', fontStyle: 'italic' }}>Inga tryckfiler uppladdade ännu.</div>
                 ) : (
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    {(() => {
-                      const realOrderIds = new Set(realOrders.map(o => o.id));
-                      return orders.filter(order => {
-                        const f = order.files;
-                        const isPrintFile = order.printOnly === true && !realOrderIds.has(order.id);
-                        return isPrintFile && (f && ((f.zipFile && f.zipFile.startsWith('data:application/pdf')) || (!f.zipFile && f.storedInIDB)));
-                      }).map(order => {
-                        const f = order.files;
-                        const hasPDF = f.zipFile && f.zipFile.startsWith('data:application/pdf');
-                        return (
-                          <li key={order.id} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            marginBottom: '10px',
-                            borderBottom: '1px solid #f0f0f0',
-                            paddingBottom: '8px'
-                          }}>
-                            <span style={{ fontWeight: 600, color: '#2c3e50', minWidth: 80 }}>#{order.id}</span>
-                            <input
-                              type="text"
-                              value={order.namn || order.customerInfo?.name || ''}
-                              onChange={e => {
-                                const updatedOrders = orders.map(o => o.id === order.id ? { ...o, namn: e.target.value } : o);
-                                setOrders(updatedOrders);
-                                localStorage.setItem('adminOrders', JSON.stringify(updatedOrders));
-                              }}
-                              style={{ flex: 1, minWidth: 0, padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                              placeholder="Namn på tryckfil/order"
-                            />
-                            {hasPDF ? (
-                              <a
-                                href={f.zipFile}
-                                download={`Tryckfil_${order.id}.pdf`}
-                                style={{
-                                  padding: '6px 16px',
-                                  backgroundColor: '#e74c3c',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '14px',
-                                  fontWeight: '600',
-                                  textDecoration: 'none'
-                                }}
-                              >
-                                Ladda ner PDF
-                              </a>
-                            ) : (
-                              <>
-                                <span style={{ color: '#e67e22', fontWeight: 500, marginRight: 8 }}>
-                                  PDF endast i IDB (för stor för localStorage)
-                                </span>
-                                <button
-                                  style={{
-                                    padding: '6px 16px',
-                                    backgroundColor: '#e67e22',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '14px',
-                                    fontWeight: '600',
-                                  }}
-                                  onClick={() => downloadPDFfromIDB(order.id)}
-                                >
-                                  Ladda ner från IDB
-                                </button>
-                              </>
-                            )}
-                          </li>
-                        );
-                      });
-                    })()}
+                    {printFiles.map(pf => (
+                      <li key={pf.id} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginBottom: '10px',
+                        borderBottom: '1px solid #f0f0f0',
+                        paddingBottom: '8px'
+                      }}>
+                        <span style={{ fontSize: '20px' }}>
+                          {pf.fileType === 'wall' ? '🖼️' : pf.fileType === 'storage' ? '📦' : '📄'}
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, color: '#2c3e50', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {pf.label || pf.fileName}
+                          </div>
+                          {pf.customerName && (
+                            <div style={{ fontSize: '12px', color: '#7f8c8d' }}>{pf.customerName}</div>
+                          )}
+                          <div style={{ fontSize: '11px', color: '#bdc3c7' }}>
+                            {new Date(pf.createdAt).toLocaleDateString('sv-SE')}
+                          </div>
+                        </div>
+                        <a
+                          href={pf.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download={pf.fileName}
+                          style={{
+                            padding: '6px 16px',
+                            backgroundColor: '#e74c3c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            textDecoration: 'none',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          ⬇️ Ladda ner
+                        </a>
+                        <button
+                          onClick={async () => {
+                            if (window.confirm('Ta bort denna tryckfil?')) {
+                              try {
+                                await PrintFileService.deletePrintFile(pf.id, pf.filePath);
+                                setPrintFiles(prev => prev.filter(f => f.id !== pf.id));
+                              } catch (e) {
+                                alert('Kunde inte ta bort tryckfil');
+                              }
+                            }
+                          }}
+                          style={{
+                            padding: '6px 10px',
+                            backgroundColor: '#95a5a6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '13px'
+                          }}
+                        >
+                          🗑️
+                        </button>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>

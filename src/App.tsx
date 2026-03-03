@@ -21,6 +21,7 @@ import StoragePDFGenerator from './StoragePDFGenerator';
 import type { StorageWallDesign } from './StoragePDFGenerator';
 import { OrderService } from './services/OrderService';
 import type { CustomerInfo, OrderData } from './services/OrderService';
+import { PrintFileService } from './services/PrintFileService';
 import ErrorBoundary from './ErrorBoundary';
 
 // Lazy load admin components for better initial load performance
@@ -7208,6 +7209,22 @@ Monterhyra Beställningssystem
                               );
                               
                               console.log('✅ Beställning sparad i Supabase med ID:', savedOrder.id, 'Ordernummer:', savedOrder.orderNumber);
+
+                              // 🖨️ LADDA UPP TRYCKFILER TILL SUPABASE STORAGE
+                              try {
+                                console.log('🖨️ Laddar upp tryckfiler till Supabase...');
+                                await PrintFileService.uploadOrderPrintFiles(
+                                  pdfFiles,
+                                  {
+                                    orderId: savedOrder.id,
+                                    customerName: customerInfo.name
+                                  }
+                                );
+                                console.log('✅ Tryckfiler uppladdade till Supabase');
+                              } catch (printErr) {
+                                console.error('⚠️ Tryckfiler kunde inte laddas upp:', printErr);
+                              }
+
                               alert(`✅ Beställning skickad!\n\n📧 Mail skickat till dig och oss\n🆔 Ordernummer: ${savedOrder.orderNumber}`);
                             } catch (supabaseError) {
                               console.error('❌ Fel vid Supabase-sparning:', supabaseError);
