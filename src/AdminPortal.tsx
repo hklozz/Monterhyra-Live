@@ -1821,7 +1821,7 @@ const AdminPortal: React.FC<{
               {!isEditing ? (
                 <>
                   <button
-                    onClick={() => startEditing(selectedOrder)}
+                    onClick={() => startEditing(selectedOrder!)}
                     style={{
                       padding: '10px 20px',
                       backgroundColor: '#f39c12',
@@ -1851,7 +1851,7 @@ const AdminPortal: React.FC<{
                     � Ladda ner monter
                   </button>
                   <button
-                    onClick={() => generateFollowupPDF(selectedOrder)}
+                    onClick={() => generateFollowupPDF(selectedOrder!)}
                     style={{
                       padding: '10px 20px',
                       backgroundColor: '#3498db',
@@ -1883,7 +1883,7 @@ const AdminPortal: React.FC<{
                     ➕ Ny knapp
                   </button>
                   <button
-                    onClick={() => createTrelloCard(selectedOrder)}
+                    onClick={() => createTrelloCard(selectedOrder!)}
                     style={{
                       padding: '10px 20px',
                       backgroundColor: '#0079bf',
