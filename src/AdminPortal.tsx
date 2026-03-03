@@ -9,12 +9,23 @@ import { PrintFileService } from './services/PrintFileService';
 import type { PrintFile } from './services/PrintFileService';
 import jsPDF from 'jspdf';
 
-  // Rensa alla tryckfiler/ordrar
-  const clearAllPrintFiles = () => {
-    if (window.confirm('Är du säker på att du vill rensa ALLA tryckfiler? Detta går inte att ångra.')) {
-      localStorage.removeItem('adminOrders');
-  // setOrders is not defined here, remove or define if needed
+  // Rensa alla tryckfiler – raderar från Supabase Storage + DB
+  const clearAllPrintFiles = async (
+    printFilesState: import('./services/PrintFileService').PrintFile[],
+    setPrintFilesState: React.Dispatch<React.SetStateAction<import('./services/PrintFileService').PrintFile[]>>
+  ) => {
+    if (!window.confirm('Är du säker på att du vill rensa ALLA tryckfiler? Detta går inte att ångra.')) return;
+    let failed = 0;
+    for (const pf of printFilesState) {
+      try {
+        await PrintFileService.deletePrintFile(pf.id, pf.filePath);
+      } catch (e) {
+        failed++;
+        console.warn('Kunde inte radera tryckfil', pf.id, e);
+      }
     }
+    setPrintFilesState([]);
+    if (failed > 0) alert(`${failed} tryckfil(er) kunde inte raderas. Övriga borttagna.`);
   };
 
 // ...existing imports at the top of the file...
@@ -431,14 +442,28 @@ const AdminPortal: React.FC<{
     }
   };
 
-  const deleteOrder = (orderId: string) => {
-    if (window.confirm('Är du säker på att du vill ta bort denna beställning?')) {
-      const updatedOrders = orders.filter(order => order.id !== orderId);
-      setOrders(updatedOrders);
-      localStorage.setItem('adminOrders', JSON.stringify(updatedOrders));
-      if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder(null);
+  const deleteOrder = async (orderId: string) => {
+    if (!window.confirm('Är du säker på att du vill ta bort denna beställning?\n\nDetta tar även bort alla kopplade tryckfiler. Det går inte att ångra.')) return;
+    try {
+      // 1. Radera kopplade tryckfiler från Storage + DB
+      const linkedFiles = printFiles.filter(pf => pf.orderId === orderId);
+      for (const pf of linkedFiles) {
+        try {
+          await PrintFileService.deletePrintFile(pf.id, pf.filePath);
+        } catch (e) {
+          console.warn('Kunde inte radera tryckfil', pf.id, e);
+        }
       }
+      // 2. Radera order från Supabase
+      await OrderService.deleteOrder(orderId);
+      // 3. Uppdatera lokalt state
+      setOrders(prev => prev.filter(o => o.id !== orderId));
+      setPrintFiles(prev => prev.filter(pf => pf.orderId !== orderId));
+      localStorage.setItem('adminOrders', JSON.stringify(orders.filter(o => o.id !== orderId)));
+      if (selectedOrder && selectedOrder.id === orderId) setSelectedOrder(null);
+    } catch (err: any) {
+      console.error('Fel vid borttagning:', err);
+      alert('Fel vid borttagning: ' + err.message);
     }
   };
 
@@ -1678,7 +1703,7 @@ const AdminPortal: React.FC<{
                     Uppdatera
                   </button>
                   <button
-                    onClick={clearAllPrintFiles}
+                    onClick={() => clearAllPrintFiles(printFiles, setPrintFiles)}
                     style={{
                       padding: '6px 16px',
                       backgroundColor: '#e74c3c',
