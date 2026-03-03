@@ -99,6 +99,7 @@ const AdminPortal: React.FC<{
   const [newEventPassword, setNewEventPassword] = useState('');
   const [createdEvent, setCreatedEvent] = useState<any>(null);
   const [allEvents, setAllEvents] = useState<any[]>([]);
+  const [showStats, setShowStats] = useState(false);
 
   // Ladda alla events när EventCreator öppnas
   React.useEffect(() => {
@@ -1070,58 +1071,79 @@ const AdminPortal: React.FC<{
           alignItems: 'center',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
-          {/* Left 50% - Beställningar button */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'flex-start',
-            paddingRight: '10px'
-          }}>
+          {/* Left - Beställningar button */}
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start', paddingRight: '8px' }}>
             <button
               onClick={() => {
                 setSelectedOrder(null);
                 setIsEditing(false);
                 setEditedOrder(null);
                 setShowEventCreator(false);
+                setShowStats(false);
               }}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#3498db',
+                backgroundColor: !showStats && !showEventCreator ? '#2980b9' : '#3498db',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '15px',
                 fontWeight: '600',
-                width: '100%'
+                width: '100%',
+                boxShadow: !showStats && !showEventCreator ? '0 2px 8px rgba(52,152,219,0.4)' : 'none'
               }}
             >
               📋 Beställningar
             </button>
           </div>
-          
-          {/* Right - Supabase Events button */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'flex-end',
-            paddingLeft: '10px'
-          }}>
+
+          {/* Middle - Statistik button */}
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', paddingLeft: '8px', paddingRight: '8px' }}>
             <button
               onClick={() => {
                 setSelectedOrder(null);
-                setShowEventCreator(true);
+                setIsEditing(false);
+                setEditedOrder(null);
+                setShowEventCreator(false);
+                setShowStats(true);
               }}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#9b59b6',
+                backgroundColor: showStats ? '#1a8a2e' : '#27ae60',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '15px',
                 fontWeight: '600',
-                width: '100%'
+                width: '100%',
+                boxShadow: showStats ? '0 2px 8px rgba(39,174,96,0.4)' : 'none'
+              }}
+            >
+              📊 Statistik
+            </button>
+          </div>
+
+          {/* Right - Supabase Events button */}
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', paddingLeft: '8px' }}>
+            <button
+              onClick={() => {
+                setSelectedOrder(null);
+                setShowEventCreator(true);
+                setShowStats(false);
+              }}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: showEventCreator ? '#7d3c98' : '#9b59b6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '15px',
+                fontWeight: '600',
+                width: '100%',
+                boxShadow: showEventCreator ? '0 2px 8px rgba(155,89,182,0.4)' : 'none'
               }}
             >
               🗄️ Supabase Events
@@ -1366,8 +1388,165 @@ const AdminPortal: React.FC<{
           </div>
         )}
 
+        {/* Stats Panel */}
+        {showStats && !showEventCreator && !selectedOrder && (() => {
+          const totalOrders = realOrders.length;
+          const totalRevenue = realOrders.reduce((sum, o) => sum + (o.orderData?.totalPrice || 0), 0);
+          const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+          const now = new Date();
+          const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          const thisMonthOrders = realOrders.filter(o => o.timestamp?.slice(0, 7) === thisMonthKey);
+          const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + (o.orderData?.totalPrice || 0), 0);
+          const monthlyData: Record<string, { orders: number; revenue: number }> = {};
+          realOrders.forEach(order => {
+            const mk = order.timestamp?.slice(0, 7) || 'Okänt';
+            if (!monthlyData[mk]) monthlyData[mk] = { orders: 0, revenue: 0 };
+            monthlyData[mk].orders++;
+            monthlyData[mk].revenue += order.orderData?.totalPrice || 0;
+          });
+          const sortedMonths = Object.keys(monthlyData).sort();
+          const maxMonthRevenue = Math.max(...Object.values(monthlyData).map(d => d.revenue), 1);
+          const companyMap: Record<string, { orders: number; revenue: number }> = {};
+          realOrders.forEach(order => {
+            const company = order.customerInfo?.company || order.customerInfo?.name || 'Okänd';
+            if (!companyMap[company]) companyMap[company] = { orders: 0, revenue: 0 };
+            companyMap[company].orders++;
+            companyMap[company].revenue += order.orderData?.totalPrice || 0;
+          });
+          const topCompanies = Object.entries(companyMap).sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 5);
+          const statusMap: Record<string, number> = {};
+          realOrders.forEach(order => { const s = (order as any).status || 'pending'; statusMap[s] = (statusMap[s] || 0) + 1; });
+          const monthNames = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+          const monthNamesFull = ['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'];
+          const statusColors: Record<string, string> = { pending: '#e67e22', confirmed: '#27ae60', cancelled: '#e74c3c', completed: '#3498db' };
+          const statusLabels: Record<string, string> = { pending: 'Väntande', confirmed: 'Bekräftad', cancelled: 'Avbruten', completed: 'Slutförd' };
+          return (
+            <div style={{ maxWidth: 960, margin: '0 auto' }}>
+              <div style={{ fontSize: '22px', fontWeight: 700, color: '#2c3e50', marginBottom: 24 }}>📊 Statistik &amp; Sammanställning</div>
+
+              {/* KPI Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+                {[
+                  { label: 'Totalt ordrar', value: String(totalOrders), color: '#3498db', sub: null },
+                  { label: 'Total omsättning', value: totalRevenue.toLocaleString('sv-SE') + ' kr', color: '#27ae60', sub: null },
+                  { label: 'Snittordervärde', value: Math.round(avgOrderValue).toLocaleString('sv-SE') + ' kr', color: '#e67e22', sub: null },
+                  { label: 'Denna månad', value: thisMonthRevenue.toLocaleString('sv-SE') + ' kr', color: '#9b59b6', sub: `${thisMonthOrders.length} ordrar` }
+                ].map(card => (
+                  <div key={card.label} style={{ background: 'white', borderRadius: 12, padding: '20px 22px', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', borderLeft: `4px solid ${card.color}` }}>
+                    <div style={{ fontSize: 11, color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{card.label}</div>
+                    <div style={{ fontSize: card.value.length > 10 ? 22 : 30, fontWeight: 800, color: card.color, lineHeight: 1 }}>{card.value}</div>
+                    {card.sub && <div style={{ fontSize: 13, color: '#888', marginTop: 6 }}>{card.sub}</div>}
+                  </div>
+                ))}
+              </div>
+
+              {/* Monthly Bar Chart */}
+              {sortedMonths.length > 0 && (
+                <div style={{ background: 'white', borderRadius: 12, padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', marginBottom: 24 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#2c3e50', marginBottom: 20 }}>📅 Omsättning per månad</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 200, overflowX: 'auto', paddingBottom: 8 }}>
+                    {sortedMonths.map(month => {
+                      const d = monthlyData[month];
+                      const barH = Math.max(4, Math.round((d.revenue / maxMonthRevenue) * 150));
+                      const [yr, mo] = month.split('-');
+                      const lbl = `${monthNames[parseInt(mo) - 1]} ${yr.slice(2)}`;
+                      const isThis = month === thisMonthKey;
+                      return (
+                        <div key={month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '0 0 auto', minWidth: 56 }}>
+                          <div style={{ fontSize: 11, color: '#666', marginBottom: 4, whiteSpace: 'nowrap', fontWeight: 600 }}>
+                            {d.revenue >= 1000 ? `${Math.round(d.revenue / 1000)}k` : d.revenue > 0 ? d.revenue : '–'}
+                          </div>
+                          <div
+                            title={`${d.revenue.toLocaleString('sv-SE')} kr · ${d.orders} ${d.orders === 1 ? 'order' : 'ordrar'}`}
+                            style={{ width: 36, height: barH, background: isThis ? 'linear-gradient(180deg,#27ae60,#1a8a2e)' : 'linear-gradient(180deg,#5dade2,#2980b9)', borderRadius: '4px 4px 0 0', cursor: 'default' }}
+                          />
+                          <div style={{ fontSize: 11, color: isThis ? '#166534' : '#888', marginTop: 6, fontWeight: isThis ? 700 : 400, whiteSpace: 'nowrap' }}>{lbl}</div>
+                          <div style={{ fontSize: 10, color: '#aaa' }}>{d.orders} st</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                {/* Top customers */}
+                <div style={{ background: 'white', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#2c3e50', marginBottom: 16 }}>🏆 Toppkunder (omsättning)</div>
+                  {topCompanies.length === 0 ? (
+                    <div style={{ color: '#aaa', fontStyle: 'italic' }}>Inga kunder ännu</div>
+                  ) : topCompanies.map(([company, data], i) => {
+                    const pct = totalRevenue > 0 ? Math.round((data.revenue / totalRevenue) * 100) : 0;
+                    return (
+                      <div key={company} style={{ marginBottom: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 5 }}>
+                          <span style={{ fontWeight: 600, color: '#2c3e50' }}>{i + 1}. {company}</span>
+                          <span style={{ color: '#27ae60', fontWeight: 700 }}>{data.revenue.toLocaleString('sv-SE')} kr</span>
+                        </div>
+                        <div style={{ height: 7, background: '#f0f0f0', borderRadius: 4 }}>
+                          <div style={{ height: 7, width: `${pct}%`, background: 'linear-gradient(90deg,#27ae60,#2ecc71)', borderRadius: 4 }} />
+                        </div>
+                        <div style={{ fontSize: 12, color: '#888', marginTop: 3 }}>{data.orders} {data.orders === 1 ? 'order' : 'ordrar'} · {pct}%</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Right column */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* Status distribution */}
+                  <div style={{ background: 'white', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#2c3e50', marginBottom: 14 }}>📌 Status-fördelning</div>
+                    {Object.entries(statusMap).length === 0 ? (
+                      <div style={{ color: '#aaa', fontStyle: 'italic' }}>Inga ordrar</div>
+                    ) : Object.entries(statusMap).map(([status, count]) => (
+                      <div key={status} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ width: 11, height: 11, borderRadius: '50%', background: statusColors[status] || '#95a5a6', display: 'inline-block' }} />
+                          <span style={{ fontSize: 14, color: '#444' }}>{statusLabels[status] || status}</span>
+                        </span>
+                        <span style={{ fontWeight: 700, color: statusColors[status] || '#95a5a6', fontSize: 18 }}>{count}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Monthly table */}
+                  <div style={{ background: 'white', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', flex: 1, overflowY: 'auto', maxHeight: 260 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#2c3e50', marginBottom: 14 }}>🗓️ Månadsöversikt</div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: '6px 8px', color: '#999', fontWeight: 700, borderBottom: '2px solid #f0f0f0' }}>Månad</th>
+                          <th style={{ textAlign: 'right', padding: '6px 8px', color: '#999', fontWeight: 700, borderBottom: '2px solid #f0f0f0' }}>Ordrar</th>
+                          <th style={{ textAlign: 'right', padding: '6px 8px', color: '#999', fontWeight: 700, borderBottom: '2px solid #f0f0f0' }}>Omsättning</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...sortedMonths].reverse().map(month => {
+                          const d = monthlyData[month];
+                          const [yr, mo] = month.split('-');
+                          const lbl = `${monthNamesFull[parseInt(mo) - 1]} ${yr}`;
+                          const isThis = month === thisMonthKey;
+                          return (
+                            <tr key={month} style={{ background: isThis ? '#f0fdf4' : 'transparent' }}>
+                              <td style={{ padding: '8px', color: isThis ? '#166534' : '#2c3e50', fontWeight: isThis ? 700 : 400 }}>{lbl} {isThis && '✓'}</td>
+                              <td style={{ padding: '8px', textAlign: 'right', color: '#666' }}>{d.orders}</td>
+                              <td style={{ padding: '8px', textAlign: 'right', color: '#27ae60', fontWeight: 600 }}>{d.revenue.toLocaleString('sv-SE')} kr</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Overview List eller Detail View */}
-        {!selectedOrder ? (
+        {!showStats && !selectedOrder ? (
           <>
             {/* Overview List */}
             <div style={{
