@@ -7228,7 +7228,10 @@ Monterhyra Beställningssystem
                               alert(`✅ Beställning skickad!\n\n📧 Mail skickat till dig och oss\n🆔 Ordernummer: ${savedOrder.orderNumber}`);
                             } catch (supabaseError) {
                               console.error('❌ Fel vid Supabase-sparning:', supabaseError);
-                              alert('✅ Beställning skickad!\n\n📧 Mail skickat men kunde inte sparas i databasen. Vi har fått din beställning via e-post.');
+                              const sbErr = supabaseError as any;
+                              const errMsg = sbErr?.message || sbErr?.details || JSON.stringify(supabaseError);
+                              console.error('Supabase feldetaljer:', errMsg);
+                              alert(`✅ Beställning skickad!\n\n📧 Mail skickat men kunde inte sparas i databasen.\nFel: ${errMsg}\n\nHar du kört SQL-migreringarna i Supabase? Se supabase/APPLY_MIGRATIONS.sql`);
                             }
                           } catch (saveError) {
                             console.error('Fel vid sparande till admin-portal:', saveError);
