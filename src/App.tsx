@@ -11757,30 +11757,32 @@ Monterhyra Beställningssystem
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch'
         }}>
-          <Suspense fallback={
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100vh',
-              fontSize: '18px',
-              color: '#666'
-            }}>
-              Laddar admin...
-            </div>
-          }>
-            <AdminPortal 
-              onOpenExhibitorAdmin={() => {
-                setShowAdminPortal(false);
-                setShowExhibitorAdmin(true);
-              }}
-              onOpenEventAdmin={(eventId) => {
-                setShowAdminPortal(false);
-                setSelectedEventId(eventId);
-                setShowEventAdminPortal(true);
-              }}
-            />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                fontSize: '18px',
+                color: '#666'
+              }}>
+                Laddar admin...
+              </div>
+            }>
+              <AdminPortal 
+                onOpenExhibitorAdmin={() => {
+                  setShowAdminPortal(false);
+                  setShowExhibitorAdmin(true);
+                }}
+                onOpenEventAdmin={(eventId) => {
+                  setShowAdminPortal(false);
+                  setSelectedEventId(eventId);
+                  setShowEventAdminPortal(true);
+                }}
+              />
+            </Suspense>
+          </ErrorBoundary>
           <div style={{
             position: 'fixed',
             top: 20,
