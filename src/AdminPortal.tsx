@@ -93,7 +93,7 @@ interface Order {
 const AdminPortal: React.FC<{ 
   onOpenExhibitorAdmin?: () => void;
   onOpenEventAdmin?: (eventId: string) => void;
-}> = ({ onOpenExhibitorAdmin, onOpenEventAdmin }) => {
+}> = ({ onOpenEventAdmin }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
