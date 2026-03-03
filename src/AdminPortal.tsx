@@ -117,6 +117,23 @@ const AdminPortal: React.FC<{
   const [newEventName, setNewEventName] = useState('');
   const [newEventPassword, setNewEventPassword] = useState('');
   const [createdEvent, setCreatedEvent] = useState<any>(null);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
+
+  // Ladda alla events när EventCreator öppnas
+  React.useEffect(() => {
+    if (showEventCreator) {
+      loadAllEvents();
+    }
+  }, [showEventCreator]);
+
+  const loadAllEvents = async () => {
+    try {
+      const events = await ExhibitorService.getAllEvents();
+      setAllEvents(events);
+    } catch (error) {
+      console.error('Kunde inte ladda events:', error);
+    }
+  };
 
   const handleCreateSupabaseEvent = async () => {
     if (!newEventName.trim()) {
@@ -134,6 +151,7 @@ const AdminPortal: React.FC<{
       );
       
       setCreatedEvent(event);
+      loadAllEvents(); // Uppdatera listan
       alert(`✅ Event skapat!\n\nEvent-ID: ${event.id}\nLösenord: ${event.password}\n\nDu kan nu öppna EventAdminPortal`);
       setNewEventName('');
       setNewEventPassword('');
@@ -1211,6 +1229,60 @@ const AdminPortal: React.FC<{
                 </>
               )}
             </div>
+
+            {/* Lista över alla events */}
+            {allEvents.length > 0 && (
+              <div style={{ marginTop: '32px' }}>
+                <h3 style={{ marginBottom: '16px', fontSize: '18px', color: '#2c3e50' }}>
+                  📋 Alla Events ({allEvents.length})
+                </h3>
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {allEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      style={{
+                        padding: '16px',
+                        background: '#f8f9fa',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: '600', fontSize: '16px', marginBottom: '4px' }}>
+                          {event.name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#666' }}>
+                          ID: {event.id} • Skapad: {new Date(event.createdAt).toLocaleDateString('sv-SE')}
+                        </div>
+                        {event.description && (
+                          <div style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
+                            {event.description}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => onOpenEventAdmin?.(event.id)}
+                        style={{
+                          padding: '10px 20px',
+                          background: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontWeight: '600',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Öppna →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -7,9 +7,49 @@ export interface EventBranding {
 }
 
 export interface EventPricing {
-  basePrice?: number;
-  discountPercent?: number;
-  customPrices?: Record<string, number>;
+  floor?: { basePricePerSqm: number; minSize: number };
+  walls?: { 
+    straight: number; 
+    lShape: number; 
+    uShape: number; 
+    heightSurcharge: { 2.5: number; 3.0: number; 3.5: number } 
+  };
+  carpet?: { none: number; colored: number; salsa: number; patterned: number };
+  frames?: { '1x2.5': number };
+  graphics?: { none: number; hyr: number; forex: number; vepa: number };
+  furniture?: { 
+    table: number; 
+    chair: number; 
+    stool: number; 
+    sofa: number; 
+    armchair: number; 
+    side_table: number; 
+    podium: number 
+  };
+  counters?: { perMeter: number; lShape: number; lShapeMirrored: number };
+  counterItems?: { espressoMachine: number; flowerVase: number; candyBowl: number };
+  tvs?: { 43: number; 55: number; 70: number };
+  storage?: { perSqm: number };
+  plants?: { small: number; medium: number; large: number };
+  lighting?: { ledStrips: number; samLed: number };
+  truss?: { none: number; frontStraight: number; hangingRound: number; hangingSquare: number };
+  extras?: { 
+    powerOutlet: number; 
+    clothingRacks: number; 
+    speakers: number; 
+    wallShelves: number; 
+    baseplate: number; 
+    colorPainting: number 
+  };
+  services?: { 
+    hourlyRate: number; 
+    sketchFeeSmall: number; 
+    sketchFeeLarge: number; 
+    projectManagementPercent: number; 
+    consumablesSmall: number; 
+    consumablesMedium: number; 
+    consumablesLarge: number 
+  };
 }
 
 export interface WhiteLabel {
@@ -186,7 +226,8 @@ export class ExhibitorService {
         location: updates.location,
         password: updates.password,
         branding: updates.branding,
-        pricing: updates.pricing
+        pricing: updates.pricing,
+        white_label: updates.whiteLabel
       })
       .eq('id', eventId);
 

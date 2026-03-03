@@ -9,6 +9,7 @@ import { ExhibitorService } from './services/ExhibitorService';
 import type { Event, Exhibitor } from './services/ExhibitorService';
 import { OrderService } from './services/OrderService';
 import type { Order } from './services/OrderService';
+import EventSettings from './EventSettings';
 
 interface EventAdminPortalProps {
   eventId: string;
@@ -48,6 +49,34 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
   const [newBoothWidth, setNewBoothWidth] = useState('3');
   const [newBoothDepth, setNewBoothDepth] = useState('3');
   const [newBoothHeight, setNewBoothHeight] = useState('2.5');
+  
+  // Settings state - White Label
+  const [whiteLabelLogoUrl, setWhiteLabelLogoUrl] = useState('');
+  const [whiteLabelPrimaryColor, setWhiteLabelPrimaryColor] = useState('#3b82f6');
+  const [whiteLabelSecondaryColor, setWhiteLabelSecondaryColor] = useState('#1e40af');
+  const [whiteLabelCompanyName, setWhiteLabelCompanyName] = useState('');
+  const [whiteLabelContactEmail, setWhiteLabelContactEmail] = useState('');
+  const [whiteLabelContactPhone, setWhiteLabelContactPhone] = useState('');
+  const [whiteLabelFooterText, setWhiteLabelFooterText] = useState('');
+  
+  // Settings state - Pricing (fullständig struktur)
+  const [pricing, setPricing] = useState<import('./services/ExhibitorService').EventPricing>({
+    floor: { basePricePerSqm: 450, minSize: 6 },
+    walls: { straight: 900, lShape: 900, uShape: 900, heightSurcharge: { 2.5: 0, 3.0: 230, 3.5: 440 } },
+    carpet: { none: 0, colored: 180, salsa: 240, patterned: 250 },
+    frames: { '1x2.5': 886 },
+    graphics: { none: 0, hyr: 880, forex: 1450, vepa: 775 },
+    furniture: { table: 650, chair: 450, stool: 650, sofa: 1500, armchair: 850, side_table: 350, podium: 850 },
+    counters: { perMeter: 800, lShape: 1000, lShapeMirrored: 1000 },
+    counterItems: { espressoMachine: 4500, flowerVase: 850, candyBowl: 500 },
+    tvs: { 43: 2700, 55: 3500, 70: 10000 },
+    storage: { perSqm: 380 },
+    plants: { small: 550, medium: 850, large: 1200 },
+    lighting: { ledStrips: 2000, samLed: 300 },
+    truss: { none: 0, frontStraight: 400, hangingRound: 5500, hangingSquare: 5500 },
+    extras: { powerOutlet: 300, clothingRacks: 200, speakers: 3500, wallShelves: 350, baseplate: 450, colorPainting: 500 },
+    services: { hourlyRate: 750, sketchFeeSmall: 5000, sketchFeeLarge: 10000, projectManagementPercent: 15, consumablesSmall: 750, consumablesMedium: 1350, consumablesLarge: 2000 }
+  });
   
   // Login state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -100,6 +129,22 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
       // Ladda event-data från Supabase
       const eventData = await ExhibitorService.getEvent(eventId);
       setEvent(eventData || null);
+
+      // Ladda White Label settings
+      if (eventData?.whiteLabel) {
+        setWhiteLabelLogoUrl(eventData.whiteLabel.logoUrl || '');
+        setWhiteLabelPrimaryColor(eventData.whiteLabel.primaryColor || '#3b82f6');
+        setWhiteLabelSecondaryColor(eventData.whiteLabel.secondaryColor || '#1e40af');
+        setWhiteLabelCompanyName(eventData.whiteLabel.companyName || '');
+        setWhiteLabelContactEmail(eventData.whiteLabel.contactEmail || '');
+        setWhiteLabelContactPhone(eventData.whiteLabel.contactPhone || '');
+        setWhiteLabelFooterText(eventData.whiteLabel.footerText || '');
+      }
+
+      // Ladda Pricing settings
+      if (eventData?.pricing) {
+        setPricing(eventData.pricing);
+      }
 
       // Ladda utställare för detta event
       const eventExhibitors = await ExhibitorService.getExhibitorsByEvent(eventId);
@@ -184,6 +229,44 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
       // Reload data
       await loadEventData();
       alert('✅ Utställare skapad!');
+    } catch (error: any) {
+      alert('Fel: ' + error.message);
+    }
+  };
+
+  const handleSaveWhiteLabel = async () => {
+    try {
+      if (!event) return;
+
+      await ExhibitorService.updateEvent(eventId, {
+        whiteLabel: {
+          logoUrl: whiteLabelLogoUrl,
+          primaryColor: whiteLabelPrimaryColor,
+          secondaryColor: whiteLabelSecondaryColor,
+          companyName: whiteLabelCompanyName,
+          contactEmail: whiteLabelContactEmail,
+          contactPhone: whiteLabelContactPhone,
+          footerText: whiteLabelFooterText
+        }
+      });
+
+      await loadEventData();
+      alert('✅ White Label-inställningar sparade!');
+    } catch (error: any) {
+      alert('Fel: ' + error.message);
+    }
+  };
+
+  const handleSavePricing = async () => {
+    try {
+      if (!event) return;
+
+      await ExhibitorService.updateEvent(eventId, {
+        pricing: pricing
+      });
+
+      await loadEventData();
+      alert('✅ Prissättning sparad!');
     } catch (error: any) {
       alert('Fel: ' + error.message);
     }
@@ -1127,112 +1210,28 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
           </div>
         )}
 
-        {activeTab === 'settings' && (
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-          }}>
-            <h2 style={{
-              margin: '0 0 20px 0',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: '#2c3e50'
-            }}>
-              ⚙️ Event-inställningar
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontWeight: '600', marginBottom: '8px' }}>
-                  Eventnamn
-                </label>
-                <input
-                  type="text"
-                  value={event.name}
-                  disabled
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    background: '#f8f9fa'
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontWeight: '600', marginBottom: '8px' }}>
-                  Beskrivning
-                </label>
-                <textarea
-                  value={event.description || ''}
-                  disabled
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    background: '#f8f9fa',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '8px' }}>
-                    Startdatum
-                  </label>
-                  <input
-                    type="text"
-                    value={event.startDate ? new Date(event.startDate).toLocaleDateString('sv-SE') : '-'}
-                    disabled
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '1px solid #e0e0e0',
-                      borderRadius: '8px',
-                      background: '#f8f9fa'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '8px' }}>
-                    Slutdatum
-                  </label>
-                  <input
-                    type="text"
-                    value={event.endDate ? new Date(event.endDate).toLocaleDateString('sv-SE') : '-'}
-                    disabled
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '1px solid #e0e0e0',
-                      borderRadius: '8px',
-                      background: '#f8f9fa'
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontWeight: '600', marginBottom: '8px' }}>
-                  Plats
-                </label>
-                <input
-                  type="text"
-                  value={event.location || '-'}
-                  disabled
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    background: '#f8f9fa'
-                  }}
-                />
-              </div>
-            </div>
-          </div>
+        {activeTab === 'settings' && event && (
+          <EventSettings
+            event={event}
+            whiteLabelLogoUrl={whiteLabelLogoUrl}
+            setWhiteLabelLogoUrl={setWhiteLabelLogoUrl}
+            whiteLabelPrimaryColor={whiteLabelPrimaryColor}
+            setWhiteLabelPrimaryColor={setWhiteLabelPrimaryColor}
+            whiteLabelSecondaryColor={whiteLabelSecondaryColor}
+            setWhiteLabelSecondaryColor={setWhiteLabelSecondaryColor}
+            whiteLabelCompanyName={whiteLabelCompanyName}
+            setWhiteLabelCompanyName={setWhiteLabelCompanyName}
+            whiteLabelContactEmail={whiteLabelContactEmail}
+            setWhiteLabelContactEmail={setWhiteLabelContactEmail}
+            whiteLabelContactPhone={whiteLabelContactPhone}
+            setWhiteLabelContactPhone={setWhiteLabelContactPhone}
+            whiteLabelFooterText={whiteLabelFooterText}
+            setWhiteLabelFooterText={setWhiteLabelFooterText}
+            pricing={pricing}
+            setPricing={setPricing}
+            onSaveWhiteLabel={handleSaveWhiteLabel}
+            onSavePricing={handleSavePricing}
+          />
         )}
       </div>
     </div>
