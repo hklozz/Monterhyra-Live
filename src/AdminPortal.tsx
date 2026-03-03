@@ -1805,6 +1805,10 @@ const AdminPortal: React.FC<{
           </>
         ) : (
           /* Detail View */
+          (() => {
+          if (!selectedOrder) return null;
+          const order = selectedOrder;
+          return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', maxHeight: '200vh', overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', paddingRight: '12px' }}>
             {/* Action Buttons */}
             <div style={{
@@ -2063,12 +2067,12 @@ const AdminPortal: React.FC<{
                   </div>
                 ) : (
                   <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#34495e' }}>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Ordernamn:</strong> {selectedOrder.namn || '-'}</p>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Namn (kund):</strong> {selectedOrder.customerInfo?.name || '-'}</p>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>E-post:</strong> {selectedOrder.customerInfo?.email || '-'}</p>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Telefon:</strong> {selectedOrder.customerInfo?.phone || '-'}</p>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Företag:</strong> {selectedOrder.customerInfo?.company || '-'}</p>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Leveransadress:</strong> {selectedOrder.customerInfo?.deliveryAddress || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Ordernamn:</strong> {order.namn || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Namn (kund):</strong> {order.customerInfo?.name || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>E-post:</strong> {order.customerInfo?.email || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Telefon:</strong> {order.customerInfo?.phone || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Företag:</strong> {order.customerInfo?.company || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Leveransadress:</strong> {order.customerInfo?.deliveryAddress || '-'}</p>
                   </div>
                 )}
               </div>
@@ -2139,13 +2143,13 @@ const AdminPortal: React.FC<{
                   </div>
                 ) : (
                   <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#34495e' }}>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Eventdatum:</strong> {selectedOrder.customerInfo?.eventDate || '-'}</p>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Eventtid:</strong> {selectedOrder.customerInfo?.eventTime || '-'}</p>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Uppsättningstid:</strong> {selectedOrder.customerInfo?.setupTime || '-'}</p>
-                    <p style={{ margin: '0 0 8px 0' }}><strong>Hämtningstid:</strong> {selectedOrder.customerInfo?.pickupTime || '-'}</p>
-                    {selectedOrder.customerInfo?.message && (
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Eventdatum:</strong> {order.customerInfo?.eventDate || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Eventtid:</strong> {order.customerInfo?.eventTime || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Uppsättningstid:</strong> {order.customerInfo?.setupTime || '-'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Hämtningstid:</strong> {order.customerInfo?.pickupTime || '-'}</p>
+                    {order.customerInfo?.message && (
                       <p style={{ margin: '12px 0 0 0', padding: '12px', backgroundColor: '#fff3cd', borderRadius: '4px', borderLeft: '3px solid #ffc107' }}>
-                        <strong>Meddelande:</strong><br/>{selectedOrder.customerInfo.message}
+                        <strong>Meddelande:</strong><br/>{order.customerInfo.message}
                       </p>
                     )}
                   </div>
@@ -2219,16 +2223,16 @@ const AdminPortal: React.FC<{
                   </div>
                 ) : (
                   <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#34495e' }}>
-                    {selectedOrder.staffInfo ? (
+                    {order.staffInfo ? (
                       <>
-                        <p style={{ margin: '0 0 8px 0' }}><strong>Kundansvarig:</strong> {selectedOrder.staffInfo.kundansvarig || '-'}</p>
-                        <p style={{ margin: '0 0 8px 0' }}><strong>Produktionsansvarig:</strong> {selectedOrder.staffInfo.produktionsansvarig || '-'}</p>
+                        <p style={{ margin: '0 0 8px 0' }}><strong>Kundansvarig:</strong> {order.staffInfo.kundansvarig || '-'}</p>
+                        <p style={{ margin: '0 0 8px 0' }}><strong>Produktionsansvarig:</strong> {order.staffInfo.produktionsansvarig || '-'}</p>
                         <p style={{ margin: '12px 0 8px 0', fontWeight: '600' }}>Crew Byggnation:</p>
-                        {(selectedOrder.staffInfo.crewByggnation || []).map((member, index) => (
+                        {(order.staffInfo.crewByggnation || []).map((member, index) => (
                           <p key={`bygg-${index}`} style={{ margin: '0 0 4px 16px' }}>• {member || '-'}</p>
                         ))}
                         <p style={{ margin: '12px 0 8px 0', fontWeight: '600' }}>Crew Riv:</p>
-                        {(selectedOrder.staffInfo.crewRiv || []).map((member, index) => (
+                        {(order.staffInfo.crewRiv || []).map((member, index) => (
                           <p key={`riv-${index}`} style={{ margin: '0 0 4px 16px' }}>• {member || '-'}</p>
                         ))}
                       </>
@@ -2241,7 +2245,7 @@ const AdminPortal: React.FC<{
 
 
               {/* Monterbilder från beställning */}
-              {selectedOrder.orderData?.images && Array.isArray(selectedOrder.orderData.images) && selectedOrder.orderData.images.length > 1 && (
+              {order.orderData?.images && Array.isArray(order.orderData.images) && order.orderData.images.length > 1 && (
                 <div style={{
                   backgroundColor: '#f8f9fa',
                   padding: '20px',
@@ -2261,7 +2265,7 @@ const AdminPortal: React.FC<{
                   </h3>
                   <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                     <div style={{ background: '#fff', borderRadius: 6, boxShadow: '0 1px 4px rgba(44,62,80,0.08)', padding: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <img src={selectedOrder.orderData.images[1]} alt="Montervy framifrån" style={{ width: 220, height: 140, objectFit: 'contain', borderRadius: 4, marginBottom: 6, background: '#eee' }} />
+                      <img src={order.orderData.images[1]} alt="Montervy framifrån" style={{ width: 220, height: 140, objectFit: 'contain', borderRadius: 4, marginBottom: 6, background: '#eee' }} />
                       <span style={{ fontSize: 13, color: '#888' }}>Framifrån</span>
                     </div>
                   </div>
@@ -2329,12 +2333,12 @@ const AdminPortal: React.FC<{
                   </div>
                 ) : (
                   <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#34495e' }}>
-                    {selectedOrder.invoiceInfo ? (
+                    {order.invoiceInfo ? (
                       <>
-                        <p style={{ margin: '0 0 8px 0' }}><strong>Fakturaadress:</strong> {selectedOrder.invoiceInfo.invoiceAddress || '-'}</p>
-                        <p style={{ margin: '0 0 8px 0' }}><strong>Org.nummer:</strong> {selectedOrder.invoiceInfo.orgNumber || '-'}</p>
-                        <p style={{ margin: '0 0 8px 0' }}><strong>Referens:</strong> {selectedOrder.invoiceInfo.referens || '-'}</p>
-                        <p style={{ margin: '0 0 8px 0' }}><strong>Betalningsvillkor:</strong> {selectedOrder.invoiceInfo.betalningsvillkor || '-'}</p>
+                        <p style={{ margin: '0 0 8px 0' }}><strong>Fakturaadress:</strong> {order.invoiceInfo.invoiceAddress || '-'}</p>
+                        <p style={{ margin: '0 0 8px 0' }}><strong>Org.nummer:</strong> {order.invoiceInfo.orgNumber || '-'}</p>
+                        <p style={{ margin: '0 0 8px 0' }}><strong>Referens:</strong> {order.invoiceInfo.referens || '-'}</p>
+                        <p style={{ margin: '0 0 8px 0' }}><strong>Betalningsvillkor:</strong> {order.invoiceInfo.betalningsvillkor || '-'}</p>
                       </>
                     ) : (
                       <p style={{ color: '#95a5a6', fontStyle: 'italic' }}>Ingen fakturainformation registrerad</p>
@@ -2651,6 +2655,8 @@ const AdminPortal: React.FC<{
               })()}
             </div>
           </div>
+          );
+          })()
         )}
       </div>
     </div>
