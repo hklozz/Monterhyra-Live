@@ -16,30 +16,7 @@ import jsPDF from 'jspdf';
   // setOrders is not defined here, remove or define if needed
     }
   };
-  // Hämta PDF från IndexedDB och ladda ner
-  const downloadPDFfromIDB = async (orderId: string) => {
-    try {
-      // @ts-ignore: OrderManager har metoden men TS kanske inte vet
-      const blob = await OrderManager.getBlobFromIDB(orderId);
-      if (!blob) {
-        alert('Kunde inte hitta PDF i IndexedDB!');
-        return;
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Tryckfil_${orderId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-    } catch (err) {
-      alert('Fel vid hämtning av PDF från IndexedDB!');
-      console.error('downloadPDFfromIDB error:', err);
-    }
-  };
+
 // ...existing imports at the top of the file...
 
 interface Order {

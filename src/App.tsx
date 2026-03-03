@@ -7198,7 +7198,7 @@ Monterhyra Beställningssystem
                                 storages: storages || [],
                                 counters: counters || [],
                                 tvs: tvs || [],
-                                totalPrice: totalPrice || 0,
+                                totalPrice: totalCost,
                                 packlista: packlistaData,
                                 images: orderImages
                               };
