@@ -39,6 +39,16 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
   const [activeTab, setActiveTab] = useState<'dashboard' | 'exhibitors' | 'orders' | 'settings'>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Add Exhibitor form state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newExhibitorName, setNewExhibitorName] = useState('');
+  const [newExhibitorEmail, setNewExhibitorEmail] = useState('');
+  const [newExhibitorCompany, setNewExhibitorCompany] = useState('');
+  const [newExhibitorPhone, setNewExhibitorPhone] = useState('');
+  const [newBoothWidth, setNewBoothWidth] = useState('3');
+  const [newBoothDepth, setNewBoothDepth] = useState('3');
+  const [newBoothHeight, setNewBoothHeight] = useState('2.5');
+  
   // Login state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -134,6 +144,48 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
       return unsubscribe;
     } catch (error) {
       console.error('Error loading event data:', error);
+    }
+  };
+
+  const handleAddExhibitor = async () => {
+    try {
+      if (!newExhibitorName || !newExhibitorEmail) {
+        alert('Fyll i namn och email');
+        return;
+      }
+
+      const boothData = {
+        width: parseFloat(newBoothWidth),
+        depth: parseFloat(newBoothDepth),
+        height: parseFloat(newBoothHeight)
+      };
+
+      await ExhibitorService.createExhibitor(
+        eventId,
+        newExhibitorName,
+        newExhibitorEmail,
+        {
+          company: newExhibitorCompany,
+          phone: newExhibitorPhone,
+          boothData
+        }
+      );
+
+      // Reset form
+      setNewExhibitorName('');
+      setNewExhibitorEmail('');
+      setNewExhibitorCompany('');
+      setNewExhibitorPhone('');
+      setNewBoothWidth('3');
+      setNewBoothDepth('3');
+      setNewBoothHeight('2.5');
+      setShowAddForm(false);
+
+      // Reload data
+      await loadEventData();
+      alert('✅ Utställare skapad!');
+    } catch (error: any) {
+      alert('Fel: ' + error.message);
     }
   };
 
@@ -562,6 +614,223 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
 
         {activeTab === 'exhibitors' && (
           <div>
+            {/* Add Exhibitor Form */}
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              marginBottom: '24px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
+                  ➕ Lägg till utställare
+                </h3>
+                <button
+                  onClick={() => setShowAddForm(!showAddForm)}
+                  style={{
+                    padding: '8px 16px',
+                    background: showAddForm ? '#e74c3c' : '#667eea',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '13px'
+                  }}
+                >
+                  {showAddForm ? '✕ Stäng' : '+ Ny utställare'}
+                </button>
+              </div>
+              
+              {showAddForm && (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '16px',
+                  padding: '20px',
+                  background: '#f8f9fa',
+                  borderRadius: '8px'
+                }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px' }}>
+                      Företag *
+                    </label>
+                    <input
+                      type="text"
+                      value={newExhibitorCompany}
+                      onChange={(e) => setNewExhibitorCompany(e.target.value)}
+                      placeholder="Volvo AB"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px' }}>
+                      Kontaktperson *
+                    </label>
+                    <input
+                      type="text"
+                      value={newExhibitorName}
+                      onChange={(e) => setNewExhibitorName(e.target.value)}
+                      placeholder="Anna Andersson"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px' }}>
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      value={newExhibitorEmail}
+                      onChange={(e) => setNewExhibitorEmail(e.target.value)}
+                      placeholder="anna@volvo.com"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px' }}>
+                      Telefon
+                    </label>
+                    <input
+                      type="tel"
+                      value={newExhibitorPhone}
+                      onChange={(e) => setNewExhibitorPhone(e.target.value)}
+                      placeholder="070-123 45 67"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px' }}>
+                      Monterbredd (m) *
+                    </label>
+                    <input
+                      type="number"
+                      value={newBoothWidth}
+                      onChange={(e) => setNewBoothWidth(e.target.value)}
+                      step="0.5"
+                      min="1"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px' }}>
+                      Monterdjup (m) *
+                    </label>
+                    <input
+                      type="number"
+                      value={newBoothDepth}
+                      onChange={(e) => setNewBoothDepth(e.target.value)}
+                      step="0.5"
+                      min="1"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px' }}>
+                      Vägghöjd (m) *
+                    </label>
+                    <input
+                      type="number"
+                      value={newBoothHeight}
+                      onChange={(e) => setNewBoothHeight(e.target.value)}
+                      step="0.5"
+                      min="1"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  
+                  <div style={{ gridColumn: 'span 2', display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                    <button
+                      onClick={() => setShowAddForm(false)}
+                      style={{
+                        padding: '10px 20px',
+                        background: '#6c757d',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Avbryt
+                    </button>
+                    <button
+                      onClick={handleAddExhibitor}
+                      style={{
+                        padding: '10px 20px',
+                        background: '#2ecc71',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        fontSize: '14px'
+                      }}
+                    >
+                      ✓ Skapa utställare
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Search and Actions */}
             <div style={{
               background: 'white',
