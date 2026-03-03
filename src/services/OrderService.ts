@@ -30,6 +30,7 @@ export interface OrderData {
 export interface Order {
   id: string;
   exhibitorId?: string | null;
+  eventId?: string | null;
   orderNumber: string;
   customerName: string;
   customerEmail: string;
@@ -59,7 +60,8 @@ export class OrderService {
   static async createOrder(
     customerInfo: CustomerInfo,
     orderData: OrderData,
-    exhibitorId?: string
+    exhibitorId?: string,
+    eventId?: string
   ): Promise<Order> {
     const orderNumber = this.generateOrderNumber();
 
@@ -67,6 +69,7 @@ export class OrderService {
       .from('orders')
       .insert({
         exhibitor_id: exhibitorId || null,
+        event_id: eventId || null,
         order_number: orderNumber,
         customer_name: customerInfo.name,
         customer_email: customerInfo.email,
@@ -138,6 +141,7 @@ export class OrderService {
     return data.map(row => ({
       id: row.id,
       exhibitorId: row.exhibitor_id,
+      eventId: row.event_id,
       orderNumber: row.order_number,
       customerName: row.customer_name,
       customerEmail: row.customer_email,
@@ -152,8 +156,36 @@ export class OrderService {
   }
 
   /**
-   * Hämta orders för en specifik utställare
+   * Hämta orders för ett specifikt event
    */
+  static async getOrdersByEvent(eventId: string): Promise<Order[]> {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Fel vid hämtning av event orders:', error);
+      throw new Error(`Kunde inte hämta orders: ${error.message}`);
+    }
+
+    return data.map(row => ({
+      id: row.id,
+      exhibitorId: row.exhibitor_id,
+      eventId: row.event_id,
+      orderNumber: row.order_number,
+      customerName: row.customer_name,
+      customerEmail: row.customer_email,
+      customerCompany: row.customer_company,
+      customerPhone: row.customer_phone,
+      boothData: row.booth_data,
+      pricingData: row.pricing_data,
+      status: row.status,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+  }
   static async getOrdersByExhibitor(exhibitorId: string): Promise<Order[]> {
     const { data, error } = await supabase
       .from('orders')

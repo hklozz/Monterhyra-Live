@@ -4,6 +4,7 @@ import { buildSceneFromOrderData } from './buildSceneFromOrderData';
 import { exportSceneToGLTF, exportSceneToThreeJSON } from './exportSceneToGLTF';
 import { OrderManager } from './OrderManager';
 import { ExhibitorService } from './services/ExhibitorService';
+import { OrderService } from './services/OrderService';
 import jsPDF from 'jspdf';
 
   // Rensa alla tryckfiler/ordrar
@@ -359,18 +360,48 @@ const AdminPortal: React.FC<{
     );
   };
 
-  const loadOrders = () => {
-    const savedOrders = localStorage.getItem('adminOrders');
-    if (savedOrders) {
-      try {
-        const parsedOrders = JSON.parse(savedOrders);
-        setOrders(parsedOrders);
-        // Logga direkt efter setOrders
-        setTimeout(() => {
-          console.log('Loaded orders (efter setOrders):', parsedOrders);
-        }, 0);
-      } catch (error) {
-        console.error('Fel vid laddning av beställningar:', error);
+  const loadOrders = async () => {
+    try {
+      // Hämta från Supabase
+      const supabaseOrders = await OrderService.getAllOrders();
+      // Konvertera Supabase-format till lokalt format
+      const converted = supabaseOrders.map(o => ({
+        id: o.id,
+        timestamp: o.createdAt,
+        customerInfo: {
+          name: o.customerName,
+          email: o.customerEmail,
+          phone: o.customerPhone || '',
+          company: o.customerCompany || '',
+          deliveryAddress: o.pricingData?.deliveryAddress || '',
+          eventDate: o.pricingData?.eventDate || '',
+          eventTime: o.pricingData?.eventTime || '',
+          setupTime: o.pricingData?.setupTime || '',
+          pickupTime: o.pricingData?.pickupTime || '',
+          message: o.pricingData?.message || ''
+        },
+        orderData: {
+          ...o.boothData,
+          totalPrice: o.pricingData?.totalPrice || 0
+        },
+        orderNumber: o.orderNumber,
+        exhibitorId: o.exhibitorId,
+        status: o.status,
+        files: { zipFile: '' }
+      }));
+      setOrders(converted);
+      console.log('✅ Laddade', converted.length, 'beställningar från Supabase');
+    } catch (err) {
+      console.error('❌ Fel vid hämtning från Supabase, faller tillbaka till localStorage:', err);
+      // Fallback till localStorage
+      const savedOrders = localStorage.getItem('adminOrders');
+      if (savedOrders) {
+        try {
+          const parsedOrders = JSON.parse(savedOrders);
+          setOrders(parsedOrders);
+        } catch (error) {
+          console.error('Fel vid laddning av beställningar:', error);
+        }
       }
     }
   };
@@ -382,7 +413,7 @@ const AdminPortal: React.FC<{
       setIsLoggedIn(true);
       loadOrders();
     }
-  }, []);
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
