@@ -19,7 +19,7 @@ import VepaPDFGenerator from './VepaPDFGenerator';
 import ForexPDFGenerator from './ForexPDFGenerator';
 import StoragePDFGenerator from './StoragePDFGenerator';
 import type { StorageWallDesign } from './StoragePDFGenerator';
-// import { OrderService } from './services/OrderService';
+import { OrderService } from './services/OrderService';
 import type { CustomerInfo, OrderData } from './services/OrderService';
 import ErrorBoundary from './ErrorBoundary';
 
@@ -7184,7 +7184,35 @@ Monterhyra Beställningssystem
                               storagePDFs: storagePDFs
                             };
                             
-                            alert('✅ Beställning skickad!\n\n📧 Mail skickat till dig och oss');
+                            // 💾 SPARA BESTÄLLNING TILL SUPABASE
+                            try {
+                              console.log('💾 Sparar beställning till Supabase...');
+                              
+                              const orderData: OrderData = {
+                                floorSize: { width: floorW, depth: floorD, custom: floorConfig?.custom },
+                                wallConfig: { shape: wallShape, height: wallHeight },
+                                furniture: furniture || [],
+                                plants: plants || [],
+                                decorations: [],
+                                storages: storages || [],
+                                counters: counters || [],
+                                tvs: tvs || [],
+                                totalPrice: totalPrice || 0,
+                                packlista: packlistaData,
+                                images: orderImages
+                              };
+                              
+                              const savedOrder = await OrderService.createOrder(
+                                customerInfo,
+                                orderData
+                              );
+                              
+                              console.log('✅ Beställning sparad i Supabase med ID:', savedOrder.id, 'Ordernummer:', savedOrder.orderNumber);
+                              alert(`✅ Beställning skickad!\n\n📧 Mail skickat till dig och oss\n🆔 Ordernummer: ${savedOrder.orderNumber}`);
+                            } catch (supabaseError) {
+                              console.error('❌ Fel vid Supabase-sparning:', supabaseError);
+                              alert('✅ Beställning skickad!\n\n📧 Mail skickat men kunde inte sparas i databasen. Vi har fått din beställning via e-post.');
+                            }
                           } catch (saveError) {
                             console.error('Fel vid sparande till admin-portal:', saveError);
                             alert('✅ Beställning skickad!\n\n⚠️ PDF kunde inte sparas till admin-portal, men e-post har skickats.');
