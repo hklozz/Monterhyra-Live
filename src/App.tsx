@@ -6371,6 +6371,11 @@ export default function App() {
                   {/* Ny Beställ-knapp som skickar e-post med EmailJS */}
                   <button
                     onClick={async () => {
+                      // 🚫 Kräv att kontaktuppgifter är ifyllda
+                      if (!registrationData.name || !registrationData.email || !registrationData.company) {
+                        setShowRegistrationModal(true);
+                        return;
+                      }
                       try {
                         console.log('Beställ-knapp klickad');
                         console.log('Registration data:', registrationData);
@@ -7316,17 +7321,36 @@ Monterhyra Beställningssystem
                     style={{
                       width: '100%',
                       padding: '10px 12px',
-                      background: '#28a745',
+                      background: (registrationData.name && registrationData.email && registrationData.company) ? '#28a745' : '#95a5a6',
                       color: '#fff',
                       border: 'none',
                       borderRadius: 6,
-                      cursor: 'pointer',
+                      cursor: (registrationData.name && registrationData.email && registrationData.company) ? 'pointer' : 'not-allowed',
                       fontWeight: 700,
-                      fontSize: 14
+                      fontSize: 14,
+                      opacity: (registrationData.name && registrationData.email && registrationData.company) ? 1 : 0.75
                     }}
                   >
-                    📧 Beställ
+                    {(registrationData.name && registrationData.email && registrationData.company) ? '📧 Beställ' : '📝 Fyll i kontaktuppgifter först'}
                   </button>
+                  {!(registrationData.name && registrationData.email && registrationData.company) && (
+                    <div style={{ marginTop: 8, textAlign: 'center' }}>
+                      <button
+                        onClick={() => setShowRegistrationModal(true)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#3498db',
+                          cursor: 'pointer',
+                          fontSize: 13,
+                          textDecoration: 'underline',
+                          padding: 0
+                        }}
+                      >
+                        👤 Öppna kontaktformulär →
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
