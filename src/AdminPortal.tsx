@@ -141,13 +141,22 @@ const AdminPortal: React.FC<{
     }
     
     try {
+      console.log('🗑️ Raderar event:', eventId);
       await ExhibitorService.deleteEvent(eventId);
-      alert('✅ Event borttaget!');
-      loadAllEvents();
+      console.log('✅ Event raderat, laddar om lista...');
+      
       if (createdEvent?.id === eventId) {
         setCreatedEvent(null);
       }
+      
+      // Ladda om eventlistan
+      const events = await ExhibitorService.getAllEvents();
+      console.log('📋 Nya eventlistan:', events);
+      setAllEvents(events);
+      
+      alert('✅ Event borttaget!');
     } catch (error: any) {
+      console.error('❌ Fel vid borttagning:', error);
       alert('Fel vid borttagning: ' + error.message);
     }
   };

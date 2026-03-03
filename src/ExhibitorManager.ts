@@ -394,6 +394,28 @@ class ExhibitorManagerClass {
     }
   }
 
+  updateExhibitorBoothConfig(
+    token: string,
+    config: {
+      furniture?: any[];
+      decorations?: any[];
+      customizations?: Record<string, any>;
+      wallShape?: string;
+      carpet?: number;
+      counters?: any[];
+    }
+  ): void {
+    const exhibitor = this.getExhibitorByToken(token);
+    if (exhibitor) {
+      exhibitor.boothConfig = {
+        furniture: config.furniture || exhibitor.boothConfig?.furniture || [],
+        decorations: config.decorations || exhibitor.boothConfig?.decorations || [],
+        customizations: config.customizations || exhibitor.boothConfig?.customizations || {}
+      };
+      this.saveToLocalStorage();
+    }
+  }
+
   getBoothConfig(exhibitorId: string) {
     const exhibitor = this.getExhibitor(exhibitorId);
     return exhibitor?.boothConfig;

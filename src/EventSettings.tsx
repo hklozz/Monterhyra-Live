@@ -1,5 +1,5 @@
  import React from 'react';
-import type { Event, EventPricing, WhiteLabel } from './services/ExhibitorService';
+import type { Event, EventPricing } from './services/ExhibitorService';
 
 interface EventSettingsProps {
   event: Event;
@@ -29,6 +29,17 @@ interface EventSettingsProps {
 export default function EventSettings(props: EventSettingsProps) {
   const { event, pricing, setPricing } = props;
   const [activeSettingsTab, setActiveSettingsTab] = React.useState<'basic' | 'whiteLabel' | 'pricing'>('basic');
+  const [pricingPassword, setPricingPassword] = React.useState('');
+  const [pricingUnlocked, setPricingUnlocked] = React.useState(false);
+
+  const handlePricingPasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pricingPassword === '2026') {
+      setPricingUnlocked(true);
+    } else {
+      alert('❌ Fel lösenord!');
+    }
+  };
 
   return (
     <div style={{
@@ -400,9 +411,74 @@ export default function EventSettings(props: EventSettingsProps) {
       {/* Pricing Tab */}
       {activeSettingsTab === 'pricing' && (
         <div style={{ maxWidth: '1000px' }}>
-          <p style={{ color: '#666', marginBottom: '20px' }}>
-            Anpassa alla priser specifikt för denna mässa. Dessa priser används istället för standardpriser när utställare designar sin monter.
-          </p>
+          {!pricingUnlocked ? (
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '20px',
+              padding: '40px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '12px'
+            }}>
+              <div style={{ fontSize: '48px' }}>🔒</div>
+              <h3 style={{ margin: 0, color: '#2c3e50' }}>Prislista är låst</h3>
+              <p style={{ color: '#666', textAlign: 'center', margin: 0 }}>
+                Ange lösenord för att visa och redigera prislistan
+              </p>
+              <form onSubmit={handlePricingPasswordSubmit} style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <input
+                  type="password"
+                  placeholder="Ange lösenord"
+                  value={pricingPassword}
+                  onChange={(e) => setPricingPassword(e.target.value)}
+                  style={{
+                    padding: '12px 16px',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    width: '200px'
+                  }}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}
+                >
+                  🔓 Lås upp
+                </button>
+              </form>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <p style={{ color: '#666', margin: 0 }}>
+                  Anpassa alla priser specifikt för denna mässa. Dessa priser används istället för standardpriser när utställare designar sin monter.
+                </p>
+                <button
+                  onClick={() => setPricingUnlocked(false)}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#f3f4f6',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: '#666'
+                  }}
+                >
+                  🔒 Lås
+                </button>
+              </div>
 
           <div style={{ display: 'grid', gap: '24px' }}>
             
@@ -719,6 +795,8 @@ export default function EventSettings(props: EventSettingsProps) {
           >
             ✓ Spara Prissättning
           </button>
+          </>
+          )}
         </div>
       )}
     </div>
