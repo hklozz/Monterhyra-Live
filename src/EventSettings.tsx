@@ -795,7 +795,7 @@ export default function EventSettings(props: EventSettingsProps) {
           >
             ✓ Spara Prissättning
           </button>
-          </>
+            </>
           )}
         </div>
       )}
