@@ -199,7 +199,7 @@ const DesignArea: React.FC<{
   setFurniture: (furniture: any[]) => void;
   counters: any[];
   setCounters: (counters: any[]) => void;
-}> = ({ exhibitor, wallShape, setWallShape, carpet, setCarpet, furniture, setFurniture, counters, setCounters }) => {
+}> = ({ exhibitor, wallShape, setWallShape, carpet, setCarpet, furniture, setFurniture, counters }) => {
   // Get locked dimensions from exhibitor
   const boothWidth = exhibitor.monterDimensions.width;
   const boothDepth = exhibitor.monterDimensions.depth;
