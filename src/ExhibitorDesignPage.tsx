@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Grid } from '@react-three/drei';
 import { ExhibitorManager } from './ExhibitorManager';
 import type { Exhibitor } from './ExhibitorManager';
 
@@ -15,6 +17,12 @@ export const ExhibitorDesignPage: React.FC<ExhibitorDesignPageProps> = ({ token 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'design'>('design');
+  
+  // 3D State
+  const [wallShape, setWallShape] = useState<'straight' | 'l' | 'u' | ''>('straight');
+  const [carpet, setCarpet] = useState(0);
+  const [furniture, setFurniture] = useState<any[]>([]);
+  const [counters, setCounters] = useState<any[]>([]);
 
   useEffect(() => {
     // Hämta utställardata baserat på token
@@ -27,6 +35,13 @@ export const ExhibitorDesignPage: React.FC<ExhibitorDesignPageProps> = ({ token 
     }
 
     setExhibitor(foundExhibitor);
+    
+    // Load existing boothConfig if available
+    if (foundExhibitor.boothConfig) {
+      setFurniture(foundExhibitor.boothConfig.furniture || []);
+      // You can load more config here
+    }
+    
     setIsLoading(false);
   }, [token]);
 
@@ -152,7 +167,17 @@ export const ExhibitorDesignPage: React.FC<ExhibitorDesignPageProps> = ({ token 
         display: 'flex'
       }}>
         {activeTab === 'design' ? (
-          <DesignArea exhibitor={exhibitor!} />
+          <DesignArea 
+            exhibitor={exhibitor!}
+            wallShape={wallShape}
+            setWallShape={setWallShape}
+            carpet={carpet}
+            setCarpet={setCarpet}
+            furniture={furniture}
+            setFurniture={setFurniture}
+            counters={counters}
+            setCounters={setCounters}
+          />
         ) : (
           <CustomerInfoTab exhibitor={exhibitor!} />
         )}

@@ -2736,19 +2736,16 @@ export default function App() {
       if (invite || exhibitorId) setIsExhibitorMode(true);
       
       // Pre-fill booth dimensions if provided
-      if (width) {
+      if (width && depth) {
         const widthNum = parseFloat(width);
-        if (!isNaN(widthNum) && widthNum > 0) {
-          setCustomFloorWidth(widthNum);
-          console.log(`📏 Pre-filled width: ${widthNum}m`);
-        }
-      }
-      
-      if (depth) {
         const depthNum = parseFloat(depth);
-        if (!isNaN(depthNum) && depthNum > 0) {
+        
+        if (!isNaN(widthNum) && widthNum > 0 && !isNaN(depthNum) && depthNum > 0) {
+          // Sätt custom floor (index 20) och de angivna måtten
+          setFloorIndex(20); // "Anpassad storlek"
+          setCustomFloorWidth(widthNum);
           setCustomFloorDepth(depthNum);
-          console.log(`📏 Pre-filled depth: ${depthNum}m`);
+          console.log(`📏 Pre-filled booth: ${widthNum}m x ${depthNum}m`);
         }
       }
       
