@@ -1,4 +1,4 @@
-import React from 'react';
+ import React from 'react';
 import type { Event, EventPricing, WhiteLabel } from './services/ExhibitorService';
 
 interface EventSettingsProps {
@@ -242,27 +242,83 @@ export default function EventSettings(props: EventSettingsProps) {
 
           <div>
             <label style={{ display: 'block', fontWeight: '600', marginBottom: '8px' }}>
-              Logo URL
+              Logotyp
             </label>
-            <input
-              type="text"
-              value={props.whiteLabelLogoUrl}
-              onChange={(e) => props.setWhiteLabelLogoUrl(e.target.value)}
-              placeholder="https://example.com/logo.png"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px'
-              }}
-            />
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 500 * 1024) {
+                        alert('Bilden är för stor! Max 500kb.');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const img = new Image();
+                        img.onload = () => {
+                          const canvas = document.createElement('canvas');
+                          let width = img.width;
+                          let height = img.height;
+                          const maxWidth = 400;
+                          if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                          }
+                          canvas.width = width;
+                          canvas.height = height;
+                          const ctx = canvas.getContext('2d');
+                          ctx?.drawImage(img, 0, 0, width, height);
+                          const compressedBase64 = canvas.toDataURL('image/png', 0.8);
+                          props.setWhiteLabelLogoUrl(compressedBase64);
+                        };
+                        img.src = reader.result as string;
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                  Max 500kb • PNG/JPG • Komprimeras automatiskt
+                </small>
+              </div>
+              {props.whiteLabelLogoUrl && (
+                <button
+                  onClick={() => props.setWhiteLabelLogoUrl('')}
+                  style={{
+                    padding: '12px 16px',
+                    background: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  🗑️ Ta bort
+                </button>
+              )}
+            </div>
             {props.whiteLabelLogoUrl && (
-              <img
-                src={props.whiteLabelLogoUrl}
-                alt="Logo preview"
-                style={{ marginTop: '12px', maxHeight: '100px', borderRadius: '8px' }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
+              <div style={{ marginTop: '12px', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
+                <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>Förhandsvisning:</div>
+                <img
+                  src={props.whiteLabelLogoUrl}
+                  alt="Logo preview"
+                  style={{ maxHeight: '100px', borderRadius: '8px' }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              </div>
             )}
           </div>
 

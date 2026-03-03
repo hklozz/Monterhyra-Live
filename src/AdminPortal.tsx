@@ -135,6 +135,23 @@ const AdminPortal: React.FC<{
     }
   };
 
+  const handleDeleteEvent = async (eventId: string, eventName: string) => {
+    if (!window.confirm(`Är du säker på att du vill ta bort eventet "${eventName}"?\n\nDetta tar även bort alla utställare och deras data. Detta går INTE att ångra!`)) {
+      return;
+    }
+    
+    try {
+      await ExhibitorService.deleteEvent(eventId);
+      alert('✅ Event borttaget!');
+      loadAllEvents();
+      if (createdEvent?.id === eventId) {
+        setCreatedEvent(null);
+      }
+    } catch (error: any) {
+      alert('Fel vid borttagning: ' + error.message);
+    }
+  };
+
   const handleCreateSupabaseEvent = async () => {
     if (!newEventName.trim()) {
       alert('Ange eventnamn');
@@ -1058,35 +1075,6 @@ const AdminPortal: React.FC<{
               📋 Beställningar
             </button>
           </div>
-
-          {/* Middle - Mässa button */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            paddingLeft: '5px',
-            paddingRight: '5px'
-          }}>
-            <button
-              onClick={() => {
-                setShowEventCreator(false);
-                onOpenExhibitorAdmin?.();
-              }}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#27ae60',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '15px',
-                fontWeight: '600',
-                width: '100%'
-              }}
-            >
-              🏢 Mässa (Old)
-            </button>
-          </div>
           
           {/* Right - Supabase Events button */}
           <div style={{
@@ -1263,21 +1251,39 @@ const AdminPortal: React.FC<{
                           </div>
                         )}
                       </div>
-                      <button
-                        onClick={() => onOpenEventAdmin?.(event.id)}
-                        style={{
-                          padding: '10px 20px',
-                          background: '#3b82f6',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontWeight: '600',
-                          fontSize: '14px'
-                        }}
-                      >
-                        Öppna →
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => onOpenEventAdmin?.(event.id)}
+                          style={{
+                            padding: '10px 20px',
+                            background: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '14px'
+                          }}
+                        >
+                          Öppna →
+                        </button>
+                        <button
+                          onClick={() => handleDeleteEvent(event.id, event.name)}
+                          style={{
+                            padding: '10px 16px',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '14px'
+                          }}
+                          title="Ta bort event"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
