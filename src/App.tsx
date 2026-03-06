@@ -3066,15 +3066,8 @@ export default function App() {
     // Check for Event Admin access
     if (eventAdminId) {
       console.log('🏢 Event Admin access detected:', eventAdminId);
-      import('./ExhibitorManager').then(({ ExhibitorManager }) => {
-        const event = ExhibitorManager.getEvent(eventAdminId);
-        if (event) {
-          setSelectedEventId(eventAdminId);
-          setShowEventAdminPortal(true);
-        } else {
-          console.warn('Event not found:', eventAdminId);
-        }
-      });
+      setSelectedEventId(eventAdminId);
+      setShowEventAdminPortal(true);
       return; // Don't process invite token if eventAdmin is present
     }
     

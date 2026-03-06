@@ -171,7 +171,6 @@ const AdminPortal: React.FC<{
       
       setCreatedEvent(event);
       loadAllEvents(); // Uppdatera listan
-      alert(`✅ Event skapat!\n\nEvent-ID: ${event.id}\nLösenord: ${event.password}\n\nDu kan nu öppna EventAdminPortal`);
       setNewEventName('');
       setNewEventPassword('');
     } catch (error: any) {
@@ -1272,18 +1271,58 @@ const AdminPortal: React.FC<{
                     border: '2px solid #22c55e',
                     borderRadius: '8px'
                   }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '12px', color: '#166534' }}>
+                    <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#166534' }}>
                       ✅ Event skapat!
                     </h3>
-                    <p style={{ margin: '8px 0', fontFamily: 'monospace', fontSize: '13px' }}>
-                      <strong>Event-ID:</strong> {createdEvent.id}
-                    </p>
-                    <p style={{ margin: '8px 0', fontFamily: 'monospace', fontSize: '13px' }}>
+                    <p style={{ margin: '8px 0', fontSize: '13px' }}>
                       <strong>Namn:</strong> {createdEvent.name}
                     </p>
-                    <p style={{ margin: '8px 0', fontFamily: 'monospace', fontSize: '13px' }}>
-                      <strong>Lösenord:</strong> <span style={{ background: '#fef3c7', padding: '4px 8px', borderRadius: '4px' }}>{createdEvent.password}</span>
+                    <p style={{ margin: '8px 0', fontSize: '13px' }}>
+                      <strong>Lösenord:</strong> <span style={{ background: '#fef3c7', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>{createdEvent.password}</span>
                     </p>
+                    <div style={{ marginTop: '16px' }}>
+                      <p style={{ margin: '0 0 8px 0', fontWeight: '600', fontSize: '13px', color: '#166534' }}>
+                        🔗 Admin-länk (skicka denna till arrangören):
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <input
+                          readOnly
+                          value={`${window.location.origin}/app.html?eventAdmin=${createdEvent.id}&key=${createdEvent.password}`}
+                          style={{
+                            flex: 1,
+                            minWidth: '200px',
+                            padding: '8px 12px',
+                            border: '1px solid #86efac',
+                            borderRadius: '6px',
+                            fontFamily: 'monospace',
+                            fontSize: '12px',
+                            background: 'white',
+                            color: '#1e3a2f'
+                          }}
+                          onFocus={e => e.target.select()}
+                        />
+                        <button
+                          onClick={() => {
+                            const link = `${window.location.origin}/app.html?eventAdmin=${createdEvent.id}&key=${createdEvent.password}`;
+                            navigator.clipboard.writeText(link);
+                            alert('✅ Länk kopierad!');
+                          }}
+                          style={{
+                            padding: '8px 16px',
+                            background: '#22c55e',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '13px',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          📋 Kopiera länk
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
@@ -1323,6 +1362,26 @@ const AdminPortal: React.FC<{
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => {
+                            const link = `${window.location.origin}/app.html?eventAdmin=${event.id}&key=${event.password}`;
+                            navigator.clipboard.writeText(link);
+                            alert('✅ Länk kopierad!');
+                          }}
+                          style={{
+                            padding: '10px 16px',
+                            background: '#22c55e',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '13px'
+                          }}
+                          title={`Kopiera admin-länk för ${event.name}`}
+                        >
+                          🔗 Länk
+                        </button>
                         <button
                           onClick={() => onOpenEventAdmin?.(event.id)}
                           style={{

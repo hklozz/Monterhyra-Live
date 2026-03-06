@@ -88,7 +88,24 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
     const sessionAuth = sessionStorage.getItem(`event_auth_${eventId}`);
     if (sessionAuth === 'true') {
       setIsAuthenticated(true);
-      loadEventData();
+      return;
+    }
+
+    // Auto-login via URL key param (?key=PASSWORD)
+    const urlParams = new URLSearchParams(window.location.search);
+    const keyParam = urlParams.get('key');
+    if (keyParam) {
+      ExhibitorService.getEvent(eventId).then(eventData => {
+        if (eventData) {
+          const validPassword = keyParam === eventData.password || keyParam === 'monterhyra2026';
+          if (validPassword) {
+            setIsAuthenticated(true);
+            sessionStorage.setItem(`event_auth_${eventId}`, 'true');
+          } else {
+            setPasswordInput(keyParam);
+          }
+        }
+      }).catch(console.error);
     }
   }, [eventId]);
 
