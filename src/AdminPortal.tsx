@@ -1287,7 +1287,7 @@ const AdminPortal: React.FC<{
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <input
                           readOnly
-                          value={`${window.location.origin}/app.html?eventAdmin=${createdEvent.id}&key=${createdEvent.password}`}
+                          value={`${window.location.origin}/app.html?eventAdmin=${createdEvent.id}`}
                           style={{
                             flex: 1,
                             minWidth: '200px',
@@ -1303,7 +1303,7 @@ const AdminPortal: React.FC<{
                         />
                         <button
                           onClick={() => {
-                            const link = `${window.location.origin}/app.html?eventAdmin=${createdEvent.id}&key=${createdEvent.password}`;
+                            const link = `${window.location.origin}/app.html?eventAdmin=${createdEvent.id}`;
                             navigator.clipboard.writeText(link);
                             alert('✅ Länk kopierad!');
                           }}
@@ -1364,7 +1364,7 @@ const AdminPortal: React.FC<{
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
                           onClick={() => {
-                            const link = `${window.location.origin}/app.html?eventAdmin=${event.id}&key=${event.password}`;
+                            const link = `${window.location.origin}/app.html?eventAdmin=${event.id}`;
                             navigator.clipboard.writeText(link);
                             alert('✅ Länk kopierad!');
                           }}
