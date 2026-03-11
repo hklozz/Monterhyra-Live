@@ -1,0 +1,23 @@
+export const FLOOR_SIZES = [
+  { label: '3x1,5', width: 3, depth: 1.5, image: '/Models/floors/3x1-5.svg' },
+  { label: '3x2', width: 3, depth: 2, image: '/Models/floors/floor.svg' },
+  { label: '3x3', width: 3, depth: 3, image: '/Models/floors/3x3.svg' },
+  { label: '4x2', width: 4, depth: 2, image: '/Models/floors/floor.svg' },
+  { label: '4x3', width: 4, depth: 3, image: '/Models/floors/floor.svg' },
+  { label: '4x4', width: 4, depth: 4, image: '/Models/floors/4x4.svg' },
+  { label: '5x2', width: 5, depth: 2, image: '/Models/floors/floor.svg' },
+  { label: '5x3', width: 5, depth: 3, image: '/Models/floors/floor.svg' },
+  { label: '5x5', width: 5, depth: 5, image: '/Models/floors/floor.svg' },
+  { label: '6x3', width: 6, depth: 3, image: '/Models/floors/floor.svg' },
+  { label: '6x4', width: 6, depth: 4, image: '/Models/floors/floor.svg' },
+  { label: '6x5', width: 6, depth: 5, image: '/Models/floors/floor.svg' },
+  { label: '6x6', width: 6, depth: 6, image: '/Models/floors/floor.svg' },
+  { label: '7x3', width: 7, depth: 3, image: '/Models/floors/floor.svg' },
+  { label: '7x4', width: 7, depth: 4, image: '/Models/floors/floor.svg' },
+  { label: '7x7', width: 7, depth: 7, image: '/Models/floors/floor.svg' },
+  { label: '8x3', width: 8, depth: 3, image: '/Models/floors/floor.svg' },
+  { label: '8x5', width: 8, depth: 5, image: '/Models/floors/floor.svg' },
+  { label: '8x6', width: 8, depth: 6, image: '/Models/floors/floor.svg' },
+  { label: '10x10', width: 10, depth: 10, image: '/Models/floors/floor.svg' },
+  { label: 'Anpassad storlek', width: 0, depth: 0, custom: true, image: null }
+];

@@ -1019,7 +1019,7 @@ export default function EventAdminPortal({ eventId, onClose }: EventAdminPortalP
                       const hasOrder = orders.some(o => o.exhibitorId === exhibitor.id);
                       const boothSize = exhibitor.boothData ? `${exhibitor.boothData.width || 3}x${exhibitor.boothData.depth || 3}m (${exhibitor.boothData.height || 2.5}m)` : '3x3m (2.5m)';
                       // Använd rätt bas-URL beroende på miljö
-                      const baseUrl = window.location.origin;
+                      const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
                       const exhibitorLink = ExhibitorService.generateExhibitorLink(exhibitor, baseUrl);
                       
                       return (

@@ -23,6 +23,16 @@ import { OrderService } from './services/OrderService';
 import type { CustomerInfo, OrderData } from './services/OrderService';
 import { PrintFileService } from './services/PrintFileService';
 import ErrorBoundary from './ErrorBoundary';
+import { DESK_SIZES, COUNTER_TYPES } from './constants/counters';
+import { TV_SIZES } from './constants/tvs';
+import { TRUSS_TYPES } from './constants/truss';
+import { STORAGE_TYPES } from './constants/storage';
+import { PLANT_TYPES } from './constants/plants';
+import { FURNITURE_TYPES } from './constants/furniture';
+import { FLOOR_SIZES } from './constants/floors';
+import { CARPET_COLORS } from './constants/carpets';
+import { WALL_SHAPES, WALL_HEIGHTS, GRAPHICS } from './constants/walls';
+import { EXHIBITION_BOOTH_TEMPLATES } from './constants/templates';
 
 // Lazy load admin components for better initial load performance
 const AdminPortal = lazy(() => import('./AdminPortal'));
@@ -164,190 +174,6 @@ const InstructionCard = ({
     </div>
   );
 };
-
-const DESK_SIZES = [
-  { label: '1m', width: 1 },
-  { label: '2m', width: 2 },
-  { label: '3m', width: 3 }
-];
-
-const COUNTER_TYPES = [
-  { label: 'Ingen disk', width: 0, depth: 0, image: '/Models/counters/none.svg' },
-  { label: '1m disk', width: 1, depth: 0.5, image: '/Models/counters/1m.svg' },
-  { label: '1,5m disk', width: 1.5, depth: 0.5, image: '/Models/counters/1-5m.svg' },
-  { label: '2m disk', width: 2, depth: 0.5, image: '/Models/counters/2m.svg' },
-  { label: '2,5m disk', width: 2.5, depth: 0.5, image: '/Models/counters/2-5m.svg' },
-  { label: '3m disk', width: 3, depth: 0.5, image: '/Models/counters/3m.svg' },
-  { label: '3,5m disk', width: 3.5, depth: 0.5, image: '/Models/counters/3m.svg' },
-  { label: '4m disk', width: 4, depth: 0.5, image: '/Models/counters/3m.svg' },
-  { label: 'L-disk (1,5m + 1m)', width: 0, depth: 0, type: 'L', image: '/Models/walls/l-shape.svg' },
-  { label: 'L-disk spegelvänd (1,5m + 1m)', width: 0, depth: 0, type: 'L-mirrored', image: '/Models/walls/l-shape.svg' }
-];
-
-const TV_SIZES = [
-  { label: 'Ingen', width: 0, height: 0, image: '/Models/tvs/none.svg' },
-  { label: '32"', width: 0.71, height: 0.40, image: '/Models/tvs/32inch.svg' },
-  { label: '43"', width: 0.96, height: 0.56, image: '/Models/tvs/43inch.svg' },
-  { label: '55"', width: 1.22, height: 0.71, image: '/Models/tvs/55inch.svg' },
-  { label: '70"', width: 1.55, height: 0.90, image: '/Models/tvs/70inch.svg' },
-  { label: '75" beTV', width: 1.68, height: 0.95, image: '/Models/tvs/75inch.svg' }
-];
-
-const TRUSS_TYPES = [
-  { label: 'Ingen truss', type: 'none', image: null },
-  { label: 'Framkant truss (rak)', type: 'front-straight', width: 0.3, height: 0.3, image: '/Models/truss/front-straight.svg' },
-  { label: 'Rund hängande truss', type: 'hanging-round', diameter: 2.0, height: 0.25, image: '/Models/truss/hanging-round.svg' },
-  { label: 'Fyrkantig hängande truss', type: 'hanging-square', width: 2.0, depth: 2.0, height: 0.3, image: '/Models/truss/hanging-square.svg' }
-] as const;
-
-const STORAGE_TYPES = [
-  { label: 'Inget förråd', width: 0, depth: 0, image: null },
-  { label: '1x1m förråd', width: 1, depth: 1, image: null },
-  { label: '2x1m förråd', width: 2, depth: 1, image: null },
-  { label: '3x1m förråd', width: 3, depth: 1, image: null },
-  { label: '4x1m förråd', width: 4, depth: 1, image: null }
-];
-
-const PLANT_TYPES = [
-  { label: 'Ficus', width: 0.4, depth: 0.4, height: 1.8, color: '#228B22', leafColor: '#32CD32', type: 'tree', emoji: '🌿', image: '/Models/plants/Ficus.png' },
-  { label: 'Monstera', width: 0.6, depth: 0.6, height: 1.2, color: '#2F4F2F', leafColor: '#228B22', type: 'broad', emoji: '🍃', image: '/Models/plants/monstera.svg' },
-  { label: 'Bambu', width: 0.3, depth: 0.3, height: 2.0, color: '#556B2F', leafColor: '#9ACD32', type: 'bamboo', emoji: '🎋', image: '/Models/plants/bambu.svg' },
-  { label: 'Palmlilja', width: 0.5, depth: 0.5, height: 1.5, color: '#8FBC8F', leafColor: '#90EE90', type: 'palm', emoji: '🌴', image: '/Models/plants/palmlilja.svg' },
-  { label: 'Olivträd', width: 0.7, depth: 0.7, height: 1.6, color: '#8B7355', leafColor: '#6B8E23', type: 'tree', emoji: '🫒', image: '/Models/plants/Olivträd.png' },
-  { label: 'Sansevieria', width: 0.3, depth: 0.3, height: 1.0, color: '#2F4F2F', leafColor: '#228B22', type: 'spiky', emoji: '🌱', image: '/Models/plants/sansevieria.svg' },
-  { label: 'Kaktus', width: 0.2, depth: 0.2, height: 0.8, color: '#228B22', leafColor: '#32CD32', type: 'cactus', emoji: '🌵', image: '/Models/plants/kaktus.svg' },
-  { label: 'Rosmarin', width: 0.4, depth: 0.4, height: 0.6, color: '#556B2F', leafColor: '#9ACD32', type: 'herb', emoji: '🌿', image: '/Models/plants/rosmarin.svg' },
-  { label: 'Lavendel', width: 0.5, depth: 0.5, height: 0.7, color: '#663399', leafColor: '#DDA0DD', type: 'flower', emoji: '💜', image: '/Models/plants/lavendel.svg' },
-  { label: 'Eucalyptus', width: 0.8, depth: 0.8, height: 2.2, color: '#8FBC8F', leafColor: '#98FB98', type: 'tree', emoji: '🌳', image: '/Models/plants/dracaena.png' }
-];
-
-// MONTERMALLAR FÖR MÄSSHALLEN
-const EXHIBITION_BOOTH_TEMPLATES = [
-  {
-    id: 'empty',
-    name: 'Tom montör',
-    emoji: '⬜',
-    floorSize: { width: 3, depth: 3 },
-    floor: '3x3',
-    wallShape: '',
-    wallHeight: 2.4,
-    carpet: 0,
-    counters: [],
-    furniture: [],
-    plants: [],
-    storages: [],
-    wallShelves: []
-  },
-  {
-    id: 'tech-startup',
-    name: 'Tech Startup',
-    emoji: '💻',
-    floorSize: { width: 3, depth: 3 },
-    floor: '3x3',
-    wallShape: 'l',
-    wallHeight: 2.4,
-    carpet: 1, // Första färgmattan
-    counters: [
-      { id: 1, type: '2m disk', position: { x: 0.8, z: -0.8 }, rotation: 0 }
-    ],
-    furniture: [
-      { id: 1, type: 'barbord', position: { x: -0.5, z: 0.5 }, rotation: 0 }
-    ],
-    plants: [
-      { id: 1, type: 'Monstera', position: { x: 1.0, z: 1.0 } }
-    ],
-    storages: [],
-    wallShelves: []
-  },
-  {
-    id: 'fashion-brand',
-    name: 'Fashion Brand',
-    emoji: '👗',
-    floorSize: { width: 4, depth: 4 },
-    floor: '4x4',
-    wallShape: 'u',
-    wallHeight: 2.4,
-    carpet: 3, // EXPO färg
-    counters: [
-      { id: 1, type: '1,5m disk', position: { x: 1.2, z: -1.2 }, rotation: 45 }
-    ],
-    furniture: [
-      { id: 1, type: 'soffa', position: { x: -1.0, z: 0 }, rotation: 90 },
-      { id: 2, type: 'fatolj', position: { x: 0, z: 1.0 }, rotation: 180 }
-    ],
-    plants: [
-      { id: 1, type: 'Ficus', position: { x: 1.5, z: 1.5 } }
-    ],
-    storages: [],
-    wallShelves: []
-  },
-  {
-    id: 'food-company',
-    name: 'Food Company',
-    emoji: '🍕',
-    floorSize: { width: 6, depth: 3 },
-    floor: '3x1-5',
-    wallShape: 'straight',
-    wallHeight: 2.4,
-    carpet: 2, // Annan färgmatta
-    counters: [
-      { id: 1, type: '3m disk', position: { x: 0, z: -1.0 }, rotation: 0 },
-      { id: 2, type: '2m disk', position: { x: 2.0, z: 0 }, rotation: 90 }
-    ],
-    furniture: [
-      { id: 1, type: 'barbord', position: { x: -1.5, z: 0 }, rotation: 0 },
-      { id: 2, type: 'barstol', position: { x: -1.2, z: 0.3 }, rotation: 0 },
-      { id: 3, type: 'barstol', position: { x: -1.2, z: -0.3 }, rotation: 0 }
-    ],
-    plants: [],
-    storages: [],
-    wallShelves: []
-  },
-  {
-    id: 'wellness-spa',
-    name: 'Wellness & Spa',
-    emoji: '🧘',
-    floorSize: { width: 4, depth: 4 },
-    floor: '4x4',
-    wallShape: 'l',
-    wallHeight: 2.4,
-    carpet: 4, // SALSA färg
-    counters: [
-      { id: 1, type: '1m disk', position: { x: 1.0, z: -1.0 }, rotation: 0 }
-    ],
-    furniture: [
-      { id: 1, type: 'soffa', position: { x: 0, z: 0.5 }, rotation: 0 },
-      { id: 2, type: 'sidobord', position: { x: -0.8, z: 0.8 }, rotation: 0 }
-    ],
-    plants: [
-      { id: 1, type: 'Palmlilja', position: { x: 1.5, z: 1.5 } },
-      { id: 2, type: 'Bambu', position: { x: -1.2, z: 1.2 } }
-    ],
-    storages: [],
-    wallShelves: []
-  },
-  {
-    id: 'minimal-design',
-    name: 'Minimal Design',
-    emoji: '⚪',
-    floorSize: { width: 3, depth: 3 },
-    floor: '3x3',
-    wallShape: 'straight',
-    wallHeight: 2.4,
-    carpet: 0, // Ingen matta
-    counters: [
-      { id: 1, type: 'L-disk (1,5m + 1m)', position: { x: 0.5, z: -0.5 }, rotation: 0 }
-    ],
-    furniture: [
-      { id: 1, type: 'fatolj', position: { x: -0.8, z: 0.8 }, rotation: 135 }
-    ],
-    plants: [
-      { id: 1, type: 'Monstera', position: { x: 1.2, z: 1.2 } }
-    ],
-    storages: [],
-    wallShelves: []
-  }
-];
 
 // Exhibition booth interfaces
 interface ExhibitionBoothTemplate {
@@ -931,89 +757,7 @@ const CaptureHelper = React.forwardRef<any, {onHideGrid?: (hide: boolean) => voi
 });
 
 
-const FURNITURE_TYPES = [
-  { label: 'Barbord', width: 0.6, depth: 0.6, height: 1.1, color: '#FFFFFF', type: 'table', emoji: '🍸', image: '/Models/furniture/barbord.svg' },
-  { label: 'Barstol', width: 0.4, depth: 0.4, height: 1.0, color: '#FFFFFF', type: 'chair', emoji: '🪑', image: '/Models/furniture/barstol.svg' },
-  { label: 'Pall', width: 0.35, depth: 0.35, height: 0.45, color: '#4169E1', type: 'stool', emoji: '🛋️', image: '/Models/furniture/pall.svg' },
-  { label: 'Soffa 2-sits', width: 1.4, depth: 0.8, height: 0.85, color: '#2F4F4F', type: 'sofa', emoji: '🛋️', image: '/Models/furniture/soffa.svg' },
-  { label: 'Soffa 3-sits', width: 1.8, depth: 0.8, height: 0.85, color: '#2F4F4F', type: 'sofa', emoji: '🛋️', image: '/Models/furniture/soffa.svg' },
-  { label: 'Fåtölj', width: 0.8, depth: 0.8, height: 0.9, color: '#8B4513', type: 'armchair', emoji: '🪑', image: '/Models/furniture/fatolj.svg' },
-  { label: 'Sidobord', width: 0.5, depth: 0.5, height: 0.5, color: '#DEB887', type: 'side_table', emoji: '🪑', image: '/Models/furniture/sidobord.svg' },
-  { label: 'Podie (Vitlaserad furu)', width: 0.35, depth: 0.2, height: 0.9, color: '#F8F8F0', type: 'podium', emoji: '📦', image: null }
-];
 
-const FLOOR_SIZES = [
-  { label: '3x1,5', width: 3, depth: 1.5, image: '/Models/floors/3x1-5.svg' },
-  { label: '3x2', width: 3, depth: 2, image: '/Models/floors/floor.svg' },
-  { label: '3x3', width: 3, depth: 3, image: '/Models/floors/3x3.svg' },
-  { label: '4x2', width: 4, depth: 2, image: '/Models/floors/floor.svg' },
-  { label: '4x3', width: 4, depth: 3, image: '/Models/floors/floor.svg' },
-  { label: '4x4', width: 4, depth: 4, image: '/Models/floors/4x4.svg' },
-  { label: '5x2', width: 5, depth: 2, image: '/Models/floors/floor.svg' },
-  { label: '5x3', width: 5, depth: 3, image: '/Models/floors/floor.svg' },
-  { label: '5x5', width: 5, depth: 5, image: '/Models/floors/floor.svg' },
-  { label: '6x3', width: 6, depth: 3, image: '/Models/floors/floor.svg' },
-  { label: '6x4', width: 6, depth: 4, image: '/Models/floors/floor.svg' },
-  { label: '6x5', width: 6, depth: 5, image: '/Models/floors/floor.svg' },
-  { label: '6x6', width: 6, depth: 6, image: '/Models/floors/floor.svg' },
-  { label: '7x3', width: 7, depth: 3, image: '/Models/floors/floor.svg' },
-  { label: '7x4', width: 7, depth: 4, image: '/Models/floors/floor.svg' },
-  { label: '7x7', width: 7, depth: 7, image: '/Models/floors/floor.svg' },
-  { label: '8x3', width: 8, depth: 3, image: '/Models/floors/floor.svg' },
-  { label: '8x5', width: 8, depth: 5, image: '/Models/floors/floor.svg' },
-  { label: '8x6', width: 8, depth: 6, image: '/Models/floors/floor.svg' },
-  { label: '10x10', width: 10, depth: 10, image: '/Models/floors/floor.svg' },
-  { label: 'Anpassad storlek', width: 0, depth: 0, custom: true, image: null }
-];
-
-const CARPET_COLORS = [
-  { name: 'Ingen matta', color: null },
-  // EXPO färger (180 kr/kvm)
-  { name: 'EXPO - Röd', color: '#e74c3c' },
-  { name: 'EXPO - Blå', color: '#3498db' },
-  { name: 'EXPO - Grön', color: '#27ae60' },
-  { name: 'EXPO - Gul', color: '#f1c40f' },
-  { name: 'EXPO - Orange', color: '#e67e22' },
-  { name: 'EXPO - Lila', color: '#9b59b6' },
-  { name: 'EXPO - Rosa', color: '#e91e63' },
-  { name: 'EXPO - Turkos', color: '#1abc9c' },
-  { name: 'EXPO - Lime', color: '#8bc34a' },
-  { name: 'EXPO - Magenta', color: '#e91e63' },
-  // SALSA färger (240 kr/kvm = 180 + 60)
-  { name: 'SALSA - Djup Röd', color: '#8b0000' },
-  { name: 'SALSA - Marinblå', color: '#000080' },
-  { name: 'SALSA - Smaragdgrön', color: '#006400' },
-  { name: 'SALSA - Burgundy', color: '#800020' },
-  { name: 'SALSA - Midnattsblå', color: '#191970' },
-  { name: 'SALSA - Skogsgrön', color: '#228b22' },
-  { name: 'SALSA - Körsbärsröd', color: '#de3163' },
-  { name: 'SALSA - Safirblå', color: '#0f52ba' },
-  // Rutmönster sist (255 kr/kvm)
-  { name: 'Rutmönster Svart/Vit', color: 'checkerboard-bw' },
-  { name: 'Rutmönster Röd/Svart', color: 'checkerboard-rb' },
-  { name: 'Rutmönster Blå/Vit', color: 'checkerboard-bwhite' },
-  { name: 'Rutmönster Gul/Svart', color: 'checkerboard-yb' }
-];
-
-const WALL_SHAPES = [
-  { label: 'Inget valt', value: '', image: null },
-  { label: 'Rak', value: 'straight', image: '/Models/walls/straight.svg' },
-  { label: 'L-form', value: 'l', image: '/Models/walls/l-shape.svg' },
-  { label: 'U-form', value: 'u', image: '/Models/walls/u-shape.svg' }
-];
-
-const WALL_HEIGHTS = [
-  { label: '2,5 m', value: 2.5, image: null },
-  { label: '3 m', value: 3, image: null },
-  { label: '3,5 m', value: 3.5, image: null }
-];
-
-const GRAPHICS = [
-  { label: 'Ej valt', value: 'none', image: null },
-  { label: 'Hyr grafik', value: 'hyr', image: null },
-  { label: 'Eget tryck (forex)', value: 'forex', image: null },
-  { label: 'Eget tryck (vepa)', value: 'vepa', image: null }
-];
 
 
 

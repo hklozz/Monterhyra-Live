@@ -618,7 +618,7 @@ export const ExhibitorAdmin: React.FC<ExhibitorAdminProps> = ({ onClose, onOpenE
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              const baseUrl = window.location.origin;
+                              const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
                               const adminUrl = `${baseUrl}/app.html?eventAdmin=${event.id}`;
                               const message = `Event Admin Portal\n\nURL: ${adminUrl}\nLösenord: ${event.password}\n\nLogga in för att administrera ditt event.`;
                               navigator.clipboard.writeText(message);
