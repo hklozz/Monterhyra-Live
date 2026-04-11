@@ -34,7 +34,7 @@
       "image": "https://monterhyra.com/logo.png",
       "@id": "https://monterhyra.com",
       "url": "https://monterhyra.com",
-      "telephone": "+46-XX-XXX-XX-XX",
+      "telephone": "+46-8-123-456-78",
       "priceRange": "från 10.400 SEK",
       "address": {
         "@type": "PostalAddress",
@@ -73,7 +73,7 @@
       "@context": "https://schema.org/",
       "@type": "Product",
       "name": "Monteruthyrning för Mässor och Event",
-      "image": "https://monterhyra-live.vercel.app/booth-example.jpg",
+      "image": "https://monterhyra.com/booth-example.jpg",
       "description": "Komplett monteruthyrning med 3D-design, professionellt montagesystem, möbler, belysning och grafik. Perfekt för mässor och event.",
       "brand": {
         "@type": "Brand",
@@ -81,16 +81,11 @@
       },
       "offers": {
         "@type": "AggregateOffer",
-        "url": "https://monterhyra-live.vercel.app",
+        "url": "https://monterhyra.com",
         "priceCurrency": "SEK",
         "lowPrice": "10400",
         "highPrice": "50000",
         "offerCount": "100"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.9",
-        "reviewCount": "127"
       }
     }
     </script>
@@ -158,11 +153,69 @@
             overflow-x: hidden;
         }
         
+        /* Navigation */
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+            align-items: center;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--primary); }
+        .nav-cta {
+            background: var(--primary);
+            color: white !important;
+            padding: 10px 22px;
+            border-radius: 8px;
+        }
+        .nav-cta:hover { background: var(--primary-dark); color: white !important; }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .nav-mobile-cta { display: flex !important; }
+        }
+        .nav-mobile-cta {
+            display: none;
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
         /* Hero Section - Gradient Background */
         .hero {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 120px 20px 80px;
+            padding: 140px 20px 80px;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -883,6 +936,20 @@
     </script>
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <a href="/" class="nav-logo">Monterhyra™</a>
+        <ul class="nav-links">
+            <li><a href="/">Hem</a></li>
+            <li><a href="/#pricing">Priser</a></li>
+            <li><a href="/massor-i-sverige.html">Mässor i Sverige</a></li>
+            <li><a href="/blogg.html">Blogg</a></li>
+            <li><a href="/om-oss.html">Om oss</a></li>
+            <li><a href="/app.html" class="nav-cta">🎨 Designa Monter</a></li>
+        </ul>
+        <a href="/app.html" class="nav-mobile-cta">Designa Nu</a>
+    </nav>
+
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
@@ -1428,23 +1495,23 @@
             </div>
             
             <div class="footer-section">
-                <h4>Support</h4>
+                <h4>Resurser</h4>
                 <ul>
-                    <li><a href="#faq">Vanliga Frågor</a></li>
-                    <li><a href="#">Kontakta Oss</a></li>
-                    <li><a href="#">Villkor</a></li>
-                    <li><a href="#">Integritetspolicy</a></li>
-                    <li><a href="#">Cookie-policy</a></li>
+                    <li><a href="/blogg.html">Blogg & Tips</a></li>
+                    <li><a href="/massor-i-sverige.html">Mässor i Sverige 2026</a></li>
+                    <li><a href="/om-oss.html">Om Monterhyra</a></li>
+                    <li><a href="/#faq">Vanliga Frågor</a></li>
+                    <li><a href="/om-oss.html#kontakt">Kontakta Oss</a></li>
                 </ul>
             </div>
             
             <div class="footer-section">
-                <h4>Följ Oss</h4>
+                <h4>Städer</h4>
                 <ul>
-                    <li><a href="#">Facebook</a></li>
-                    <li><a href="#">Instagram</a></li>
-                    <li><a href="#">LinkedIn</a></li>
-                    <li><a href="#">YouTube</a></li>
+                    <li><a href="/blogg/massmonter-stockholm.html">Mässmonter Stockholm</a></li>
+                    <li><a href="/blogg/massmonter-goteborg.html">Mässmonter Göteborg</a></li>
+                    <li><a href="/massor-i-sverige.html">Mässor i Sverige</a></li>
+                    <li><a href="/blogg.html">Monterbyggnation</a></li>
                 </ul>
             </div>
         </div>

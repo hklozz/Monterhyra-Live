@@ -1,20 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
-  <!-- Homepage / Landing page -->
+  <!-- Homepage -->
   <url>
     <loc>https://monterhyra.com/</loc>
-    <lastmod>2026-03-01</lastmod>
-    <changefreq>daily</changefreq>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  
+
   <!-- Main application -->
   <url>
     <loc>https://monterhyra.com/app.html</loc>
-    <lastmod>2026-03-01</lastmod>
+    <lastmod>2026-04-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+  </url>
+
+  <!-- Om oss -->
+  <url>
+    <loc>https://monterhyra.com/om-oss.html</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Blogg index -->
+  <url>
+    <loc>https://monterhyra.com/blogg.html</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Mässor i Sverige -->
+  <url>
+    <loc>https://monterhyra.com/massor-i-sverige.html</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Blogginlägg -->
+  <url>
+    <loc>https://monterhyra.com/blogg/hyra-massmonter-komplett-guide.html</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://monterhyra.com/blogg/tips-lyckas-massan.html</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://monterhyra.com/blogg/massmonter-stockholm.html</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://monterhyra.com/blogg/massmonter-goteborg.html</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://monterhyra.com/blogg/monterbyggnation-guide.html</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 
 </urlset>
