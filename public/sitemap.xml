@@ -77,4 +77,19 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- Landningssidor med hög köpintention -->
+  <url>
+    <loc>https://monterhyra.com/massmonter-pris.html</loc>
+    <lastmod>2026-04-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://monterhyra.com/hyra-massmonter.html</loc>
+    <lastmod>2026-04-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
 </urlset>

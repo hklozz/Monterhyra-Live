@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyra Mässmonter Sverige 2026 – Enkel, Transparent & Prisvärd | Monterhyra</title>
+    <meta name="description" content="Hyra mässmonter i Sverige – designa i 3D, se direkt pris, beställ online. Leverans och montering ingår. Från 10.400 kr exkl. moms. Hela Sverige.">
+    <link rel="canonical" href="https://monterhyra.com/hyra-massmonter.html">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "Hyra Mässmonter",
+      "description": "Professionell mässmonteruthyrning i hela Sverige med 3D-design, direkt pris och komplett leverans.",
+      "provider": { "@type": "Organization", "name": "Monterhyra", "url": "https://monterhyra.com" },
+      "areaServed": "SE",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "SEK",
+        "price": "10400",
+        "priceSpecification": { "@type": "PriceSpecification", "minPrice": "10400", "priceCurrency": "SEK" }
+      }
+    }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #3b82f6; --secondary: #1e293b; --text: #1f2937; --text-light: #6b7280; --border: #e5e7eb; --green: #10b981; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: var(--text); line-height: 1.7; }
+        .main-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(255,255,255,0.97); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); padding: 0 20px; height: 65px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { font-size: 1.3rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 30px; list-style: none; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--text); font-weight: 500; font-size: 0.95rem; }
+        .nav-links a:hover { color: var(--primary); }
+        .nav-cta { background: var(--primary); color: white !important; padding: 10px 22px; border-radius: 8px; }
+        @media (max-width: 768px) { .nav-links { display: none; } }
+
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 120px 20px 100px; text-align: center; }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 800; margin-bottom: 20px; max-width: 900px; margin-left: auto; margin-right: auto; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; max-width: 650px; margin: 0 auto 35px; }
+        .hero-stats { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 50px; }
+        .stat { text-align: center; }
+        .stat-num { font-size: 2.2rem; font-weight: 800; }
+        .stat-label { font-size: 0.9rem; opacity: 0.8; }
+        .hero-btns { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .btn-primary-hero { display: inline-block; padding: 18px 36px; background: white; color: #667eea; border-radius: 50px; text-decoration: none; font-weight: 800; font-size: 1.1rem; }
+        .btn-secondary-hero { display: inline-block; padding: 18px 36px; background: rgba(255,255,255,0.15); color: white; border: 2px solid rgba(255,255,255,0.5); border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.1rem; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        section { padding: 80px 20px; }
+        h2 { font-size: 2rem; font-weight: 700; color: var(--secondary); margin-bottom: 15px; }
+        h3 { font-size: 1.3rem; font-weight: 600; color: var(--secondary); margin-bottom: 10px; }
+        p { font-size: 1.05rem; margin-bottom: 20px; }
+
+        /* Steg */
+        .steps { background: #f8fafc; }
+        .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-top: 40px; }
+        .step-card { background: white; border-radius: 16px; padding: 30px 20px; text-align: center; border: 1px solid var(--border); }
+        .step-num { width: 52px; height: 52px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; margin: 0 auto 15px; }
+        .step-card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+        .step-card p { font-size: 0.9rem; color: var(--text-light); margin: 0; }
+
+        /* Fördelar */
+        .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-top: 40px; }
+        .benefit-card { display: flex; gap: 15px; align-items: flex-start; padding: 20px; background: #f8fafc; border-radius: 12px; }
+        .benefit-icon { font-size: 2rem; flex-shrink: 0; }
+        .benefit-card h3 { font-size: 1rem; margin-bottom: 5px; }
+        .benefit-card p { font-size: 0.9rem; margin: 0; color: var(--text-light); }
+
+        /* Vad ingår */
+        .includes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 30px; }
+        .include-item { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .include-item h4 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--secondary); }
+        .include-item p { font-size: 0.9rem; color: var(--text-light); margin: 0; }
+
+        /* Highlight */
+        .highlight-box { background: #eff6ff; border-left: 4px solid var(--primary); padding: 20px 25px; border-radius: 0 12px 12px 0; margin: 30px 0; }
+
+        /* FAQ */
+        .faq-item { border-bottom: 1px solid var(--border); padding: 22px 0; }
+        .faq-item h3 { font-size: 1.1rem; margin-bottom: 10px; }
+        .faq-item p { margin: 0; color: var(--text-light); font-size: 1rem; }
+
+        /* Städer */
+        .cities { background: var(--secondary); color: white; text-align: center; }
+        .cities h2 { color: white; }
+        .cities p { opacity: 0.8; }
+        .cities-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 30px; }
+        .city-tag { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 50px; font-size: 0.95rem; }
+
+        /* CTA */
+        .cta-section { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-align: center; }
+        .cta-section h2 { color: white; font-size: 2.2rem; }
+        .cta-section p { opacity: 0.9; font-size: 1.15rem; max-width: 600px; margin: 0 auto 30px; }
+        .btn-white { display: inline-block; padding: 18px 40px; background: white; color: #059669; border-radius: 50px; text-decoration: none; font-weight: 800; font-size: 1.1rem; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+
+        .breadcrumb { font-size: 0.9rem; color: var(--text-light); padding: 20px 0 0; }
+        .breadcrumb a { color: var(--primary); text-decoration: none; }
+        footer { background: var(--secondary); color: white; padding: 40px 20px; text-align: center; }
+        footer a { color: rgba(255,255,255,0.7); text-decoration: none; margin: 0 10px; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="/" class="nav-logo">Monterhyra™</a>
+        <ul class="nav-links">
+            <li><a href="/">Hem</a></li>
+            <li><a href="/massmonter-pris.html">Priser</a></li>
+            <li><a href="/massor-i-sverige.html">Mässor i Sverige</a></li>
+            <li><a href="/blogg.html">Blogg</a></li>
+            <li><a href="/om-oss.html">Om oss</a></li>
+            <li><a href="/app.html" class="nav-cta">🎨 Designa Monter</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <h1>Hyra Mässmonter i Sverige – Enklare än Någonsin</h1>
+        <p>Sveriges enda tjänst där du designar din mässmonter i 3D, ser exakt pris direkt och beställer online. Vi levererar och bygger – du visar upp dig.</p>
+        <div class="hero-btns">
+            <a href="/app.html" class="btn-primary-hero">🎨 Designa Din Monter Nu</a>
+            <a href="/massmonter-pris.html" class="btn-secondary-hero">💰 Se Priser</a>
+        </div>
+        <div class="hero-stats">
+            <div class="stat"><div class="stat-num">10 400 kr</div><div class="stat-label">Från (exkl. moms)</div></div>
+            <div class="stat"><div class="stat-num">5 min</div><div class="stat-label">Designa din monter</div></div>
+            <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Transparent pris</div></div>
+            <div class="stat"><div class="stat-num">Sverige</div><div class="stat-label">Vi levererar överallt</div></div>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="breadcrumb"><a href="/">Hem</a> → Hyra Mässmonter</div>
+    </div>
+
+    <!-- Introduktion -->
+    <section>
+        <div class="container">
+            <h2>Vad är Monteruthyrning?</h2>
+            <p>Att <strong>hyra mässmonter</strong> innebär att du hyr alla komponenter du behöver för att ställa ut på en mässa – väggar, golv, möbler, belysning och grafik – och att leverantören levererar, monterar och river allt åt dig.</p>
+            <p>Det är det absolut smidigaste sättet att ha en professionell närvaro på mässor utan att investera i eget material, ordna transport eller anlita montörer. Du betalar för ett komplettpaket och kan fokusera på det du är bäst på – att möta kunder.</p>
+            <p>Monterhyra har tagit monteruthyrning ett steg längre: med vår <strong>3D-designer</strong> skapar du din monter online och ser exakt pris i realtid. Inga offertrondar, inga väntetider – bara direkt beslut.</p>
+
+            <div class="highlight-box">
+                🚀 <strong>Så enkelt är det:</strong> Designa → Se pris → Beställ → Vi fixar resten. Från idé till färdig monter på plats på under 5 minuter online.
+            </div>
+        </div>
+    </section>
+
+    <!-- Steg för steg -->
+    <section class="steps">
+        <div class="container">
+            <h2>Hyra Mässmonter – Steg för Steg</h2>
+            <p>Vår process är designad för att vara så enkel och snabb som möjligt:</p>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <h3>Välj Storlek</h3>
+                    <p>Från 3×3m upp till stora custom-monter. Välj bredden och djupet på din monteryta.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <h3>Välj Väggar</h3>
+                    <p>Rak bakvägg, L-form eller U-form. Välj höjd från 2,4m till 3,5m.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <h3>Lägg Till Inredning</h3>
+                    <p>Disk, möbler, TV, belysning och grafik. Se allt i 3D direkt.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">4</div>
+                    <h3>Se Direktpris</h3>
+                    <p>Priset beräknas automatiskt. Inga dolda kostnader.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">5</div>
+                    <h3>Beställ Online</h3>
+                    <p>Fyll i mässinfo och kontakt. Vi bekräftar inom 24h.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">6</div>
+                    <h3>Vi Fixar Resten</h3>
+                    <p>Leverans, montering och rivning. Du dyker bara upp.</p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="/app.html" style="display:inline-block; padding: 16px 36px; background: var(--primary); color: white; border-radius: 50px; text-decoration: none; font-weight: 800; font-size: 1.1rem;">Prova Designern Gratis →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fördelar -->
+    <section>
+        <div class="container">
+            <h2>Varför Hyra Mässmonter istället för att Köpa?</h2>
+            <p>För de allra flesta bolag är hyra det klokaste valet – ekonomiskt, praktiskt och miljömässigt:</p>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">💰</div>
+                    <div><h3>Lägre kostnad</h3><p>Ingen stor investering. Betala per mässa, förutsägbar kostnad varje gång.</p></div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🚚</div>
+                    <div><h3>Ingen transport att ordna</h3><p>Vi hämtar och levererar allt. Du behöver inte hyra lastbil eller anlita bärare.</p></div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🔨</div>
+                    <div><h3>Professionell montering</h3><p>Erfaren personal bygger upp och river. Garanterat klart i tid.</p></div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">📦</div>
+                    <div><h3>Inget lager</h3><p>Inga väggar och möbler som tar plats på kontoret eller i ett lager du betalar för.</p></div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🎨</div>
+                    <div><h3>Flexibel design</h3><p>Anpassa storlek och inredning till varje mässa. Olika mässor, olika behov.</p></div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🌿</div>
+                    <div><h3>Miljövänligt</h3><p>Återanvändbara system, minimal materialsvinn. Det hållbara valet.</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vad ingår -->
+    <section style="background: #f8fafc;">
+        <div class="container">
+            <h2>Vad Ingår i Monteruthyrningen?</h2>
+            <p>När du <strong>hyr mässmonter</strong> hos Monterhyra ingår alltid ett komplett paket:</p>
+            <div class="includes-grid">
+                <div class="include-item">
+                    <h4>🏗️ Monterkomponenter</h4>
+                    <p>Aluminiumstomme, väggpaneler i valfri form och höjd. Stabila, fräscha och professionella.</p>
+                </div>
+                <div class="include-item">
+                    <h4>🪵 Monterplatform</h4>
+                    <p>Upphöjt golv i valfri storlek. Välj med eller utan färgmatta ovanpå.</p>
+                </div>
+                <div class="include-item">
+                    <h4>💡 Belysning</h4>
+                    <p>LED-spotlights och lysrör. Se din monter lysa upp i mässhallen.</p>
+                </div>
+                <div class="include-item">
+                    <h4>🪑 Möbler (tillval)</h4>
+                    <p>Disk, barstolar, barbord, soffor, fåtöljer. Välj fritt i 3D-designern.</p>
+                </div>
+                <div class="include-item">
+                    <h4>🖼️ Grafik (tillval)</h4>
+                    <p>Hyrgrafik, Forex eller Vepa med din logotyp och design.</p>
+                </div>
+                <div class="include-item">
+                    <h4>📺 Teknik (tillval)</h4>
+                    <p>TV-skärmar i 43", 55" och 70". Truss-system för takmonterad belysning.</p>
+                </div>
+                <div class="include-item">
+                    <h4>🚚 Leverans</h4>
+                    <p>Transport till och från mässan ingår alltid. Hela Sverige.</p>
+                </div>
+                <div class="include-item">
+                    <h4>🔨 Montering & Rivning</h4>
+                    <p>Erfaren personal bygger upp och plockar ner. Du behöver inte lyfta ett finger.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Städer -->
+    <section class="cities">
+        <div class="container">
+            <h2>Vi Levererar Mässmonter i Hela Sverige</h2>
+            <p>Oavsett var i Sverige din mässa är – vi levererar och bygger på plats.</p>
+            <div class="cities-grid">
+                <div class="city-tag">📍 Stockholm</div>
+                <div class="city-tag">📍 Göteborg</div>
+                <div class="city-tag">📍 Malmö</div>
+                <div class="city-tag">📍 Jönköping (Elmia)</div>
+                <div class="city-tag">📍 Uppsala</div>
+                <div class="city-tag">📍 Örebro</div>
+                <div class="city-tag">📍 Linköping</div>
+                <div class="city-tag">📍 Västerås</div>
+                <div class="city-tag">📍 Hela Sverige</div>
+            </div>
+            <p style="margin-top: 30px; opacity: 0.7;">Fraktkostnad utanför Stockholmsregionen beräknas baserat på avstånd och volym. Kontakta oss för offert.</p>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section>
+        <div class="container">
+            <h2>Vanliga Frågor om att Hyra Mässmonter</h2>
+
+            <div class="faq-item">
+                <h3>Hur långt i förväg måste jag boka min mässmonter?</h3>
+                <p>Vi rekommenderar minst 2–3 veckor i förväg. Under högsäsong (september–november) är 4–6 veckor att föredra för att säkra tillgänglighet på alla tillval.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Kan jag ändra designen efter beställning?</h3>
+                <p>Ja, ändringar är möjliga upp till ca 1 vecka innan mässan, beroende på vad som ska ändras. Kontakta oss så hittar vi en lösning.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Vad händer om något går sönder under mässan?</h3>
+                <p>Vi finns tillgängliga under evenemanget. Normalt slitage och yttre åverkan ingår. Kontakta oss direkt vid problem – vi löser det snabbt.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Kan jag hyra mässmonter för bara en dag?</h3>
+                <p>Ja, vi hyr ut för enstaka dagar lika gärna som flerdagarsevent. Priset baseras på utrustning och leverans, inte antal dagar.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Levererar ni till mässhallar utomlands?</h3>
+                <p>I nuläget levererar vi inom Sverige. Kontakta oss för specialförfrågningar om event nära gränsen.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Kan jag ladda upp min egen grafik?</h3>
+                <p>Ja! Du laddar upp din logotyp och design i beställningsformuläret, eller skickar filerna separat. Vi hanterar trycket och monterar på plats.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Måste jag vara på plats när ni monterar?</h3>
+                <p>Det är inte nödvändigt, men rekommenderat för att godkänna uppställningen och ange ev. sista justeringar. Många kunder väljer att dyka upp när montern är klar.</p>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 40px;">
+                🔗 <strong>Läs mer:</strong> <a href="/massmonter-pris.html">Mässmonter Pris – Fullständig Prislista</a> | <a href="/blogg/massmonter-stockholm.html">Mässmonter Stockholm</a> | <a href="/blogg/tips-lyckas-massan.html">10 Tips för att Lyckas på Mässan</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="container">
+            <h2>Redo att Hyra Din Mässmonter?</h2>
+            <p>Designa i 3D, se exakt pris direkt och beställ online. Ingen offert, ingen väntan.</p>
+            <a href="/app.html" class="btn-white">🎨 Starta Din Design Gratis →</a>
+            <p style="margin-top: 20px; opacity: 0.8; font-size: 0.95rem;">Ingen registrering krävs • Se pris direkt • Beställ på 5 minuter</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 Monterhyra™ | <a href="/">Hem</a> | <a href="/massmonter-pris.html">Priser</a> | <a href="/blogg.html">Blogg</a> | <a href="/om-oss.html">Om oss</a> | <a href="/app.html">Designa Monter</a></p>
+        <p style="margin-top: 10px; opacity: 0.6; font-size: 0.85rem;">Hyra Mässmonter | Monteruthyrning | Sverige 2026</p>
+    </footer>
+</body>
+</html>
