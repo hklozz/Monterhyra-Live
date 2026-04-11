@@ -1,6 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="12" fill="#3b82f6"/>
-  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
-        font-family="Arial Black, Arial, sans-serif" font-weight="900"
-        font-size="38" fill="white">M</text>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <rect width="64" height="32" rx="14" fill="url(#shine)"/>
+  <text x="32" y="46" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="40" fill="white" text-anchor="middle" letter-spacing="-2">M</text>
+  <circle cx="32" cy="57" r="3" fill="white" opacity="0.55"/>
 </svg>
