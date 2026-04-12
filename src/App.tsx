@@ -5892,8 +5892,8 @@ export default function App() {
                   <span>TOTALT:</span>
                   <span>{totalCost.toLocaleString('sv-SE')} kr</span>
                 </div>
-                {/* Beställ-knapp */}
-                <div style={{ marginTop: 10, marginBottom: 6 }}>
+                {/* Knappar - tre runda */}
+                <div style={{ marginTop: 10, marginBottom: 6, display: 'flex', gap: 8, justifyContent: 'center' }}>
                   {/* PDF-knapp - dölj i exhibitor-mode */}
                   {!isExhibitorMode && (
                   <button
@@ -6209,20 +6209,24 @@ export default function App() {
                         alert('Kunde inte skapa PDF. Försök öppna appen i ett nytt fönster eller kontrollera att inga cross-origin-bilder används.');
                       }
                     }}
+                    title="Ladda ner PDF"
                     style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      background: '#666666',
+                      width: 44,
+                      height: 44,
+                      padding: 0,
+                      background: '#555',
                       color: '#fff',
                       border: 'none',
-                      borderRadius: 6,
+                      borderRadius: '50%',
                       cursor: 'pointer',
-                      fontWeight: 700,
-                      fontSize: 14,
-                      marginBottom: '8px'
+                      fontSize: 18,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
                     }}
                   >
-                    📄 PDF
+                    📄
                   </button>
                   )}
                   
@@ -7177,39 +7181,47 @@ Monterhyra Beställningssystem
                         alert(`❌ Ett fel uppstod vid sändning av beställningen: ${err.message || 'Okänt fel'}\n\nKontrollera konsolen för mer detaljer.`);
                       }
                     }}
+                    title={(registrationData.name && registrationData.email && registrationData.company) ? 'Skicka beställning' : 'Fyll i kontaktuppgifter först'}
                     style={{
-                      width: '100%',
-                      padding: '10px 12px',
+                      width: 44,
+                      height: 44,
+                      padding: 0,
                       background: (registrationData.name && registrationData.email && registrationData.company) ? '#28a745' : '#95a5a6',
                       color: '#fff',
                       border: 'none',
-                      borderRadius: 6,
+                      borderRadius: '50%',
                       cursor: (registrationData.name && registrationData.email && registrationData.company) ? 'pointer' : 'not-allowed',
-                      fontWeight: 700,
-                      fontSize: 14,
-                      opacity: (registrationData.name && registrationData.email && registrationData.company) ? 1 : 0.75
+                      fontSize: 18,
+                      opacity: (registrationData.name && registrationData.email && registrationData.company) ? 1 : 0.75,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
                     }}
                   >
-                    {(registrationData.name && registrationData.email && registrationData.company) ? '📧 Beställ' : '📝 Fyll i kontaktuppgifter först'}
+                    {(registrationData.name && registrationData.email && registrationData.company) ? '📧' : '📝'}
                   </button>
-                  {!(registrationData.name && registrationData.email && registrationData.company) && (
-                    <div style={{ marginTop: 8, textAlign: 'center' }}>
-                      <button
-                        onClick={() => setShowRegistrationModal(true)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#3498db',
-                          cursor: 'pointer',
-                          fontSize: 13,
-                          textDecoration: 'underline',
-                          padding: 0
-                        }}
-                      >
-                        👤 Öppna kontaktformulär →
-                      </button>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => setShowRegistrationModal(true)}
+                    title="Öppna kontaktformulär"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      padding: 0,
+                      background: '#3498db',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      fontSize: 18,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}
+                  >
+                    👤
+                  </button>
                 </div>
               </div>
             );
