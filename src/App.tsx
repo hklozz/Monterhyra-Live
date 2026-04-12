@@ -4,7 +4,10 @@
  * Unauthorized copying or distribution is strictly prohibited.
  */
 
-import React, { useState, useMemo, useRef, useImperativeHandle, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useMemo, useRef, useImperativeHandle, useEffect, useCallback, lazy, Suspense } from 'react';
+import AIChat from './components/AIChat';
+import type { AIAction, AIContext } from './utils/aiInterpreter';
+import { generateGraphic } from './utils/graphicGenerator';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import emailjs from '@emailjs/browser';
@@ -2515,6 +2518,9 @@ export default function App() {
   const [priceSectionCollapsed, setPriceSectionCollapsed] = useState(true);
   // Collapsed state for floating price box
   const [floatingPriceCollapsed, setFloatingPriceCollapsed] = useState(false);
+  // Refs för att trigga PDF och beställ från flytande panel
+  const pdfButtonRef = useRef<HTMLButtonElement>(null);
+  const orderButtonRef = useRef<HTMLButtonElement>(null);
   
   // Mässmiljö toggle
   const [showExhibitionHall, setShowExhibitionHall] = useState(false);
@@ -2699,6 +2705,98 @@ export default function App() {
   
   const [plants, setPlants] = useState<Array<{id: number, type: number, position: {x: number, z: number}, rotation: number}>>([]);
   const [plantMarkersVisible, setPlantMarkersVisible] = useState(false);
+
+  // ─── AI-CHAT HANDLER ─────────────────────────────────────────────────────────
+  const handleAIActions = useCallback((actions: AIAction[]) => {
+    for (const action of actions) {
+      switch (action.type) {
+        case 'SET_FLOOR':
+          setFloorIndex(action.index);
+          break;
+        case 'SET_WALL_SHAPE':
+          setWallShape(action.shape);
+          break;
+        case 'SET_WALL_HEIGHT':
+          setWallHeight(action.height);
+          break;
+        case 'SET_CARPET':
+          setCarpetIndex(action.index);
+          break;
+        case 'SET_LIGHTS':
+          setShowLights(action.show);
+          break;
+        case 'SET_GRAPHIC':
+          setGraphic(action.graphic);
+          break;
+        case 'ADD_TV':
+          setTvs(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            size: action.size,
+            wall: action.wall,
+            position: prev.filter(t => t.wall === action.wall).length,
+            heightIndex: 0,
+            orientation: 'landscape' as const,
+          }]);
+          break;
+        case 'REMOVE_ALL_TVS':
+          setTvs([]);
+          break;
+        case 'ADD_PLANT':
+          setPlants(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            type: action.plantType,
+            position: { x: (Math.random() - 0.5) * 2, z: (Math.random() - 0.5) * 2 },
+            rotation: 0,
+          }]);
+          break;
+        case 'ADD_COUNTER':
+          setCounters(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            type: action.counterType,
+            position: { x: 0, z: 0 },
+            rotation: 0,
+          }]);
+          break;
+        case 'ADD_STORAGE':
+          setStorages(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            type: action.storageType,
+            position: { x: 0, z: 0 },
+            rotation: 0,
+          }]);
+          break;
+        case 'GENERATE_IMAGE': {
+          const dataUrl = generateGraphic(action.config);
+          if (action.wall === 'back') {
+            setGraphic('vepa');
+            setUploadedImage(dataUrl);
+          } else if (action.wall === 'left') {
+            setGraphic('vepa');
+            setUploadedImageLeft(dataUrl);
+          } else {
+            setGraphic('vepa');
+            setUploadedImageRight(dataUrl);
+          }
+          break;
+        }
+        case 'RESET':
+          setFloorIndex(null);
+          setWallShape('');
+          setWallHeight(2.5);
+          setCarpetIndex(0);
+          setTvs([]);
+          setPlants([]);
+          setCounters([]);
+          setStorages([]);
+          setShowLights(false);
+          setGraphic('none');
+          setUploadedImage(null);
+          setUploadedImageLeft(null);
+          setUploadedImageRight(null);
+          break;
+      }
+    }
+  }, [setFloorIndex, setWallShape, setWallHeight, setCarpetIndex, setShowLights, setGraphic, setTvs, setPlants, setCounters, setStorages, setUploadedImage, setUploadedImageLeft, setUploadedImageRight]);
   const [nextPlantId, setNextPlantId] = useState(1);
   const [selectedPlantType, setSelectedPlantType] = useState(0); // Vald växttyp
   const [furniture, setFurniture] = useState<Array<{id: number, type: number, position: {x: number, z: number}, rotation: number}>>([]);
@@ -3861,8 +3959,8 @@ export default function App() {
         })()}
       </div>
 
-      {/* Floating price box (separate from main interface) - DOLD */}
-      <div id="price-floating" style={{ position: 'fixed', left: 560, top: 12, width: 280, padding: 12, background: '#fff', border: '2px solid #007acc', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 1200, display: 'none' }}>
+      {/* Floating price box - dold, ersatt av sticky pris i sidopanelen */}
+      <div id="price-floating" style={{ display: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <div style={{ fontWeight: 700, fontSize: 16, color: '#007acc', display: 'flex', alignItems: 'center', gap: 6 }}>
             💰 Prissamanställning
@@ -3941,6 +4039,24 @@ export default function App() {
               <div style={{ marginTop: 8, fontSize: 11, color: '#888', textAlign: 'center' }}>
                 Priser exkl. moms
               </div>
+
+              {/* PDF & Beställ-knappar */}
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {!isExhibitorMode && (
+                  <button
+                    onClick={() => pdfButtonRef.current?.click()}
+                    style={{ width: '100%', padding: '9px 12px', background: '#555', color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+                  >
+                    📄 Ladda ner PDF
+                  </button>
+                )}
+                <button
+                  onClick={() => orderButtonRef.current?.click()}
+                  style={{ width: '100%', padding: '10px 12px', background: 'linear-gradient(135deg, #28a745, #20913b)', color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontWeight: 700, fontSize: 14, boxShadow: '0 3px 10px rgba(40,167,69,0.3)' }}
+                >
+                  🚀 Skicka Beställning
+                </button>
+              </div>
             </div>
           );
         })()}
@@ -3966,7 +4082,7 @@ export default function App() {
         borderRight: '2px solid #e1e8ed',
         boxShadow: '8px 0 32px rgba(0, 0, 0, 0.08)',
         padding: '24px',
-        paddingBottom: 56,
+        paddingBottom: 0,
         display: 'flex',
         flexDirection: 'column',
         gap: 0,
@@ -5658,14 +5774,18 @@ export default function App() {
         )}
   </>}
 
-  {/* Prisberäkning */}
+  {/* Prisberäkning - sticky längst ner i sidopanelen */}
   <div id="price-summary" style={{ 
-          ...(isExhibitorMode ? {} : { position: 'sticky', bottom: 0 }),
+          position: 'sticky',
+          bottom: 0,
+          marginTop: 'auto',
           backgroundColor: '#fff',
           borderTop: '2px solid #007acc',
-          padding: '16px',
-          marginTop: '20px',
-          boxShadow: '0 -4px 12px rgba(0,0,0,0.1)'
+          padding: '12px 16px',
+          marginLeft: '-24px',
+          marginRight: '-24px',
+          boxShadow: '0 -4px 12px rgba(0,0,0,0.12)',
+          zIndex: 10
         }}>
                 <div style={{ 
             display: 'flex', 
@@ -5777,6 +5897,7 @@ export default function App() {
                   {/* PDF-knapp - dölj i exhibitor-mode */}
                   {!isExhibitorMode && (
                   <button
+                    ref={pdfButtonRef}
                     onClick={async () => {
                       const pdf = new jsPDF('p', 'mm', 'a4');
                       const canvasEl = document.querySelector('canvas') as HTMLCanvasElement | null;
@@ -6107,6 +6228,7 @@ export default function App() {
                   
                   {/* Ny Beställ-knapp som skickar e-post med EmailJS */}
                   <button
+                    ref={orderButtonRef}
                     onClick={async () => {
                       // 🚫 Kräv att kontaktuppgifter är ifyllda
                       if (!registrationData.name || !registrationData.email || !registrationData.company) {
@@ -7141,7 +7263,7 @@ Monterhyra Beställningssystem
     display: 'block'
   }}>
         
-        {/* 💾 FLOATING SPARA/LADDA-KNAPPAR */}
+        {/* 💾 FLOATING SPARA/LADDA-KNAPPAR + AI */}
         {!isExhibitorMode && window.innerWidth > 768 && (
           <div style={{ position: 'fixed', left: '340px', top: '20px', zIndex: 999, display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Spara-knapp */}
@@ -11931,6 +12053,18 @@ Monterhyra Beställningssystem
           </div>
         </div>
       )}
+
+      {/* 🤖 AI-MONTERASSISTENT */}
+      <AIChat
+        onActions={handleAIActions}
+        context={{
+          floorIndex,
+          wallShape,
+          wallHeight,
+          tvCount: tvs.length,
+          plantCount: plants.length,
+        } as AIContext}
+      />
 
     </div>
   );
