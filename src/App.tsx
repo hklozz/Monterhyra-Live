@@ -2822,6 +2822,7 @@ export default function App() {
   
   // Registrerings-modal state
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [pendingOrderAfterRegistration, setPendingOrderAfterRegistration] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [registrationData, setRegistrationData] = useState({
     name: '',
@@ -6237,8 +6238,9 @@ export default function App() {
                   <button
                     ref={orderButtonRef}
                     onClick={async () => {
-                      // 🚫 Kräv att kontaktuppgifter är ifyllda
+                      // Om kontaktuppgifter saknas → öppna formuläret
                       if (!registrationData.name || !registrationData.email || !registrationData.company) {
+                        setPendingOrderAfterRegistration(true);
                         setShowRegistrationModal(true);
                         return;
                       }
@@ -7189,13 +7191,12 @@ Monterhyra Beställningssystem
                       width: 52,
                       height: 52,
                       padding: 0,
-                      background: (registrationData.name && registrationData.email && registrationData.company) ? '#28a745' : '#95a5a6',
+                      background: '#28a745',
                       color: '#fff',
                       border: 'none',
                       borderRadius: '50%',
-                      cursor: (registrationData.name && registrationData.email && registrationData.company) ? 'pointer' : 'not-allowed',
+                      cursor: 'pointer',
                       fontSize: 18,
-                      opacity: (registrationData.name && registrationData.email && registrationData.company) ? 1 : 0.75,
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -7204,8 +7205,8 @@ Monterhyra Beställningssystem
                       flexShrink: 0
                     }}
                   >
-                    <span>{(registrationData.name && registrationData.email && registrationData.company) ? '📧' : '📝'}</span>
-                    <span style={{ fontSize: 9, lineHeight: 1, letterSpacing: 0 }}>{(registrationData.name && registrationData.email && registrationData.company) ? 'Beställ' : 'Kontakt'}</span>
+                    <span>📧</span>
+                    <span style={{ fontSize: 9, lineHeight: 1, letterSpacing: 0 }}>Beställ</span>
                   </button>
                   <button
                     onClick={() => setShowRegistrationModal(true)}
@@ -11269,8 +11270,11 @@ Monterhyra Beställningssystem
               // Spara registreringsdata och stäng modal
               setIsRegistered(true);
               setShowRegistrationModal(false);
-              
-              // Här kan du skicka data till server senare
+              // Om Beställ-knappen triggade formuläret, skicka beställning direkt
+              if (pendingOrderAfterRegistration) {
+                setPendingOrderAfterRegistration(false);
+                setTimeout(() => orderButtonRef.current?.click(), 100);
+              }
               console.log('Registrering sparad:', registrationData);
             }}>
               <div style={{
@@ -11609,7 +11613,24 @@ Monterhyra Beställningssystem
                       boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
                     }}
                   >
-                    Fortsätt designa →
+                    Spara uppgifter
+                  </button>
+                  <button
+                    type="submit"
+                    onClick={() => setPendingOrderAfterRegistration(true)}
+                    style={{
+                      background: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px 32px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 15px rgba(40, 167, 69, 0.4)'
+                    }}
+                  >
+                    📧 Beställ nu →
                   </button>
                 </div>
               </div>
