@@ -5,8 +5,8 @@
  */
 
 import React, { useState, useMemo, useRef, useImperativeHandle, useEffect, useCallback, lazy, Suspense } from 'react';
-import AIChat from './components/AIChat';
-import type { AIAction, AIContext } from './utils/aiInterpreter';
+// import AIChat from './components/AIChat'; // Tillfälligt dold – ej klar
+import type { AIAction } from './utils/aiInterpreter'; // AIContext dold med AIChat
 import { generateGraphic } from './utils/graphicGenerator';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -12054,8 +12054,8 @@ Monterhyra Beställningssystem
         </div>
       )}
 
-      {/* 🤖 AI-MONTERASSISTENT */}
-      <AIChat
+      {/* 🤖 AI-MONTERASSISTENT – tillfälligt dold, ej klar för produktion */}
+      {/* <AIChat
         onActions={handleAIActions}
         context={{
           floorIndex,
@@ -12064,7 +12064,7 @@ Monterhyra Beställningssystem
           tvCount: tvs.length,
           plantCount: plants.length,
         } as AIContext}
-      />
+      /> */}
 
     </div>
   );
