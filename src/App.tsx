@@ -6221,12 +6221,15 @@ export default function App() {
                       cursor: 'pointer',
                       fontSize: 18,
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      gap: 2,
                       flexShrink: 0
                     }}
                   >
-                    📄
+                    <span>📄</span>
+                    <span style={{ fontSize: 9, lineHeight: 1, letterSpacing: 0 }}>PDF</span>
                   </button>
                   )}
                   
@@ -7183,8 +7186,8 @@ Monterhyra Beställningssystem
                     }}
                     title={(registrationData.name && registrationData.email && registrationData.company) ? 'Skicka beställning' : 'Fyll i kontaktuppgifter först'}
                     style={{
-                      width: 44,
-                      height: 44,
+                      width: 52,
+                      height: 52,
                       padding: 0,
                       background: (registrationData.name && registrationData.email && registrationData.company) ? '#28a745' : '#95a5a6',
                       color: '#fff',
@@ -7194,12 +7197,15 @@ Monterhyra Beställningssystem
                       fontSize: 18,
                       opacity: (registrationData.name && registrationData.email && registrationData.company) ? 1 : 0.75,
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      gap: 2,
                       flexShrink: 0
                     }}
                   >
-                    {(registrationData.name && registrationData.email && registrationData.company) ? '📧' : '📝'}
+                    <span>{(registrationData.name && registrationData.email && registrationData.company) ? '📧' : '📝'}</span>
+                    <span style={{ fontSize: 9, lineHeight: 1, letterSpacing: 0 }}>{(registrationData.name && registrationData.email && registrationData.company) ? 'Beställ' : 'Kontakt'}</span>
                   </button>
                   <button
                     onClick={() => setShowRegistrationModal(true)}
@@ -7215,12 +7221,15 @@ Monterhyra Beställningssystem
                       cursor: 'pointer',
                       fontSize: 18,
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      gap: 2,
                       flexShrink: 0
                     }}
                   >
-                    👤
+                    <span>👤</span>
+                    <span style={{ fontSize: 9, lineHeight: 1, letterSpacing: 0 }}>Kontakt</span>
                   </button>
                 </div>
               </div>
