@@ -4,10 +4,10 @@
  * Unauthorized copying or distribution is strictly prohibited.
  */
 
-import React, { useState, useMemo, useRef, useImperativeHandle, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useMemo, useRef, useImperativeHandle, useEffect, lazy, Suspense } from 'react';
 // import AIChat from './components/AIChat'; // Tillfälligt dold – ej klar
-import type { AIAction } from './utils/aiInterpreter'; // AIContext dold med AIChat
-import { generateGraphic } from './utils/graphicGenerator';
+// import type { AIAction } from './utils/aiInterpreter'; // Dold med AIChat
+// import { generateGraphic } from './utils/graphicGenerator'; // Dold med AIChat
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import emailjs from '@emailjs/browser';
@@ -2706,7 +2706,7 @@ export default function App() {
   const [plants, setPlants] = useState<Array<{id: number, type: number, position: {x: number, z: number}, rotation: number}>>([]);
   const [plantMarkersVisible, setPlantMarkersVisible] = useState(false);
 
-  // ─── AI-CHAT HANDLER ─────────────────────────────────────────────────────────
+  /* AI-CHAT HANDLER – tillfälligt dold (AIChat ej klar)
   const handleAIActions = useCallback((actions: AIAction[]) => {
     for (const action of actions) {
       switch (action.type) {
@@ -2796,7 +2796,7 @@ export default function App() {
           break;
       }
     }
-  }, [setFloorIndex, setWallShape, setWallHeight, setCarpetIndex, setShowLights, setGraphic, setTvs, setPlants, setCounters, setStorages, setUploadedImage, setUploadedImageLeft, setUploadedImageRight]);
+  }, [setFloorIndex, setWallShape, setWallHeight, setCarpetIndex, setShowLights, setGraphic, setTvs, setPlants, setCounters, setStorages, setUploadedImage, setUploadedImageLeft, setUploadedImageRight]);  */ // AI-CHAT HANDLER SLUT
   const [nextPlantId, setNextPlantId] = useState(1);
   const [selectedPlantType, setSelectedPlantType] = useState(0); // Vald växttyp
   const [furniture, setFurniture] = useState<Array<{id: number, type: number, position: {x: number, z: number}, rotation: number}>>([]);
